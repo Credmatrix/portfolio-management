@@ -1,0 +1,38 @@
+import { createServerClient } from '@supabase/ssr'
+import { cookies } from 'next/headers'
+import { Database } from '@/types/database.types'
+import { SupabaseClient } from '@supabase/supabase-js'
+
+export async function createServerSupabaseClient(): Promise<SupabaseClient<Database>> {
+    const cookieStore = await cookies()
+
+    return createServerClient<Database>(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        {
+            cookies: {
+                getAll() {
+                    return cookieStore.getAll()
+                },
+                setAll(cookiesToSet) {
+                    try {
+                        cookiesToSet.forEach(({ name, value, options }) => {
+                            cookieStore.set(name, value, options)
+                        })
+                    } catch (error) {
+                        // Handle cookie setting errors in Server Components
+                        console.warn('Cookie setting error in Server Component:', error)
+                    }
+                },
+            },
+            global: {
+                headers: {
+                    'X-Client-Info': 'credmatrix-portfolio-dashboard'
+                }
+            },
+            db: {
+                schema: 'public'
+            }
+        }
+    ) as unknown as SupabaseClient<Database>
+}
