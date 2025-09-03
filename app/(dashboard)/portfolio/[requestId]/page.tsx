@@ -450,9 +450,9 @@ export default function CompanyDetailPage({ }: CompanyDetailPageProps) {
                             />
 
                             {/* Parameter Breakdown Section */}
-                            <ParameterBreakdownSection
+{/*                             <ParameterBreakdownSection
                                 company={company}
-                            />
+                            /> */}
 
 
                         </div>
