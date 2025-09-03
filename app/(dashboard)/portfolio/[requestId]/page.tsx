@@ -450,9 +450,9 @@ export default function CompanyDetailPage({ }: CompanyDetailPageProps) {
                             />
 
                             {/* Parameter Breakdown Section */}
-                            <ParameterBreakdownSection
+                            {/* <ParameterBreakdownSection
                                 company={company}
-                            />
+                            /> */}
 
 
                         </div>
@@ -460,9 +460,9 @@ export default function CompanyDetailPage({ }: CompanyDetailPageProps) {
                         {/* Right Column - Sidebar */}
                         <div className="xl:col-span-1 space-y-6">
                             {/* Credit Eligibility Section */}
-                            <CreditEligibilitySection
+                            {/* <CreditEligibilitySection
                                 company={company}
-                            />
+                            /> */}
 
                             {/* Compliance Section */}
                             <ComplianceSection

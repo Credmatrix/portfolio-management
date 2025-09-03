@@ -1072,10 +1072,10 @@ export function RiskTrendAnalysis({ company, industryBenchmarks }: RiskTrendAnal
                                                             style={{ width: `${Math.max(15, (factor.score / factor.maxScore) * 100)}%` }}
                                                         ></div>
                                                     </div>
-                                                    <div className="flex items-center justify-between text-xs">
+                                                    {/* <div className="flex items-center justify-between text-xs">
                                                         <span className={config.text.replace('-900', '-600')}>Risk Score:</span>
                                                         <span className={`font-bold ${config.text}`}>{factor.score}/{factor.maxScore}</span>
-                                                    </div>
+                                                    </div> */}
                                                 </div>
                                             </div>
                                         )
@@ -1141,10 +1141,10 @@ export function RiskTrendAnalysis({ company, industryBenchmarks }: RiskTrendAnal
                                                             style={{ width: `${Math.min(100, (factor.score / factor.maxScore) * 100)}%` }}
                                                         ></div>
                                                     </div>
-                                                    <div className="flex items-center justify-between text-xs">
+                                                    {/* <div className="flex items-center justify-between text-xs">
                                                         <span className={config.text.replace('-900', '-600')}>Performance Score:</span>
                                                         <span className={`font-bold ${config.text}`}>{factor.score}/{factor.maxScore}</span>
-                                                    </div>
+                                                    </div> */}
                                                 </div>
                                             </div>
                                         )
