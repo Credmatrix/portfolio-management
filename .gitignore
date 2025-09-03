@@ -52,3 +52,4 @@ next-env.d.ts
 /supabase/seed.sql
 *-lock.json
 /server
+.env.local
