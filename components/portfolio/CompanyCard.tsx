@@ -143,7 +143,7 @@ export function CompanyCard({ company, onClick, onRetry, onDelete, showActions =
 			<div className='flex items-center justify-between text-xs text-neutral-60 pt-3 border-t border-neutral-20'>
 				<div className="flex items-center gap-1">
 					<MapPin className="w-3 h-3" />
-					<span className="truncate">{companyLocation ?? '' }</span>
+					<span className="truncate">{companyLocation ?? ''}</span>
 				</div>
 				<div className="flex items-center gap-1">
 					{getStatusIcon(company.status)}
@@ -201,7 +201,7 @@ export function CompanyCard({ company, onClick, onRetry, onDelete, showActions =
 							View
 						</Button>
 
-						{company.status === 'completed' && (
+						{/* {company.status === 'completed' && (
 							<Button
 								variant="outline"
 								size="sm"
@@ -234,7 +234,7 @@ export function CompanyCard({ company, onClick, onRetry, onDelete, showActions =
 							>
 								<MoreHorizontal className="w-3 h-3" />
 							</Button>
-						)}
+						)} */}
 					</div>
 				</div>
 			)}
