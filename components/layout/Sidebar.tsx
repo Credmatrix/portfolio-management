@@ -86,7 +86,7 @@ export function Sidebar({ className }: SidebarProps) {
 								<Building2 className="w-6 h-6" />
 							</div>
 							<div>
-								<h2 className="font-bold text-white">Terra91</h2>
+								<h2 className="font-bold text-white">Credmatrix</h2>
 								<p className="text-xs text-neutral-40">Credit Portfolio</p>
 							</div>
 						</div>

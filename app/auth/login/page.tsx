@@ -103,7 +103,7 @@ export default function LoginPage() {
             <Building2 className="w-8 h-8 text-white" />
           </div>
           <h1 className="text-2xl font-bold text-neutral-90">
-            Terra91
+            Credmatrix
           </h1>
           <p className="text-neutral-60 mt-2">
             Enterprise Credit Risk Management
