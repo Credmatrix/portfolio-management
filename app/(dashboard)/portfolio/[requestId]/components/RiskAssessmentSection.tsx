@@ -94,7 +94,7 @@ export function RiskAssessmentSection({ company, industryBenchmarks }: RiskAsses
 
             <CardContent className="space-y-6">
                 {/* Overall Risk Summary */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg">
                     <div className="text-center">
                         <div className="text-3xl font-bold text-neutral-90 mb-2">
                             {riskAnalysis.overallPercentage.toFixed(1)}%
