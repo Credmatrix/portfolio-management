@@ -926,85 +926,7 @@ export function RiskTrendAnalysis({ company, industryBenchmarks }: RiskTrendAnal
                             </div>
 
                             {/* Risk Heatmap Overview */}
-                            <div className="p-8 bg-gradient-to-br from-slate-50 to-gray-100 rounded-2xl border border-gray-200 shadow-lg">
-                                <h5 className="font-semibold text-gray-900 mb-6 flex items-center gap-3 text-lg">
-                                    <div className="p-2 rounded-lg bg-gray-100 shadow-sm">
-                                        <BarChart3 className="w-5 h-5 text-gray-600" />
-                                    </div>
-                                    Risk Factor Heatmap
-                                </h5>
-                                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                                    {riskAnalysis.allScores?.filter(score => score.available).slice(0, 15).map((factor, index) => {
-                                        const intensity = factor.score <= 1 ? 'critical' :
-                                            factor.score <= 2 ? 'high' :
-                                                factor.score <= 3 ? 'medium' :
-                                                    factor.score <= 4 ? 'low' : 'minimal'
-
-                                        const intensityConfig = {
-                                            critical: {
-                                                color: 'bg-gradient-to-br from-red-500 to-rose-600 border-red-600 text-white shadow-red-200',
-                                                icon: AlertTriangle
-                                            },
-                                            high: {
-                                                color: 'bg-gradient-to-br from-red-400 to-red-500 border-red-500 text-white shadow-red-100',
-                                                icon: AlertCircle
-                                            },
-                                            medium: {
-                                                color: 'bg-gradient-to-br from-amber-400 to-yellow-500 border-amber-500 text-gray-900 shadow-amber-100',
-                                                icon: Info
-                                            },
-                                            low: {
-                                                color: 'bg-gradient-to-br from-blue-400 to-indigo-500 border-blue-500 text-white shadow-blue-100',
-                                                icon: CheckCircle2
-                                            },
-                                            minimal: {
-                                                color: 'bg-gradient-to-br from-green-400 to-emerald-500 border-green-500 text-white shadow-green-100',
-                                                icon: CheckCircle2
-                                            }
-                                        }
-
-                                        const config = intensityConfig[intensity]
-                                        const IntensityIcon = config.icon
-
-                                        return (
-                                            <div
-                                                key={index}
-                                                className={`p-4 rounded-xl border-2 transition-all hover:scale-105 hover:shadow-lg cursor-pointer ${config.color} shadow-lg`}
-                                                title={`${factor.parameter}: ${factor.value} (${factor.benchmark})`}
-                                            >
-                                                <div className="flex items-center justify-between mb-2">
-                                                    <IntensityIcon className="w-4 h-4" />
-                                                    <div className="text-xs font-bold opacity-90">{factor.benchmark}</div>
-                                                </div>
-                                                <div className="text-xs font-semibold truncate mb-1">
-                                                    {factor.parameter.split(' ').slice(0, 2).join(' ')}
-                                                </div>
-                                                <div className="text-xs opacity-90 truncate">
-                                                    {factor.value}
-                                                </div>
-                                            </div>
-                                        )
-                                    })}
-                                </div>
-                                <div className="flex items-center justify-between mt-6 text-sm text-gray-600">
-                                    <div className="flex items-center gap-6">
-                                        <div className="flex items-center gap-2">
-                                            <div className="w-4 h-4 bg-gradient-to-br from-red-500 to-rose-600 rounded-md shadow-sm"></div>
-                                            <span>Critical Risk</span>
-                                        </div>
-                                        <div className="flex items-center gap-2">
-                                            <div className="w-4 h-4 bg-gradient-to-br from-amber-400 to-yellow-500 rounded-md shadow-sm"></div>
-                                            <span>Moderate Risk</span>
-                                        </div>
-                                        <div className="flex items-center gap-2">
-                                            <div className="w-4 h-4 bg-gradient-to-br from-green-400 to-emerald-500 rounded-md shadow-sm"></div>
-                                            <span>Low Risk</span>
-                                        </div>
-                                    </div>
-                                    {/* <span className="font-medium">Score: 1-5 (Higher is Better)</span> */}
-                                </div>
-                            </div>
-
+                            
                             {/* Critical Areas and Strengths */}
                             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                                 {/* Critical Areas */}
@@ -1072,10 +994,10 @@ export function RiskTrendAnalysis({ company, industryBenchmarks }: RiskTrendAnal
                                                             style={{ width: `${Math.max(15, (factor.score / factor.maxScore) * 100)}%` }}
                                                         ></div>
                                                     </div>
-                                                    <div className="flex items-center justify-between text-xs">
+                                                    {/* <div className="flex items-center justify-between text-xs">
                                                         <span className={config.text.replace('-900', '-600')}>Risk Score:</span>
                                                         <span className={`font-bold ${config.text}`}>{factor.score}/{factor.maxScore}</span>
-                                                    </div>
+                                                    </div> */}
                                                 </div>
                                             </div>
                                         )
@@ -1141,10 +1063,10 @@ export function RiskTrendAnalysis({ company, industryBenchmarks }: RiskTrendAnal
                                                             style={{ width: `${Math.min(100, (factor.score / factor.maxScore) * 100)}%` }}
                                                         ></div>
                                                     </div>
-                                                    <div className="flex items-center justify-between text-xs">
+                                                    {/* <div className="flex items-center justify-between text-xs">
                                                         <span className={config.text.replace('-900', '-600')}>Performance Score:</span>
                                                         <span className={`font-bold ${config.text}`}>{factor.score}/{factor.maxScore}</span>
-                                                    </div>
+                                                    </div> */}
                                                 </div>
                                             </div>
                                         )

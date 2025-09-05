@@ -94,7 +94,7 @@ export function RiskAssessmentSection({ company, industryBenchmarks }: RiskAsses
 
             <CardContent className="space-y-6">
                 {/* Overall Risk Summary */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg">
                     <div className="text-center">
                         <div className="text-3xl font-bold text-neutral-90 mb-2">
                             {riskAnalysis.overallPercentage.toFixed(1)}%
@@ -115,7 +115,7 @@ export function RiskAssessmentSection({ company, industryBenchmarks }: RiskAsses
                         </div>
                     </div>
 
-                    <div className="text-center">
+                    {/* <div className="text-center">
                         <div className={cn("text-3xl font-bold text-neutral-90 mb-2", riskAnalysis.overallGrade.multiplier === "Reject" ? "text-red-90" : "text-neutral-90" )}>
                             {riskAnalysis.overallGrade.multiplier === "Reject" ? riskAnalysis.overallGrade.multiplier : parseFloat(riskAnalysis.overallGrade.multiplier).toFixed(2)}
                         </div>
@@ -123,7 +123,7 @@ export function RiskAssessmentSection({ company, industryBenchmarks }: RiskAsses
                         <div className="text-xs text-neutral-50">
                             {riskAnalysis.overallGrade.description}
                         </div>
-                    </div>
+                    </div> */}
                 </div>
 
                 {/* Category Breakdown */}
@@ -237,7 +237,7 @@ export function RiskAssessmentSection({ company, industryBenchmarks }: RiskAsses
                             <div>
                                 <div className="text-neutral-60">Performance vs Peers</div>
                                 <div className={`font-semibold ${(company.risk_score || 0) > (industryBenchmarks.median_risk_score || 0)
-                                        ? 'text-green-700' : 'text-red-700'
+                                    ? 'text-green-700' : 'text-red-700'
                                     }`}>
                                     {(company.risk_score || 0) > (industryBenchmarks.median_risk_score || 0)
                                         ? 'Above Average' : 'Below Average'}

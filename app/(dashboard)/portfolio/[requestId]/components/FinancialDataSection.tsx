@@ -135,10 +135,10 @@ export function FinancialDataSection({ company, industryBenchmarks }: FinancialD
             />
 
             {/* Benchmark Comparison */}
-            <BenchmarkComparison
+{/*             <BenchmarkComparison
                 company={company}
                 industryBenchmarks={industryBenchmarks}
-            />
+            /> */}
 
         </div>
     )
