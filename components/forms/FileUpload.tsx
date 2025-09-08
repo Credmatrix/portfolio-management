@@ -8,10 +8,13 @@ import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { Alert } from "@/components/ui/Alert";
 import { Progress } from "@/components/ui/Progress";
+import { CompanyDetails } from "@/types/company.types";
+
 
 interface FileUploadProps {
     onUploadComplete: (request: any) => void;
     onStatusUpdate: (requestId: string, status: string, progress?: number) => void;
+    selectedCompany?: CompanyDetails | null;
 }
 
 interface UploadFile extends File {
@@ -36,9 +39,9 @@ const INDUSTRY_LABELS = {
 const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
 const SUPPORTED_TYPES = ['.xlsx', '.xls'];
 
-export function FileUpload({ onUploadComplete, onStatusUpdate }: FileUploadProps) {
+export function FileUpload({ onUploadComplete, onStatusUpdate, selectedCompany }: FileUploadProps) {
     const [files, setFiles] = useState<UploadFile[]>([]);
-    const [companyName, setCompanyName] = useState("");
+    const [companyName, setCompanyName] = useState(selectedCompany?.company_name || "");
     const [industry, setIndustry] = useState("manufacturing-oem");
     const [modelType, setModelType] = useState("without_banking");
     const [isDragging, setIsDragging] = useState(false);
@@ -139,7 +142,8 @@ export function FileUpload({ onUploadComplete, onStatusUpdate }: FileUploadProps
                     filename: file.name,
                     model_type: modelType,
                     industry: industry,
-                    company_name: companyName
+                    company_name: selectedCompany?.company_name || companyName,
+                    cin: selectedCompany?.cin
                 }),
             });
 
@@ -217,7 +221,7 @@ export function FileUpload({ onUploadComplete, onStatusUpdate }: FileUploadProps
             onUploadComplete({
                 id: request_id,
                 request_id,
-                company_name: companyName,
+                company_name: selectedCompany?.company_name || companyName,
                 filename: file.name,
                 status: 'submitted',
                 submitted_at: new Date().toISOString()
@@ -273,7 +277,8 @@ export function FileUpload({ onUploadComplete, onStatusUpdate }: FileUploadProps
     };
 
     const handleUpload = async () => {
-        if (!companyName.trim()) {
+        const effectiveCompanyName = selectedCompany?.company_name || companyName;
+        if (!effectiveCompanyName.trim()) {
             setUploadError('Company name is required');
             return;
         }
@@ -361,11 +366,17 @@ export function FileUpload({ onUploadComplete, onStatusUpdate }: FileUploadProps
                             Company Name *
                         </label>
                         <Input
-                            value={companyName}
+                            value={selectedCompany?.company_name || companyName}
                             onChange={(e) => setCompanyName(e.target.value)}
                             placeholder="Enter company name"
                             className="w-full"
+                            disabled={!!selectedCompany}
                         />
+                        {selectedCompany && (
+                            <p className="text-xs text-neutral-60 mt-1">
+                                CIN: {selectedCompany.cin}
+                            </p>
+                        )}
                     </div>
 
                     <div>
@@ -555,7 +566,7 @@ export function FileUpload({ onUploadComplete, onStatusUpdate }: FileUploadProps
                                 <Button
                                     variant="primary"
                                     onClick={handleUpload}
-                                    disabled={isUploading || !companyName.trim()}
+                                    disabled={isUploading || !(selectedCompany?.company_name || companyName.trim())}
                                     className="w-full"
                                 >
                                     {isUploading ? 'Uploading...' : `Upload ${files.filter(f => f.status === 'pending').length} File(s)`}

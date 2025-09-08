@@ -8,10 +8,11 @@ import { Card } from "@/components/ui/Card";
 import { PortfolioGrid } from "@/components/portfolio/PortfolioGrid";
 import { RiskDistribution } from "@/components/portfolio/RiskDistribution";
 import { RatingDistribution } from "@/components/portfolio/RatingDistribution";
+import { CompanySearchBar } from "@/components/portfolio/CompanySearchBar";
 
 export default function PortfolioPage() {
 	const router = useRouter();
-	
+
 	const { data: analytics, isLoading } = useQuery({
 		queryKey: ["analytics"],
 		queryFn: async () => {
@@ -33,20 +34,25 @@ export default function PortfolioPage() {
 	}
 
 	// Calculate high risk companies (CM5, CM6, CM7 + D rating)
-	const highRiskCount = (analytics?.risk_distribution?.cm5 || 0) + 
-	                     (analytics?.risk_distribution?.cm6 || 0) + 
-	                     (analytics?.risk_distribution?.cm7 || 0) + 
-	                     (analytics?.rating_distribution?.D || 0);
+	const highRiskCount = (analytics?.risk_distribution?.cm5 || 0) +
+		(analytics?.risk_distribution?.cm6 || 0) +
+		(analytics?.risk_distribution?.cm7 || 0) +
+		(analytics?.rating_distribution?.D || 0);
 
 	return (
 		<div className='p-8'>
 			<div className='mb-8'>
-				<h1 className='text-3xl font-bold text-neutral-90'>
-					Credit Portfolio Management
-				</h1>
-				<p className='text-neutral-60 mt-2'>
-					Monitor and analyze your complete credit portfolio
-				</p>
+				<div className='flex items-center justify-between'>
+					<div>
+						<h1 className='text-3xl font-bold text-neutral-90'>
+							Credit Portfolio Management
+						</h1>
+						<p className='text-neutral-60 mt-2'>
+							Monitor and analyze your complete credit portfolio
+						</p>
+					</div>
+					<CompanySearchBar />
+				</div>
 			</div>
 
 			<div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8'>
@@ -172,7 +178,7 @@ export default function PortfolioPage() {
 						</div>
 					</Card>
 				</div>
-				
+
 				<Card>
 					<h3 className='text-lg font-semibold text-neutral-90 mb-4'>
 						Recent Assessments
@@ -196,25 +202,24 @@ export default function PortfolioPage() {
 											<span className='text-xs text-neutral-60'>Risk:</span>
 											<span className='text-xs font-medium text-neutral-80'>{item.risk_score} %</span>
 										</div>
-											<div className='flex items-center gap-1'>
-												<span className='text-xs text-neutral-60'>Limit:</span>
-												<span className='text-xs font-medium text-neutral-80'>
-													{item.recommended_limit ? `₹${parseFloat(item.recommended_limit).toFixed(2)} Cr` : '-'}
-												</span>
-											</div>
+										<div className='flex items-center gap-1'>
+											<span className='text-xs text-neutral-60'>Limit:</span>
+											<span className='text-xs font-medium text-neutral-80'>
+												{item.recommended_limit ? `₹${parseFloat(item.recommended_limit).toFixed(2)} Cr` : '-'}
+											</span>
+										</div>
 									</div>
 								</div>
 								<div className='flex flex-col items-end gap-1'>
 									<span
-										className={`px-2 py-1 rounded-full text-xs font-medium ${
-											item.risk_grade?.startsWith("CM1") || item.risk_grade?.startsWith("CM2")
-												? "bg-green-100 text-green-700"
-												: item.risk_grade?.startsWith("CM3") || item.risk_grade?.startsWith("CM4")
+										className={`px-2 py-1 rounded-full text-xs font-medium ${item.risk_grade?.startsWith("CM1") || item.risk_grade?.startsWith("CM2")
+											? "bg-green-100 text-green-700"
+											: item.risk_grade?.startsWith("CM3") || item.risk_grade?.startsWith("CM4")
 												? "bg-yellow-100 text-yellow-700"
 												: item.risk_grade?.startsWith("CM5") || item.risk_grade?.startsWith("CM6") || item.risk_grade?.startsWith("CM7")
-												? "bg-red-100 text-red-700"
-												: "bg-gray-100 text-gray-700"
-										}`}
+													? "bg-red-100 text-red-700"
+													: "bg-gray-100 text-gray-700"
+											}`}
 									>
 										{item.risk_grade || "N/A"}
 									</span>

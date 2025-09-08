@@ -132,7 +132,7 @@ export function UploadProgress({ requests, onStatusUpdate }: UploadProgressProps
         const elapsed = now - submittedTime;
 
         // Estimate 10-15 minutes total processing time
-        const estimatedTotal = 12 * 60 * 1000; // 12 minutes in ms
+        const estimatedTotal = 2 * 60 * 1000; // 12 minutes in ms
         const remaining = Math.max(0, estimatedTotal - elapsed);
 
         if (remaining === 0) return 'Completing soon...';
