@@ -1,12 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { FileUpload } from "@/components/forms/FileUpload";
+import { CompanySearch } from "@/components/forms/CompanySearch";
 import { UploadProgress } from "@/components/forms/UploadProgress";
 import { ProcessingQueue } from "@/components/forms/ProcessingQueue";
 import { UploadHistory } from "@/components/forms/UploadHistory";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/Tabs";
-import { Upload, History, ListChecks } from "lucide-react";
+import { Upload, History, ListChecks, Search } from "lucide-react";
+import { Button } from "@/components/ui";
+import { CompanyDetails } from "@/types/company.types";
 
 interface UploadRequest {
 	id: string;
@@ -20,14 +24,35 @@ interface UploadRequest {
 }
 
 export default function UploadPage() {
-	const [activeTab, setActiveTab] = useState("upload");
+	const searchParams = useSearchParams();
+	const [activeTab, setActiveTab] = useState("search");
 	const [uploadRequests, setUploadRequests] = useState<UploadRequest[]>([]);
 	const [refreshTrigger, setRefreshTrigger] = useState(0);
+	const [selectedCompany, setSelectedCompany] = useState<CompanyDetails | null>(null);
+
+	// Check for pre-filled company data from URL params
+	useEffect(() => {
+		const companyName = searchParams.get('company_name');
+		const companyId = searchParams.get('company_id');
+
+		if (companyName && companyId) {
+			// If we have URL params, we could potentially pre-populate the search
+			// For now, we'll just clear any existing selection
+			setSelectedCompany(null);
+		}
+	}, [searchParams]);
+
+	// Handle company selection from search
+	const handleCompanySelect = (company: CompanyDetails) => {
+		setSelectedCompany(company);
+	};
 
 	// Refresh data when upload completes or status changes
 	const handleUploadComplete = (newRequest: UploadRequest) => {
 		setUploadRequests(prev => [newRequest, ...prev]);
 		setRefreshTrigger(prev => prev + 1);
+		setSelectedCompany(null);
+		setActiveTab("queue")
 	};
 
 	const handleStatusUpdate = (requestId: string, status: string, progress?: number) => {
@@ -53,7 +78,11 @@ export default function UploadPage() {
 			</div>
 
 			<Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-				<TabsList className="grid w-full grid-cols-3">
+				<TabsList className="grid w-full grid-cols-4">
+					<TabsTrigger value="search" className="flex items-center gap-2">
+						<Search className="w-4 h-4" />
+						Company Search
+					</TabsTrigger>
 					<TabsTrigger value="upload" className="flex items-center gap-2">
 						<Upload className="w-4 h-4" />
 						Upload Documents
@@ -68,10 +97,27 @@ export default function UploadPage() {
 					</TabsTrigger>
 				</TabsList>
 
+				<TabsContent value="search" className="space-y-6">
+					<CompanySearch
+						onCompanySelect={handleCompanySelect}
+						selectedCompany={selectedCompany}
+					/>
+					{selectedCompany && (
+						<div className="flex justify-center">
+							<Button
+								onClick={() => setActiveTab("upload")}
+							>
+								Proceed to Upload Documents
+							</Button>
+						</div>
+					)}
+				</TabsContent>
+
 				<TabsContent value="upload" className="space-y-6">
 					<FileUpload
 						onUploadComplete={handleUploadComplete}
 						onStatusUpdate={handleStatusUpdate}
+						selectedCompany={selectedCompany}
 					/>
 					{uploadRequests.filter(req => req.status === 'processing' || req.status === 'submitted').length > 0 && (
 						<UploadProgress

@@ -437,3 +437,38 @@ export interface ValidationWarning {
     message: string
     suggestion?: string
 }
+
+export interface CompanySuggestion {
+    suggestion: string;
+    company_count: number;
+    cin: string;
+}
+
+export interface CompanyDetails {
+    cin: string;
+    company_name: string;
+    company_roc_code: string;
+    company_category: string;
+    company_sub_category: string;
+    company_class: string;
+    authorized_capital: number;
+    paidup_capital: number;
+    registration_date: string;
+    registered_office_address: string;
+    listing_status: string;
+    company_status: string;
+    company_state_code: string;
+    company_type: string;
+    nic_code: string;
+    industrial_classification: string;
+    formatted_capital: {
+        authorized: string;
+        paidup: string;
+    };
+    company_age: number;
+    company_size: string;
+    state_info: {
+        code: string;
+        name: string;
+    };
+}

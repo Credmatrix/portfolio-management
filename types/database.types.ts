@@ -248,6 +248,72 @@ export type Database = {
           },
         ]
       }
+      companies: {
+        Row: {
+          base_data: Json | null
+          base_data_cached_at: string | null
+          cache_ttl_hours: number | null
+          cin: string | null
+          comprehensive_data: Json | null
+          comprehensive_data_cached_at: string | null
+          created_at: string | null
+          data_status: Json | null
+          id: string
+          is_stale: boolean | null
+          legal_name: string | null
+          pan: string | null
+          probe42_doc_version: string | null
+          probe42_efiling_status: string | null
+          probe42_last_base_updated: string | null
+          probe42_last_details_updated: string | null
+          probe42_last_fin_year_end: string | null
+          status_cached_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          base_data?: Json | null
+          base_data_cached_at?: string | null
+          cache_ttl_hours?: number | null
+          cin?: string | null
+          comprehensive_data?: Json | null
+          comprehensive_data_cached_at?: string | null
+          created_at?: string | null
+          data_status?: Json | null
+          id?: string
+          is_stale?: boolean | null
+          legal_name?: string | null
+          pan?: string | null
+          probe42_doc_version?: string | null
+          probe42_efiling_status?: string | null
+          probe42_last_base_updated?: string | null
+          probe42_last_details_updated?: string | null
+          probe42_last_fin_year_end?: string | null
+          status_cached_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          base_data?: Json | null
+          base_data_cached_at?: string | null
+          cache_ttl_hours?: number | null
+          cin?: string | null
+          comprehensive_data?: Json | null
+          comprehensive_data_cached_at?: string | null
+          created_at?: string | null
+          data_status?: Json | null
+          id?: string
+          is_stale?: boolean | null
+          legal_name?: string | null
+          pan?: string | null
+          probe42_doc_version?: string | null
+          probe42_efiling_status?: string | null
+          probe42_last_base_updated?: string | null
+          probe42_last_details_updated?: string | null
+          probe42_last_fin_year_end?: string | null
+          status_cached_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       credit_management: {
         Row: {
           actual_credit_limit_approved: number | null
@@ -555,6 +621,111 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      mca_master_data: {
+        Row: {
+          authorized_capital: number | null
+          cin: string
+          company_category: string | null
+          company_class: string | null
+          company_name: string
+          company_roc_code: string | null
+          company_state_code: string | null
+          company_status: string | null
+          company_sub_category: string | null
+          company_type: string | null
+          created_at: string | null
+          data_fetched_at: string | null
+          id: number
+          industrial_classification: string | null
+          listing_status: string | null
+          nic_code: string | null
+          paidup_capital: number | null
+          registered_office_address: string | null
+          registration_date: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          authorized_capital?: number | null
+          cin: string
+          company_category?: string | null
+          company_class?: string | null
+          company_name: string
+          company_roc_code?: string | null
+          company_state_code?: string | null
+          company_status?: string | null
+          company_sub_category?: string | null
+          company_type?: string | null
+          created_at?: string | null
+          data_fetched_at?: string | null
+          id?: number
+          industrial_classification?: string | null
+          listing_status?: string | null
+          nic_code?: string | null
+          paidup_capital?: number | null
+          registered_office_address?: string | null
+          registration_date?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          authorized_capital?: number | null
+          cin?: string
+          company_category?: string | null
+          company_class?: string | null
+          company_name?: string
+          company_roc_code?: string | null
+          company_state_code?: string | null
+          company_status?: string | null
+          company_sub_category?: string | null
+          company_type?: string | null
+          created_at?: string | null
+          data_fetched_at?: string | null
+          id?: number
+          industrial_classification?: string | null
+          listing_status?: string | null
+          nic_code?: string | null
+          paidup_capital?: number | null
+          registered_office_address?: string | null
+          registration_date?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      mca_sync_progress: {
+        Row: {
+          completed_at: string | null
+          created_at: string | null
+          current_offset: number | null
+          error_message: string | null
+          fetched_records: number | null
+          id: number
+          started_at: string | null
+          sync_status: string | null
+          total_records: number | null
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string | null
+          current_offset?: number | null
+          error_message?: string | null
+          fetched_records?: number | null
+          id?: number
+          started_at?: string | null
+          sync_status?: string | null
+          total_records?: number | null
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string | null
+          current_offset?: number | null
+          error_message?: string | null
+          fetched_records?: number | null
+          id?: number
+          started_at?: string | null
+          sync_status?: string | null
+          total_records?: number | null
+        }
+        Relationships: []
       }
       portfolio_analytics: {
         Row: {
@@ -1195,8 +1366,231 @@ export type Database = {
         }
         Relationships: []
       }
+      sqs_job_tracking: {
+        Row: {
+          attempts: number | null
+          cin: string | null
+          company_id: string | null
+          completed_at: string | null
+          error_details: Json | null
+          id: string
+          identifier_type: string | null
+          job_type: string
+          last_error: string | null
+          max_attempts: number | null
+          next_retry_at: string | null
+          pan: string | null
+          priority: number | null
+          processing_started_at: string | null
+          queued_at: string | null
+          sqs_message_id: string | null
+          status: string | null
+          triggered_by_request_id: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          attempts?: number | null
+          cin?: string | null
+          company_id?: string | null
+          completed_at?: string | null
+          error_details?: Json | null
+          id?: string
+          identifier_type?: string | null
+          job_type: string
+          last_error?: string | null
+          max_attempts?: number | null
+          next_retry_at?: string | null
+          pan?: string | null
+          priority?: number | null
+          processing_started_at?: string | null
+          queued_at?: string | null
+          sqs_message_id?: string | null
+          status?: string | null
+          triggered_by_request_id?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          attempts?: number | null
+          cin?: string | null
+          company_id?: string | null
+          completed_at?: string | null
+          error_details?: Json | null
+          id?: string
+          identifier_type?: string | null
+          job_type?: string
+          last_error?: string | null
+          max_attempts?: number | null
+          next_retry_at?: string | null
+          pan?: string | null
+          priority?: number | null
+          processing_started_at?: string | null
+          queued_at?: string | null
+          sqs_message_id?: string | null
+          status?: string | null
+          triggered_by_request_id?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sqs_job_tracking_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sqs_job_tracking_triggered_by_request_id_fkey"
+            columns: ["triggered_by_request_id"]
+            isOneToOne: false
+            referencedRelation: "user_company_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_company_requests: {
+        Row: {
+          api_key_used: string | null
+          cin: string | null
+          company_id: string
+          created_at: string | null
+          endpoint_called: string
+          id: string
+          identifier_type: string | null
+          ip_address: unknown | null
+          is_update_request: boolean | null
+          pan: string | null
+          request_type: string | null
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          api_key_used?: string | null
+          cin?: string | null
+          company_id: string
+          created_at?: string | null
+          endpoint_called: string
+          id?: string
+          identifier_type?: string | null
+          ip_address?: unknown | null
+          is_update_request?: boolean | null
+          pan?: string | null
+          request_type?: string | null
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          api_key_used?: string | null
+          cin?: string | null
+          company_id?: string
+          created_at?: string | null
+          endpoint_called?: string
+          id?: string
+          identifier_type?: string | null
+          ip_address?: unknown | null
+          is_update_request?: boolean | null
+          pan?: string | null
+          request_type?: string | null
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_company_requests_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_quota_usage: {
+        Row: {
+          base_updates_limit: number | null
+          base_updates_used: number | null
+          company_id: string
+          comprehensive_updates_limit: number | null
+          comprehensive_updates_used: number | null
+          created_at: string | null
+          id: string
+          updated_at: string | null
+          user_id: string
+          year: number
+        }
+        Insert: {
+          base_updates_limit?: number | null
+          base_updates_used?: number | null
+          company_id: string
+          comprehensive_updates_limit?: number | null
+          comprehensive_updates_used?: number | null
+          created_at?: string | null
+          id?: string
+          updated_at?: string | null
+          user_id: string
+          year: number
+        }
+        Update: {
+          base_updates_limit?: number | null
+          base_updates_used?: number | null
+          company_id?: string
+          comprehensive_updates_limit?: number | null
+          comprehensive_updates_used?: number | null
+          created_at?: string | null
+          id?: string
+          updated_at?: string | null
+          user_id?: string
+          year?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_quota_usage_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
+      active_companies: {
+        Row: {
+          authorized_capital: number | null
+          cin: string | null
+          company_class: string | null
+          company_name: string | null
+          company_size: string | null
+          company_state_code: string | null
+          company_status: string | null
+          paidup_capital: number | null
+          registration_date: string | null
+        }
+        Insert: {
+          authorized_capital?: number | null
+          cin?: string | null
+          company_class?: string | null
+          company_name?: string | null
+          company_size?: never
+          company_state_code?: string | null
+          company_status?: string | null
+          paidup_capital?: number | null
+          registration_date?: string | null
+        }
+        Update: {
+          authorized_capital?: number | null
+          cin?: string | null
+          company_class?: string | null
+          company_name?: string | null
+          company_size?: never
+          company_state_code?: string | null
+          company_status?: string | null
+          paidup_capital?: number | null
+          registration_date?: string | null
+        }
+        Relationships: []
+      }
       analysis_summary: {
         Row: {
           analysis_date: string | null
@@ -1275,6 +1669,20 @@ export type Database = {
         }
         Relationships: []
       }
+      mca_dashboard_stats: {
+        Row: {
+          active_companies: number | null
+          avg_paidup_capital: number | null
+          computed_at: string | null
+          foreign_companies: number | null
+          indian_companies: number | null
+          latest_registration: string | null
+          states_covered: number | null
+          strike_off_companies: number | null
+          total_companies: number | null
+        }
+        Relationships: []
+      }
       recent_activity: {
         Row: {
           activity_description: string | null
@@ -1325,8 +1733,52 @@ export type Database = {
         }
         Relationships: []
       }
+      sync_monitor: {
+        Row: {
+          completed_at: string | null
+          current_offset: number | null
+          duration: string | null
+          error_message: string | null
+          id: number | null
+          percentage: string | null
+          progress: string | null
+          started_at: string | null
+          sync_status: string | null
+        }
+        Insert: {
+          completed_at?: string | null
+          current_offset?: number | null
+          duration?: never
+          error_message?: string | null
+          id?: number | null
+          percentage?: never
+          progress?: never
+          started_at?: string | null
+          sync_status?: string | null
+        }
+        Update: {
+          completed_at?: string | null
+          current_offset?: number | null
+          duration?: never
+          error_message?: string | null
+          id?: number | null
+          percentage?: never
+          progress?: never
+          started_at?: string | null
+          sync_status?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
+      autocomplete_companies: {
+        Args: { limit_param?: number; search_prefix: string }
+        Returns: {
+          cin: string
+          company_name: string
+          company_status: string
+        }[]
+      }
       batch_sync_portfolio_analytics: {
         Args: {
           p_batch_size?: number
@@ -1339,6 +1791,10 @@ export type Database = {
           operation_id: string
           total_records: number
         }[]
+      }
+      cancel_mca_sync: {
+        Args: { sync_id?: number }
+        Returns: boolean
       }
       cancel_sync_operation: {
         Args: { p_operation_id: string }
@@ -1556,6 +2012,18 @@ export type Database = {
           total_records: number
         }[]
       }
+      get_company_suggestions: {
+        Args: { search_prefix: string; suggestion_limit?: number }
+        Returns: {
+          cin: string
+          company_count: number
+          suggestion: string
+        }[]
+      }
+      get_mca_stats: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
       get_party_analysis_summary: {
         Args: { request_uuid: string }
         Returns: Json
@@ -1597,6 +2065,50 @@ export type Database = {
           total_records: number
         }[]
       }
+      get_sync_status: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          completed_at: string
+          current_offset: number
+          error_message: string
+          estimated_completion: string
+          fetched_records: number
+          id: number
+          progress_percentage: number
+          started_at: string
+          sync_status: string
+          total_records: number
+        }[]
+      }
+      gtrgm_compress: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      gtrgm_decompress: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      gtrgm_in: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      gtrgm_options: {
+        Args: { "": unknown }
+        Returns: undefined
+      }
+      gtrgm_out: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      increment_user_quota: {
+        Args: {
+          p_company_id: string
+          p_field: string
+          p_user_id: string
+          p_year: number
+        }
+        Returns: undefined
+      }
       rebuild_analytics_table: {
         Args: Record<PropertyKey, never>
         Returns: {
@@ -1607,6 +2119,10 @@ export type Database = {
         }[]
       }
       refresh_dashboard_analytics: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      refresh_mca_dashboard_stats: {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
@@ -1625,6 +2141,119 @@ export type Database = {
           operation_id: string
           rolled_back_count: number
         }[]
+      }
+      schedule_next_mca_batch: {
+        Args: { sync_id: number }
+        Returns: boolean
+      }
+      search_companies_advanced: {
+        Args: {
+          class_filter?: string
+          limit_param?: number
+          offset_param?: number
+          search_query: string
+          state_filter?: string
+          status_filter?: string
+          use_fuzzy?: boolean
+        }
+        Returns: {
+          authorized_capital: number
+          cin: string
+          company_category: string
+          company_class: string
+          company_name: string
+          company_roc_code: string
+          company_state_code: string
+          company_status: string
+          company_sub_category: string
+          company_type: string
+          industrial_classification: string
+          listing_status: string
+          nic_code: string
+          paidup_capital: number
+          registered_office_address: string
+          registration_date: string
+          relevance_score: number
+        }[]
+      }
+      search_companies_fts: {
+        Args: {
+          class_filter?: string
+          result_limit?: number
+          result_offset?: number
+          search_term: string
+          state_filter?: string
+          status_filter?: string
+        }
+        Returns: {
+          cin: string
+          company_class: string
+          company_name: string
+          company_roc_code: string
+          company_state_code: string
+          company_status: string
+          rank_score: number
+        }[]
+      }
+      search_companies_hybrid: {
+        Args: {
+          class_filter?: string
+          result_limit?: number
+          result_offset?: number
+          search_term: string
+          state_filter?: string
+          status_filter?: string
+        }
+        Returns: {
+          cin: string
+          company_class: string
+          company_name: string
+          company_roc_code: string
+          company_state_code: string
+          company_status: string
+          match_type: string
+          score: number
+        }[]
+      }
+      search_companies_trigram: {
+        Args: {
+          class_filter?: string
+          min_similarity?: number
+          result_limit?: number
+          result_offset?: number
+          search_term: string
+          state_filter?: string
+          status_filter?: string
+        }
+        Returns: {
+          cin: string
+          company_class: string
+          company_name: string
+          company_roc_code: string
+          company_state_code: string
+          company_status: string
+          similarity_score: number
+        }[]
+      }
+      set_limit: {
+        Args: { "": number }
+        Returns: number
+      }
+      setup_mca_secrets: {
+        Args: { p_service_role_key: string; p_supabase_url: string }
+        Returns: boolean
+      }
+      show_limit: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
+      show_trgm: {
+        Args: { "": string }
+        Returns: string[]
+      }
+      start_mca_sync: {
+        Args: Record<PropertyKey, never>
+        Returns: number
       }
       sync_portfolio_analytics: {
         Args: { p_request_id?: string }
