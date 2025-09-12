@@ -1,10 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Card, CardContent, CardHeader } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
-import { Alert } from '@/components/ui/Alert'
 import { CreditManagement, CreditManagementFormData } from '@/types/credit-management.types'
 import {
     CreditCard,
@@ -221,7 +219,34 @@ export function CreditManagementSection({ requestId }: CreditManagementSectionPr
                             <h3 className="text-lg font-semibold text-gray-900">Credit Approval Details</h3>
                         </div>
 
-                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+                            <div className="space-y-2">
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Credit Type
+                                </label>
+                                {isEditing ? (
+                                    <select
+                                        value={formData.credit_type || ''}
+                                        onChange={(e) => setFormData({
+                                            ...formData,
+                                            credit_type: e.target.value
+                                        })}
+                                        className="w-full px-4 py-3 bg-white/80 backdrop-blur-sm border border-gray-200/60 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-300 transition-all duration-200"
+                                    >
+                                        <option value="">Select credit type</option>
+                                        <option value="SECURED">Secured</option>
+                                        <option value="UNSECURED">Unsecured</option>
+                                        <option value="SECURED_UNSECURED">Secured + Unsecured</option>
+                                    </select>
+                                ) : (
+                                    <div className="flex items-center gap-2 p-3 bg-indigo-50/50 rounded-xl">
+                                        <Badge className="bg-indigo-100 text-indigo-800 border-indigo-200">
+                                            {creditData?.credit_type || 'Not set'}
+                                        </Badge>
+                                    </div>
+                                )}
+                            </div>
+
                             <div className="space-y-2">
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
                                     Actual Credit Limit Approved
@@ -242,6 +267,30 @@ export function CreditManagementSection({ requestId }: CreditManagementSectionPr
                                         <TrendingUp className="w-4 h-4 text-green-600" />
                                         <span className="text-lg font-semibold text-green-800">
                                             {formatCurrency(creditData?.actual_credit_limit_approved)}
+                                        </span>
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Credit Limit Validity
+                                </label>
+                                {isEditing ? (
+                                    <input
+                                        type="date"
+                                        value={formData.actual_credit_limit_approved_validity || ''}
+                                        onChange={(e) => setFormData({
+                                            ...formData,
+                                            actual_credit_limit_approved_validity: e.target.value
+                                        })}
+                                        className="w-full px-4 py-3 bg-white/80 backdrop-blur-sm border border-gray-200/60 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-300 transition-all duration-200"
+                                    />
+                                ) : (
+                                    <div className="flex items-center gap-2 p-3 bg-green-50/50 rounded-xl">
+                                        <Calendar className="w-4 h-4 text-green-600" />
+                                        <span className="font-medium text-green-800">
+                                            {formatDate(creditData?.actual_credit_limit_approved_validity)}
                                         </span>
                                     </div>
                                 )}
@@ -273,6 +322,30 @@ export function CreditManagementSection({ requestId }: CreditManagementSectionPr
 
                             <div className="space-y-2">
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Ad Hoc Limit Validity
+                                </label>
+                                {isEditing ? (
+                                    <input
+                                        type="date"
+                                        value={formData.ad_hoc_limit_validity_date || ''}
+                                        onChange={(e) => setFormData({
+                                            ...formData,
+                                            ad_hoc_limit_validity_date: e.target.value
+                                        })}
+                                        className="w-full px-4 py-3 bg-white/80 backdrop-blur-sm border border-gray-200/60 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-300 transition-all duration-200"
+                                    />
+                                ) : (
+                                    <div className="flex items-center gap-2 p-3 bg-blue-50/50 rounded-xl">
+                                        <Calendar className="w-4 h-4 text-blue-600" />
+                                        <span className="font-medium text-blue-800">
+                                            {formatDate(creditData?.ad_hoc_limit_validity_date)}
+                                        </span>
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
                                     Payment Terms
                                 </label>
                                 {isEditing ? (
@@ -292,6 +365,36 @@ export function CreditManagementSection({ requestId }: CreditManagementSectionPr
                                         <span className="font-medium text-purple-800">
                                             {creditData?.payment_terms || 'Not set'}
                                         </span>
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Repayment Type
+                                </label>
+                                {isEditing ? (
+                                    <select
+                                        value={formData.repayment || ''}
+                                        onChange={(e) => setFormData({
+                                            ...formData,
+                                            repayment: e.target.value
+                                        })}
+                                        className="w-full px-4 py-3 bg-white/80 backdrop-blur-sm border border-gray-200/60 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-300 transition-all duration-200"
+                                    >
+                                        <option value="">Select repayment type</option>
+                                        <option value="MONTHLY">Monthly</option>
+                                        <option value="QUARTERLY">Quarterly</option>
+                                        <option value="HALF_YEARLY">Half Yearly</option>
+                                        <option value="YEARLY">Yearly</option>
+                                        <option value="BULLET">Bullet Payment</option>
+                                        <option value="ON_DEMAND">On Demand</option>
+                                    </select>
+                                ) : (
+                                    <div className="flex items-center gap-2 p-3 bg-orange-50/50 rounded-xl">
+                                        <Badge className="bg-orange-100 text-orange-800 border-orange-200">
+                                            {creditData?.repayment || 'Not set'}
+                                        </Badge>
                                     </div>
                                 )}
                             </div>
@@ -326,21 +429,29 @@ export function CreditManagementSection({ requestId }: CreditManagementSectionPr
                                 Security Requirements
                             </label>
                             {isEditing ? (
-                                <textarea
+                                <select
                                     value={formData.security_requirements || ''}
                                     onChange={(e) => setFormData({
                                         ...formData,
                                         security_requirements: e.target.value
                                     })}
-                                    rows={3}
-                                    className="w-full px-4 py-3 bg-white/80 backdrop-blur-sm border border-gray-200/60 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-300 transition-all duration-200 resize-none"
-                                    placeholder="Describe security requirements and collateral details..."
-                                />
+                                    className="w-full px-4 py-3 bg-white/80 backdrop-blur-sm border border-gray-200/60 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-300 transition-all duration-200"
+                                >
+                                    <option value="">Select security requirement</option>
+                                    <option value="UNSECURED">Unsecured</option>
+                                    <option value="PERSONAL_GUARANTEE">Personal Guarantee</option>
+                                    <option value="CORPORATE_GUARANTEE">Corporate Guarantee</option>
+                                    <option value="COLLATERAL_SECURITY">Collateral Security</option>
+                                    <option value="HYPOTHECATION">Hypothecation</option>
+                                    <option value="MORTGAGE">Mortgage</option>
+                                    <option value="PLEDGE">Pledge</option>
+                                    <option value="LIEN">Lien</option>
+                                </select>
                             ) : (
                                 <div className="p-4 bg-gray-50/60 rounded-xl border border-gray-200/40">
-                                    <p className="text-gray-800 leading-relaxed">
+                                    <Badge className="bg-slate-100 text-slate-800 border-slate-200">
                                         {creditData?.security_requirements || 'No security requirements specified'}
-                                    </p>
+                                    </Badge>
                                 </div>
                             )}
                         </div>
@@ -357,7 +468,7 @@ export function CreditManagementSection({ requestId }: CreditManagementSectionPr
                                 <h3 className="text-lg font-semibold text-gray-900">Insurance Coverage</h3>
                             </div>
 
-                            <div className="space-y-4">
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
                                 <div className="space-y-2">
                                     <label className="block text-sm font-medium text-gray-700">
                                         Insurance Cover Amount
@@ -384,24 +495,155 @@ export function CreditManagementSection({ requestId }: CreditManagementSectionPr
 
                                 <div className="space-y-2">
                                     <label className="block text-sm font-medium text-gray-700">
-                                        Insurance Remarks
+                                        Insurance Coverage Requested
                                     </label>
                                     {isEditing ? (
-                                        <textarea
-                                            value={formData.insurance_remarks || ''}
+                                        <input
+                                            type="number"
+                                            value={formData.insurance_coverage_requested_amount || ''}
                                             onChange={(e) => setFormData({
                                                 ...formData,
-                                                insurance_remarks: e.target.value
+                                                insurance_coverage_requested_amount: e.target.value ? Number(e.target.value) : undefined
                                             })}
-                                            rows={3}
-                                            className="w-full px-4 py-3 bg-white/80 backdrop-blur-sm border border-gray-200/60 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-300 transition-all duration-200 resize-none"
-                                            placeholder="Insurance coverage details and remarks..."
+                                            className="w-full px-4 py-3 bg-white/80 backdrop-blur-sm border border-gray-200/60 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-300 transition-all duration-200"
+                                            placeholder="Enter requested amount"
                                         />
                                     ) : (
-                                        <div className="p-4 bg-gray-50/60 rounded-xl border border-gray-200/40">
-                                            <p className="text-gray-800 text-sm leading-relaxed">
-                                                {creditData?.insurance_remarks || 'No insurance remarks'}
-                                            </p>
+                                        <div className="flex items-center gap-2 p-3 bg-teal-50/50 rounded-xl">
+                                            <span className="text-lg font-semibold text-teal-800">
+                                                {formatCurrency(creditData?.insurance_coverage_requested_amount)}
+                                            </span>
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div className="space-y-2">
+                                    <label className="block text-sm font-medium text-gray-700">
+                                        Insurance Validity
+                                    </label>
+                                    {isEditing ? (
+                                        <input
+                                            type="date"
+                                            value={formData.insurance_validity || ''}
+                                            onChange={(e) => setFormData({
+                                                ...formData,
+                                                insurance_validity: e.target.value
+                                            })}
+                                            className="w-full px-4 py-3 bg-white/80 backdrop-blur-sm border border-gray-200/60 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-300 transition-all duration-200"
+                                        />
+                                    ) : (
+                                        <div className="flex items-center gap-2 p-3 bg-emerald-50/50 rounded-xl">
+                                            <Calendar className="w-4 h-4 text-emerald-600" />
+                                            <span className="font-medium text-emerald-800">
+                                                {formatDate(creditData?.insurance_validity)}
+                                            </span>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="block text-sm font-medium text-gray-700">
+                                    Insurance Remarks
+                                </label>
+                                {isEditing ? (
+                                    <textarea
+                                        value={formData.insurance_remarks || ''}
+                                        onChange={(e) => setFormData({
+                                            ...formData,
+                                            insurance_remarks: e.target.value
+                                        })}
+                                        rows={3}
+                                        className="w-full px-4 py-3 bg-white/80 backdrop-blur-sm border border-gray-200/60 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-300 transition-all duration-200 resize-none"
+                                        placeholder="Insurance coverage details and remarks..."
+                                    />
+                                ) : (
+                                    <div className="p-4 bg-gray-50/60 rounded-xl border border-gray-200/40">
+                                        <p className="text-gray-800 text-sm leading-relaxed">
+                                            {creditData?.insurance_remarks || 'No insurance remarks'}
+                                        </p>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* LPI Management */}
+                        <div className="backdrop-blur-sm bg-white/60 border border-gray-200/40 rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300">
+                            <div className="flex items-center gap-3 mb-6">
+                                <div className="p-2 bg-gradient-to-br from-violet-500 to-purple-600 rounded-lg">
+                                    <FileText className="w-5 h-5 text-white" />
+                                </div>
+                                <h3 className="text-lg font-semibold text-gray-900">LPI Management</h3>
+                            </div>
+
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                <div className="space-y-2">
+                                    <label className="block text-sm font-medium text-gray-700">
+                                        LPI Required
+                                    </label>
+                                    {isEditing ? (
+                                        <div className="flex items-center gap-4">
+                                            <label className="flex items-center gap-2">
+                                                <input
+                                                    type="radio"
+                                                    name="lpi"
+                                                    checked={formData.lpi === true}
+                                                    onChange={() => setFormData({
+                                                        ...formData,
+                                                        lpi: true
+                                                    })}
+                                                    className="w-4 h-4 text-blue-600 focus:ring-blue-500"
+                                                />
+                                                <span className="text-sm text-gray-700">Yes</span>
+                                            </label>
+                                            <label className="flex items-center gap-2">
+                                                <input
+                                                    type="radio"
+                                                    name="lpi"
+                                                    checked={formData.lpi === false}
+                                                    onChange={() => setFormData({
+                                                        ...formData,
+                                                        lpi: false
+                                                    })}
+                                                    className="w-4 h-4 text-blue-600 focus:ring-blue-500"
+                                                />
+                                                <span className="text-sm text-gray-700">No</span>
+                                            </label>
+                                        </div>
+                                    ) : (
+                                        <div className="p-3 bg-violet-50/50 rounded-xl">
+                                            <Badge className={`${creditData?.lpi ? 'bg-green-100 text-green-800 border-green-200' : 'bg-gray-100 text-gray-800 border-gray-200'}`}>
+                                                {creditData?.lpi ? 'Required' : 'Not Required'}
+                                            </Badge>
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div className="space-y-2">
+                                    <label className="block text-sm font-medium text-gray-700">
+                                        LPI Received Status
+                                    </label>
+                                    {isEditing ? (
+                                        <select
+                                            value={formData.lpi_received || ''}
+                                            onChange={(e) => setFormData({
+                                                ...formData,
+                                                lpi_received: e.target.value
+                                            })}
+                                            className="w-full px-4 py-3 bg-white/80 backdrop-blur-sm border border-gray-200/60 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-300 transition-all duration-200"
+                                        >
+                                            <option value="NA">Not Applicable</option>
+                                            <option value="YES">Yes</option>
+                                            <option value="NO">No</option>
+                                        </select>
+                                    ) : (
+                                        <div className="p-3 bg-purple-50/50 rounded-xl">
+                                            <Badge className={`${creditData?.lpi_received === 'YES' ? 'bg-green-100 text-green-800 border-green-200' :
+                                                creditData?.lpi_received === 'NO' ? 'bg-red-100 text-red-800 border-red-200' :
+                                                    'bg-gray-100 text-gray-800 border-gray-200'
+                                                }`}>
+                                                {creditData?.lpi_received || 'NA'}
+                                            </Badge>
                                         </div>
                                     )}
                                 </div>
@@ -423,21 +665,32 @@ export function CreditManagementSection({ requestId }: CreditManagementSectionPr
                                         Collection Feedback
                                     </label>
                                     {isEditing ? (
-                                        <textarea
+                                        <select
                                             value={formData.collection_feedback || ''}
                                             onChange={(e) => setFormData({
                                                 ...formData,
                                                 collection_feedback: e.target.value
                                             })}
-                                            rows={3}
-                                            className="w-full px-4 py-3 bg-white/80 backdrop-blur-sm border border-gray-200/60 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-300 transition-all duration-200 resize-none"
-                                            placeholder="Collection activity feedback and observations..."
-                                        />
+                                            className="w-full px-4 py-3 bg-white/80 backdrop-blur-sm border border-gray-200/60 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-300 transition-all duration-200"
+                                        >
+                                            <option value="">Select feedback type</option>
+                                            <option value="EXCELLENT">Excellent</option>
+                                            <option value="GOOD">Good</option>
+                                            <option value="AVERAGE">Average</option>
+                                            <option value="POOR">Poor</option>
+                                            <option value="DEFAULTER">Defaulter</option>
+                                        </select>
                                     ) : (
-                                        <div className="p-4 bg-gray-50/60 rounded-xl border border-gray-200/40">
-                                            <p className="text-gray-800 text-sm leading-relaxed">
-                                                {creditData?.collection_feedback || 'No collection feedback recorded'}
-                                            </p>
+                                        <div className="p-3 bg-orange-50/50 rounded-xl">
+                                            <Badge className={`${creditData?.collection_feedback === 'EXCELLENT' ? 'bg-green-100 text-green-800 border-green-200' :
+                                                creditData?.collection_feedback === 'GOOD' ? 'bg-blue-100 text-blue-800 border-blue-200' :
+                                                    creditData?.collection_feedback === 'AVERAGE' ? 'bg-yellow-100 text-yellow-800 border-yellow-200' :
+                                                        creditData?.collection_feedback === 'POOR' ? 'bg-orange-100 text-orange-800 border-orange-200' :
+                                                            creditData?.collection_feedback === 'DEFAULTER' ? 'bg-red-100 text-red-800 border-red-200' :
+                                                                'bg-gray-100 text-gray-800 border-gray-200'
+                                                }`}>
+                                                {creditData?.collection_feedback || 'Not set'}
+                                            </Badge>
                                         </div>
                                     )}
                                 </div>
