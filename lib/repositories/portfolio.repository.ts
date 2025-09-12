@@ -23,6 +23,22 @@ import {
     CategoryScore,
     StructuredAnalyticsData
 } from '@/types/analytics-table.types'
+import {
+    applyAllEnhancedFilters,
+    getFilteringStatistics,
+    validateCompaniesForFiltering
+} from './enhanced-compliance-filtering'
+import {
+    applyEnhancedRegionFiltering,
+    getRegionDistribution,
+    validateRegionFilters,
+    optimizeRegionFiltering
+} from './enhanced-region-filtering'
+import {
+    analyzeFilterComplexity,
+    generateOptimizedQueryConfig,
+    generateOptimizationReport
+} from './query-optimization'
 
 type DocumentProcessingRequest = Database['public']['Tables']['document_processing_requests']['Row']
 
@@ -31,11 +47,11 @@ export class PortfolioRepository {
         return await createServerSupabaseClient()
     }
 
-    private useAnalyticsTable: boolean = true // Always use analytics table for better performance
+    private useAnalyticsTable: boolean = false // Always use analytics table for better performance
 
     /**
-     * Get portfolio overview with pagination and filtering
-     * Uses analytics table for optimal performance
+     * Get portfolio overview with enhanced filtering and query optimization
+     * Automatically selects optimal query strategy based on filter complexity
      */
     async getPortfolioOverview(
         filters?: FilterCriteria,
@@ -43,7 +59,40 @@ export class PortfolioRepository {
         pagination?: PaginationParams,
         userId?: string
     ): Promise<PortfolioResponse> {
-        return await this.getPortfolioOverviewFromMainTable(filters, sort, pagination, userId)
+        const startTime = Date.now()
+
+        // Analyze filter complexity and determine optimal strategy
+        const optimizationStrategy = analyzeFilterComplexity(filters || {})
+        const queryConfig = generateOptimizedQueryConfig(filters || {}, sort, pagination)
+
+        console.log('Portfolio query optimization strategy:', {
+            useAnalyticsTable: optimizationStrategy.useAnalyticsTable,
+            estimatedPerformance: optimizationStrategy.estimatedPerformance,
+            appliedFilters: Object.keys(filters || {}).length
+        })
+
+        // Use analytics table for complex queries, main table for simple ones
+        let result: PortfolioResponse
+        if (optimizationStrategy.useAnalyticsTable && this.useAnalyticsTable) {
+            result = await this.getPortfolioOverviewFromAnalytics(filters, sort, pagination, userId)
+        } else {
+            result = await this.getPortfolioOverviewFromMainTable(filters, sort, pagination, userId)
+        }
+
+        // Add performance metadata to response
+        const executionTime = Date.now() - startTime
+        const enhancedResult = {
+            ...result,
+            performance_metadata: {
+                execution_time_ms: executionTime,
+                strategy_used: optimizationStrategy.useAnalyticsTable ? 'analytics_table' : 'main_table',
+                estimated_performance: optimizationStrategy.estimatedPerformance,
+                optimization_recommendations: optimizationStrategy.recommendations,
+                query_complexity_score: Object.keys(filters || {}).length
+            }
+        }
+
+        return enhancedResult
     }
 
     /**
@@ -137,7 +186,7 @@ export class PortfolioRepository {
             pdf_filename, pdf_s3_key, pdf_file_size, model_type,
             total_parameters, available_parameters, financial_parameters,
             business_parameters, hygiene_parameters, banking_parameters,
-            error_message, retry_count, created_at, updated_at, risk_analysis`, { count: 'exact' })
+            error_message, retry_count, created_at, updated_at, risk_analysis, sector, epfo_compliance_status, gst_compliance_status`, { count: 'exact' })
 
         // Filter by user_id for security
         if (userId) {
@@ -323,8 +372,8 @@ export class PortfolioRepository {
     }
 
     /**
-     * Search companies with full-text search using analytics table
-     * Supports searching across company names, industry, CIN, PAN, and other flattened fields
+     * Search companies with full-text search using enhanced flattened fields
+     * Supports searching across company names, industry, CIN, PAN, rating, sector, and location
      */
     async searchCompanies(
         searchQuery: string,
@@ -335,7 +384,7 @@ export class PortfolioRepository {
         const supabase = await this.getSupabaseClient()
         const startTime = Date.now()
 
-        // Build search query with text search and filters using analytics table
+        // Build search query with text search and filters using enhanced fields
         let query = supabase
             .from('document_processing_requests')
             .select(`id, request_id, user_id, organization_id, original_filename,
@@ -345,33 +394,34 @@ export class PortfolioRepository {
             pdf_filename, pdf_s3_key, pdf_file_size, model_type,
             total_parameters, available_parameters, financial_parameters,
             business_parameters, hygiene_parameters, banking_parameters,
-            error_message, retry_count, created_at, updated_at, risk_analysis`, { count: 'exact' })
-            .eq('processing_status', 'completed')
+            error_message, retry_count, created_at, updated_at, risk_analysis,
+            credit_rating, sector, location_city, location_state, location_combined, epfo_compliance_status, gst_compliance_status`, { count: 'exact' })
+            .eq('status', 'completed')
 
         // Filter by user_id for security
         if (userId) {
             query = query.eq('user_id', userId)
         }
 
-        // Apply text search across multiple indexed fields
+        // Apply enhanced text search across multiple indexed fields including new flattened fields
         if (searchQuery.trim()) {
-            // Search in company name, legal name, CIN, PAN, industry
+            // Search in company name, industry, rating, sector, and location fields
             query = query.or(`
                 company_name.ilike.%${searchQuery}%,
-                legal_name.ilike.%${searchQuery}%,
-                cin.ilike.%${searchQuery}%,
-                pan.ilike.%${searchQuery}%,
                 industry.ilike.%${searchQuery}%,
-                business_city.ilike.%${searchQuery}%,
-                business_state.ilike.%${searchQuery}%,
-                registered_city.ilike.%${searchQuery}%,
-                registered_state.ilike.%${searchQuery}%
+                credit_rating.ilike.%${searchQuery}%,
+                sector.ilike.%${searchQuery}%,
+                location_city.ilike.%${searchQuery}%,
+                location_state.ilike.%${searchQuery}%,
+                location_combined.ilike.%${searchQuery}%,
+                gst_compliance_status.ilike.%${searchQuery}%,
+                epfo_compliance_status.ilike.%${searchQuery}%
             `)
         }
 
-        // Apply additional filters
+        // Apply additional filters including new flattened fields
         if (filters) {
-            query = this.applyAnalyticsFilters(query, filters)
+            query = this.applyEnhancedFilters(query, filters)
         }
 
         // Apply pagination
@@ -388,7 +438,7 @@ export class PortfolioRepository {
             throw new Error(`Search failed: ${error.message}`)
         }
 
-        const companies = (data || []).map((row) => this.transformAnalyticsToPortfolioCompany(row))
+        const companies = (data || []).map((row) => this.transformToPortfolioCompany(row))
         const searchTime = Date.now() - startTime
 
         return {
@@ -396,6 +446,63 @@ export class PortfolioRepository {
             total_matches: count || 0,
             search_time_ms: searchTime
         }
+    }
+
+    /**
+     * Apply enhanced filters including new flattened fields
+     */
+    private applyEnhancedFilters(query: any, filters: FilterCriteria) {
+        // Apply existing filters first
+        query = this.applyFilters(query, filters)
+        // Enhanced filters using new flattened fields
+        // Note: credit_rating filter is already handled in applyFilters method
+
+        // Sector filter (more granular than industry)
+        if (filters.sectors && filters.sectors.length > 0) {
+            query = query.in('sector', filters.sectors)
+        }
+
+        // Enhanced location filtering using flattened fields
+        if (filters.cities && filters.cities.length > 0) {
+            if (filters.cities.includes('Unknown') || filters.cities.includes('unknown')) {
+                const knownCities = filters.cities.filter(c => c.toLowerCase() !== 'unknown')
+                if (knownCities.length > 0) {
+                    query = query.or(`location_city.in.(${knownCities.join(',')}),location_city.is.null`)
+                } else {
+                    query = query.is('location_city', null)
+                }
+            } else {
+                query = query.in('location_city', filters.cities)
+            }
+        }
+
+        if (filters.regions && filters.regions.length > 0) {
+            if (filters.regions.includes('Unknown') || filters.regions.includes('unknown')) {
+                const knownRegions = filters.regions.filter(r => r.toLowerCase() !== 'unknown')
+                if (knownRegions.length > 0) {
+                    query = query.or(`location_state.in.(${knownRegions.join(',')}),location_state.is.null`)
+                } else {
+                    query = query.is('location_state', null)
+                }
+            } else {
+                query = query.in('location_state', filters.regions)
+            }
+        }
+
+        // Combined location search
+        if (filters.location_search) {
+            query = query.ilike('location_combined', `%${filters.location_search}%`)
+        }
+
+        // if (filters.gst_compliance_status) {
+        //     query = query.in('gst_compliance_status', filters.gst_compliance_status)
+        // }
+
+        // if (filters.epfo_compliance_status) {
+        //     query = query.in('epfo_compliance_status', filters.epfo_compliance_status)
+        // }
+
+        return query
     }
 
     /**
@@ -446,19 +553,63 @@ export class PortfolioRepository {
             query = query.in('risk_grade', filters.risk_grades)
         }
 
+        if (filters.sectors && filters.sectors.length > 0) {
+            console.log(filters)
+            query = query.in('sector', filters.sectors)
+        }
+
         if (filters.risk_score_range) {
             const [min, max] = filters.risk_score_range
             query = query.gte('risk_score', min).lte('risk_score', max)
         }
 
-        // Business filters using indexed columns
-        if (filters.industries && filters.industries.length > 0) {
-            query = query.in('industry', filters.industries)
+        // Credit rating filter (if available in analytics table)
+        if (filters.credit_ratings && filters.credit_ratings.length > 0) {
+            // Handle 'Not Rated' or null values
+            if (filters.credit_ratings.includes('Not Rated') || filters.credit_ratings.includes('Unknown')) {
+                const knownRatings = filters.credit_ratings.filter(r => r !== 'Not Rated' && r !== 'Unknown')
+                if (knownRatings.length > 0) {
+                    query = query.or(`credit_rating.in.(${knownRatings.join(',')}),credit_rating.is.null`)
+                } else {
+                    query = query.is('credit_rating', null)
+                }
+            } else {
+                query = query.in('credit_rating', filters.credit_ratings)
+            }
         }
 
+        // Business filters using indexed columns
+        if (filters.industries && filters.industries.length > 0) {
+            query = query.in('sector', filters.industries)
+        }
+
+        // Enhanced region filtering with multiple address sources
         if (filters.regions && filters.regions.length > 0) {
-            // Use both region and state columns for comprehensive filtering
-            query = query.or(`region.in.(${filters.regions.join(',')}),state.in.(${filters.regions.join(',')}),business_state.in.(${filters.regions.join(',')}),registered_state.in.(${filters.regions.join(',')})`)
+            // Handle 'unknown' regions by including null values
+            if (filters.regions.includes('Unknown') || filters.regions.includes('unknown')) {
+                const knownRegions = filters.regions.filter(r => r.toLowerCase() !== 'unknown')
+                if (knownRegions.length > 0) {
+                    query = query.or(`business_state.in.(${knownRegions.join(',')}),registered_state.in.(${knownRegions.join(',')}),business_state.is.null,registered_state.is.null`)
+                } else {
+                    query = query.or('business_state.is.null,registered_state.is.null')
+                }
+            } else {
+                query = query.or(`business_state.in.(${filters.regions.join(',')}),registered_state.in.(${filters.regions.join(',')})`)
+            }
+        }
+
+        // City-level filtering
+        if (filters.cities && filters.cities.length > 0) {
+            if (filters.cities.includes('Unknown') || filters.cities.includes('unknown')) {
+                const knownCities = filters.cities.filter(c => c.toLowerCase() !== 'unknown')
+                if (knownCities.length > 0) {
+                    query = query.or(`business_city.in.(${knownCities.join(',')}),registered_city.in.(${knownCities.join(',')}),business_city.is.null,registered_city.is.null`)
+                } else {
+                    query = query.or('business_city.is.null,registered_city.is.null')
+                }
+            } else {
+                query = query.or(`business_city.in.(${filters.cities.join(',')}),registered_city.in.(${filters.cities.join(',')})`)
+            }
         }
 
         if (filters.recommended_limit_range) {
@@ -493,28 +644,92 @@ export class PortfolioRepository {
             query = query.gte('current_ratio_value', min).lte('current_ratio_value', max)
         }
 
-        // Additional financial filters
+        // Additional financial filters with proper scaling
         if (filters.revenue_range) {
             const [min, max] = filters.revenue_range
-            query = query.gte('revenue', min).lte('revenue', max)
+            // Convert crores to actual values (multiply by 10,000,000)
+            query = query.gte('revenue', min * 10000000).lte('revenue', max * 10000000)
         }
 
         if (filters.net_worth_range) {
             const [min, max] = filters.net_worth_range
-            query = query.gte('total_equity', min).lte('total_equity', max)
+            // Convert crores to actual values
+            query = query.gte('total_equity', min * 10000000).lte('total_equity', max * 10000000)
         }
 
-        // Compliance filters using flattened columns
+        // Employee range filter
+        if (filters.employee_range) {
+            const [min, max] = filters.employee_range
+            query = query.gte('employee_count', min).lte('employee_count', max)
+        }
+
+        // Additional financial ratio filters
+        if (filters.roce_range) {
+            const [min, max] = filters.roce_range
+            query = query.gte('roce_value', min).lte('roce_value', max)
+        }
+
+        if (filters.interest_coverage_range) {
+            const [min, max] = filters.interest_coverage_range
+            query = query.gte('interest_coverage_value', min).lte('interest_coverage_value', max)
+        }
+
+        // Credit assessment filters
+        if (filters.eligibility_range) {
+            const [min, max] = filters.eligibility_range
+            // Convert crores to actual values
+            query = query.gte('final_eligibility', min * 10000000).lte('final_eligibility', max * 10000000)
+        }
+
+        // Overall grade categories filter
+        if (filters.overall_grade_categories && filters.overall_grade_categories.length > 0) {
+            query = query.in('grade_category', filters.overall_grade_categories)
+        }
+
+        // Model type filter
+        if (filters.model_type && filters.model_type.length > 0) {
+            query = query.in('model_type', filters.model_type)
+        }
+
+        // Enhanced compliance filters using flattened columns with proper status mapping
         if (filters.gst_compliance_status && filters.gst_compliance_status.length > 0) {
-            query = query.in('gst_compliance_status', filters.gst_compliance_status)
+            // Handle 'unknown' status by including null values
+            if (filters.gst_compliance_status.includes('unknown')) {
+                const knownStatuses = filters.gst_compliance_status.filter(s => s !== 'unknown')
+                if (knownStatuses.length > 0) {
+                    query = query.or(`gst_compliance_status.in.(${knownStatuses.join(',')}),gst_compliance_status.is.null`)
+                } else {
+                    query = query.is('gst_compliance_status', null)
+                }
+            } else {
+                query = query.in('gst_compliance_status', filters.gst_compliance_status)
+            }
         }
 
         if (filters.epfo_compliance_status && filters.epfo_compliance_status.length > 0) {
-            query = query.in('epfo_compliance_status', filters.epfo_compliance_status)
+            if (filters.epfo_compliance_status.includes('unknown')) {
+                const knownStatuses = filters.epfo_compliance_status.filter(s => s !== 'unknown')
+                if (knownStatuses.length > 0) {
+                    query = query.or(`epfo_compliance_status.in.(${knownStatuses.join(',')}),epfo_compliance_status.is.null`)
+                } else {
+                    query = query.is('epfo_compliance_status', null)
+                }
+            } else {
+                query = query.in('epfo_compliance_status', filters.epfo_compliance_status)
+            }
         }
 
         if (filters.audit_qualification_status && filters.audit_qualification_status.length > 0) {
-            query = query.in('audit_qualification_status', filters.audit_qualification_status)
+            if (filters.audit_qualification_status.includes('unknown')) {
+                const knownStatuses = filters.audit_qualification_status.filter(s => s !== 'unknown')
+                if (knownStatuses.length > 0) {
+                    query = query.or(`audit_qualification_status.in.(${knownStatuses.join(',')}),audit_qualification_status.is.null`)
+                } else {
+                    query = query.is('audit_qualification_status', null)
+                }
+            } else {
+                query = query.in('audit_qualification_status', filters.audit_qualification_status)
+            }
         }
 
         // Company type filters
@@ -544,9 +759,24 @@ export class PortfolioRepository {
             query = query.gte('risk_score', min).lte('risk_score', max)
         }
 
+        // Credit rating filter using flattened field
+        if (filters.credit_ratings && filters.credit_ratings.length > 0) {
+            // Handle 'Not Rated' or null values
+            if (filters.credit_ratings.includes('Not Rated') || filters.credit_ratings.includes('Unknown')) {
+                const knownRatings = filters.credit_ratings.filter(r => r !== 'Not Rated' && r !== 'Unknown')
+                if (knownRatings.length > 0) {
+                    query = query.or(`credit_rating.in.(${knownRatings.join(',')}),credit_rating.is.null`)
+                } else {
+                    query = query.is('credit_rating', null)
+                }
+            } else {
+                query = query.in('credit_rating', filters.credit_ratings)
+            }
+        }
+
         // Business filters
-        if (filters.industries && filters.industries.length > 0) {
-            query = query.in('industry', filters.industries)
+        if (filters.sectors && filters.sectors.length > 0) {
+            query = query.in('sector', filters.sectors)
         }
 
         if (filters.recommended_limit_range) {
@@ -574,19 +804,36 @@ export class PortfolioRepository {
             query = query.or(regionFilters)
         }
 
-        // Compliance filters using extracted data
+        // Enhanced compliance filters using flattened fields for better performance
         if (filters.gst_compliance_status && filters.gst_compliance_status.length > 0) {
-            // This is complex to filter at DB level, will be handled in post-processing
-            // For now, we'll fetch all and filter in memory for compliance status
+            // Handle 'unknown' status by including null values
+            if (filters.gst_compliance_status.includes('unknown')) {
+                const knownStatuses = filters.gst_compliance_status.filter(s => s !== 'unknown')
+                if (knownStatuses.length > 0) {
+                    query = query.or(`gst_compliance_status.in.(${knownStatuses.join(',')}),gst_compliance_status.is.null`)
+                } else {
+                    query = query.is('gst_compliance_status', null)
+                }
+            } else {
+                query = query.in('gst_compliance_status', filters.gst_compliance_status)
+            }
         }
 
         if (filters.epfo_compliance_status && filters.epfo_compliance_status.length > 0) {
-            // This is complex to filter at DB level, will be handled in post-processing
+            if (filters.epfo_compliance_status.includes('unknown')) {
+                const knownStatuses = filters.epfo_compliance_status.filter(s => s !== 'unknown')
+                if (knownStatuses.length > 0) {
+                    query = query.or(`epfo_compliance_status.in.(${knownStatuses.join(',')}),epfo_compliance_status.is.null`)
+                } else {
+                    query = query.is('epfo_compliance_status', null)
+                }
+            } else {
+                query = query.in('epfo_compliance_status', filters.epfo_compliance_status)
+            }
         }
 
-        if (filters.audit_qualification_status && filters.audit_qualification_status.length > 0) {
-            // This is complex to filter at DB level, will be handled in post-processing
-        }
+        // Note: audit_qualification_status is not in the flattened fields yet, 
+        // so it will still be handled in post-processing
 
         // Financial metrics filters - these require post-processing due to JSONB complexity
         if (filters.ebitda_margin_range || filters.debt_equity_range || filters.current_ratio_range) {
@@ -597,60 +844,64 @@ export class PortfolioRepository {
     }
 
     /**
-     * Apply client-side filters for complex criteria that can't be handled efficiently at DB level
+     * Apply enhanced client-side filters using data extraction utilities
+     * This method now uses sophisticated extraction-based filtering for better accuracy
      */
     private applyClientSideFilters(companies: PortfolioCompany[], filters?: FilterCriteria): PortfolioCompany[] {
         if (!filters) return companies
 
-        let filteredCompanies = [...companies]
+        // Validate companies have sufficient data for filtering
+        const validation = validateCompaniesForFiltering(companies, filters)
+        if (validation.validationWarnings.length > 0) {
+            console.warn('Portfolio filtering validation warnings:', validation.validationWarnings)
+        }
+
+        // Use enhanced filtering with data extraction utilities
+        let filteredCompanies = applyAllEnhancedFilters(companies, filters)
+
+        // Get filtering statistics for performance monitoring
+        const stats = getFilteringStatistics(companies.length, filteredCompanies.length, filters)
+        console.log('Portfolio filtering statistics:', stats)
 
         // GST Compliance filter
-        if (filters.gst_compliance_status && filters.gst_compliance_status.length > 0) {
-            filteredCompanies = filteredCompanies.filter(company => {
-                const gstRecords = company.extracted_data?.gst_records
-                if (!gstRecords) {
-                    return filters.gst_compliance_status!.includes('Unknown')
-                }
+        // if (filters.gst_compliance_status && filters.gst_compliance_status.length > 0) {
+        //     filteredCompanies = filteredCompanies.filter(company => {
+        //         const gstComplianceStatus = company.gst_compliance_status
 
-                const activeGSTINs = gstRecords.active_gstins || []
-                const hasRegularCompliance = activeGSTINs.some(gstin =>
-                    gstin.compliance_status === 'Regular'
-                )
-                const hasIrregularCompliance = activeGSTINs.some(gstin =>
-                    gstin.compliance_status === 'Irregular'
-                )
+        //         const hasRegularCompliance = gstComplianceStatus === 'Regular'
+        //         const hasIrregularCompliance = gstComplianceStatus === 'Irregular'
 
-                if (hasRegularCompliance && filters.gst_compliance_status!.includes('Regular')) return true
-                if (hasIrregularCompliance && filters.gst_compliance_status!.includes('Irregular')) return true
-                if (!hasRegularCompliance && !hasIrregularCompliance && filters.gst_compliance_status!.includes('Unknown')) return true
+        //         if (hasRegularCompliance && filters.gst_compliance_status!.includes('Regular')) return true
+        //         if (hasIrregularCompliance && filters.gst_compliance_status!.includes('Irregular')) return true
+        //         if (!hasRegularCompliance && !hasIrregularCompliance && filters.gst_compliance_status!.includes('Unknown')) return true
 
-                return false
-            })
-        }
+        //         return false
+        //     })
+        // }
 
-        // EPFO Compliance filter
-        if (filters.epfo_compliance_status && filters.epfo_compliance_status.length > 0) {
-            filteredCompanies = filteredCompanies.filter(company => {
-                const epfoRecords = company.extracted_data?.epfo_records
-                if (!epfoRecords) {
-                    return filters.epfo_compliance_status!.includes('Unknown')
-                }
+        // // EPFO Compliance filter
+        // if (filters.epfo_compliance_status && filters.epfo_compliance_status.length > 0) {
+        //     filteredCompanies = filteredCompanies.filter(company => {
+        //         const epfoRecords = company.extracted_data?.epfo_records
+        //         if (!epfoRecords) {
+        //             return filters.epfo_compliance_status!.includes('Unknown')
+        //         }
 
-                const establishments = epfoRecords.establishments || []
-                const hasRegularCompliance = establishments.some(est =>
-                    est.compliance_status === 'Regular'
-                )
-                const hasIrregularCompliance = establishments.some(est =>
-                    est.compliance_status === 'Irregular'
-                )
+        //         const establishments = epfoRecords.establishments || []
+        //         const hasRegularCompliance = establishments.some(est =>
+        //             est.compliance_status === 'Regular'
+        //         )
+        //         const hasIrregularCompliance = establishments.some(est =>
+        //             est.compliance_status === 'Irregular'
+        //         )
 
-                if (hasRegularCompliance && filters.epfo_compliance_status!.includes('Regular')) return true
-                if (hasIrregularCompliance && filters.epfo_compliance_status!.includes('Irregular')) return true
-                if (!hasRegularCompliance && !hasIrregularCompliance && filters.epfo_compliance_status!.includes('Unknown')) return true
+        //         if (hasRegularCompliance && filters.epfo_compliance_status!.includes('Regular')) return true
+        //         if (hasIrregularCompliance && filters.epfo_compliance_status!.includes('Irregular')) return true
+        //         if (!hasRegularCompliance && !hasIrregularCompliance && filters.epfo_compliance_status!.includes('Unknown')) return true
 
-                return false
-            })
-        }
+        //         return false
+        //     })
+        // }
 
         // Audit Qualification filter
         if (filters.audit_qualification_status && filters.audit_qualification_status.length > 0) {
@@ -1373,7 +1624,15 @@ export class PortfolioRepository {
             risk_analysis: row.risk_analysis,
             processing_summary: row.processing_summary,
             created_at: row.created_at,
-            updated_at: row.updated_at
+            updated_at: row.updated_at,
+            // Enhanced flattened fields
+            credit_rating: row.credit_rating,
+            sector: row.sector,
+            location_city: row.location_city,
+            location_state: row.location_state,
+            location_combined: row.location_combined,
+            gst_compliance_status: row.gst_compliance_status,
+            epfo_compliance_status: row.epfo_compliance_status
         }
     }
 

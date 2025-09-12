@@ -57,11 +57,11 @@ export function RiskConcentrationAnalysis({
 
         // Calculate regional concentration (mock data - would come from API)
         const regions = [
-            { name: 'Maharashtra', exposure: 45000000000, riskWeightedExposure: 35000000000, companyCount: 85, averageRiskScore: 72 },
-            { name: 'Gujarat', exposure: 32000000000, riskWeightedExposure: 28000000000, companyCount: 62, averageRiskScore: 68 },
-            { name: 'Karnataka', exposure: 28000000000, riskWeightedExposure: 22000000000, companyCount: 48, averageRiskScore: 75 },
-            { name: 'Tamil Nadu', exposure: 25000000000, riskWeightedExposure: 20000000000, companyCount: 42, averageRiskScore: 70 },
-            { name: 'Delhi NCR', exposure: 22000000000, riskWeightedExposure: 18000000000, companyCount: 38, averageRiskScore: 73 }
+            //     { name: 'Maharashtra', exposure: 45000000000, riskWeightedExposure: 35000000000, companyCount: 85, averageRiskScore: 72 },
+            //     { name: 'Gujarat', exposure: 32000000000, riskWeightedExposure: 28000000000, companyCount: 62, averageRiskScore: 68 },
+            //     { name: 'Karnataka', exposure: 28000000000, riskWeightedExposure: 22000000000, companyCount: 48, averageRiskScore: 75 },
+            //     { name: 'Tamil Nadu', exposure: 25000000000, riskWeightedExposure: 20000000000, companyCount: 42, averageRiskScore: 70 },
+            //     { name: 'Delhi NCR', exposure: 22000000000, riskWeightedExposure: 18000000000, companyCount: 38, averageRiskScore: 73 }
         ];
 
         // Calculate risk grade concentration

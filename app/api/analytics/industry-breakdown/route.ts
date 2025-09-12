@@ -12,7 +12,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { PortfolioAnalyticsService } from '@/lib/services/portfolio-analytics.service';
 import { PortfolioRepository } from '@/lib/repositories/portfolio.repository';
-import { FilterCriteria } from '@/types/portfolio.types';
+import { FilterCriteria, ProcessingStatus } from '@/types/portfolio.types';
 
 const portfolioRepository = new PortfolioRepository();
 
@@ -34,22 +34,90 @@ export async function GET(request: NextRequest) {
         const minCompanyCount = parseInt(searchParams.get('min_company_count') || '1');
         const sortBy = searchParams.get('sort_by') || 'company_count'; // 'company_count', 'avg_risk_score', 'total_exposure'
 
-        // Parse filters
+        // Parse comprehensive filters
         const filters: FilterCriteria = {};
 
+        // Risk-based filters
         const riskGrades = searchParams.get('risk_grades');
         if (riskGrades) {
             filters.risk_grades = riskGrades.split(',');
         }
 
+        const riskScoreRange = searchParams.get('risk_score_range');
+        if (riskScoreRange) {
+            const [min, max] = riskScoreRange.split(',').map(Number);
+            filters.risk_score_range = [min, max];
+        }
+
+        // Geographic filters
         const regions = searchParams.get('regions');
         if (regions) {
             filters.regions = regions.split(',');
         }
 
+        const cities = searchParams.get('cities');
+        if (cities) {
+            filters.cities = cities.split(',');
+        }
+
+        // Industry filters
         const specificIndustries = searchParams.get('industries');
         if (specificIndustries) {
             filters.industries = specificIndustries.split(',');
+        }
+
+        // Compliance filters
+        const gstCompliance = searchParams.get('gst_compliance_status');
+        if (gstCompliance) {
+            filters.gst_compliance_status = gstCompliance.split(',');
+        }
+
+        const epfoCompliance = searchParams.get('epfo_compliance_status');
+        if (epfoCompliance) {
+            filters.epfo_compliance_status = epfoCompliance.split(',');
+        }
+
+        const auditStatus = searchParams.get('audit_qualification_status');
+        if (auditStatus) {
+            filters.audit_qualification_status = auditStatus.split(',');
+        }
+
+        // Financial filters
+        const revenueRange = searchParams.get('revenue_range');
+        if (revenueRange) {
+            const [min, max] = revenueRange.split(',').map(Number);
+            filters.revenue_range = [min, max];
+        }
+
+        const ebitdaMarginRange = searchParams.get('ebitda_margin_range');
+        if (ebitdaMarginRange) {
+            const [min, max] = ebitdaMarginRange.split(',').map(Number);
+            filters.ebitda_margin_range = [min, max];
+        }
+
+        const debtEquityRange = searchParams.get('debt_equity_range');
+        if (debtEquityRange) {
+            const [min, max] = debtEquityRange.split(',').map(Number);
+            filters.debt_equity_range = [min, max];
+        }
+
+        // Credit assessment filters
+        const recommendedLimitRange = searchParams.get('recommended_limit_range');
+        if (recommendedLimitRange) {
+            const [min, max] = recommendedLimitRange.split(',').map(Number);
+            filters.recommended_limit_range = [min, max];
+        }
+
+        // Processing filters
+        const processingStatus = searchParams.get('processing_status');
+        if (processingStatus) {
+            filters.processing_status = processingStatus.split(',') as ProcessingStatus[];
+        }
+
+        const dateFrom = searchParams.get('date_from');
+        const dateTo = searchParams.get('date_to');
+        if (dateFrom && dateTo) {
+            filters.date_range = [new Date(dateFrom), new Date(dateTo)];
         }
 
         // Get portfolio data
@@ -117,7 +185,7 @@ export async function GET(request: NextRequest) {
         // Add industry benchmarks if requested
         let industryBenchmarks = {};
         if (includeBenchmarks) {
-            industryBenchmarks = await calculateIndustryBenchmarks(filteredIndustries);
+            industryBenchmarks = await calculateIndustryBenchmarks(filteredIndustries, filters);
         }
 
         return NextResponse.json({
@@ -138,6 +206,30 @@ export async function GET(request: NextRequest) {
                     include_risk_overlay: includeRiskOverlay,
                     include_benchmarks: includeBenchmarks,
                     filters_applied: Object.keys(filters).length > 0,
+                    applied_filters: {
+                        risk_grades: filters.risk_grades?.length || 0,
+                        risk_score_range: filters.risk_score_range ? 1 : 0,
+                        regions: filters.regions?.length || 0,
+                        cities: filters.cities?.length || 0,
+                        industries: filters.industries?.length || 0,
+                        gst_compliance: filters.gst_compliance_status?.length || 0,
+                        epfo_compliance: filters.epfo_compliance_status?.length || 0,
+                        audit_status: filters.audit_qualification_status?.length || 0,
+                        financial_filters: [
+                            filters.revenue_range,
+                            filters.ebitda_margin_range,
+                            filters.debt_equity_range,
+                            filters.recommended_limit_range
+                        ].filter(Boolean).length,
+                        date_range: filters.date_range ? 1 : 0,
+                        processing_status: filters.processing_status?.length || 0
+                    },
+                    filter_impact: {
+                        companies_filtered_out: portfolioData.total_count - portfolioData.companies.length,
+                        filter_efficiency: portfolioData.total_count > 0
+                            ? ((portfolioData.companies.length / portfolioData.total_count) * 100).toFixed(2) + '%'
+                            : '100%'
+                    },
                     generated_at: new Date().toISOString()
                 }
             }
@@ -205,7 +297,7 @@ export async function POST(request: NextRequest) {
         }
 
         if (include_benchmarks) {
-            result.industry_benchmarks = await calculateIndustryBenchmarks(industryBreakdown.industries);
+            result.industry_benchmarks = await calculateIndustryBenchmarks(industryBreakdown.industries, filters);
         }
 
         if (include_peer_comparison) {
@@ -424,7 +516,7 @@ function calculateRiskVolatility(riskScores: number[]): number {
     return Math.sqrt(variance);
 }
 
-async function calculateIndustryBenchmarks(industries: any[]) {
+async function calculateIndustryBenchmarks(industries: any[], appliedFilters?: FilterCriteria) {
     const benchmarks: Record<string, any> = {};
 
     // For each industry, calculate benchmarks
@@ -439,10 +531,27 @@ async function calculateIndustryBenchmarks(industries: any[]) {
             // Benchmark categories
             performance_category: getIndustryPerformanceCategory(industry.average_risk_score),
             exposure_category: getExposureCategory(industry.total_exposure),
+            risk_profile: getRiskProfile(industry.average_risk_score),
 
-            // Relative metrics (would need industry standards data)
-            market_position: 'Average', // Placeholder
-            risk_profile: getRiskProfile(industry.average_risk_score)
+            // Filter-aware benchmarking
+            filter_context: {
+                is_filtered_dataset: appliedFilters && Object.keys(appliedFilters).length > 0,
+                applied_filters: appliedFilters ? Object.keys(appliedFilters).filter(key =>
+                    appliedFilters[key as keyof FilterCriteria] !== undefined
+                ) : [],
+                benchmark_reliability: industry.count >= 10 ? 'High' : industry.count >= 5 ? 'Medium' : 'Low'
+            },
+
+            // Relative performance within filtered context
+            market_position: calculateMarketPosition(industry, industries),
+            concentration_metrics: {
+                market_share_in_filtered_set: industries.length > 0
+                    ? ((industry.count / industries.reduce((sum, ind) => sum + ind.count, 0)) * 100).toFixed(2) + '%'
+                    : '0%',
+                exposure_share_in_filtered_set: industries.length > 0
+                    ? ((industry.total_exposure / industries.reduce((sum, ind) => sum + ind.total_exposure, 0)) * 100).toFixed(2) + '%'
+                    : '0%'
+            }
         };
     });
 
@@ -470,6 +579,23 @@ function getRiskProfile(avgRiskScore: number): string {
     if (avgRiskScore >= 60) return 'Medium Risk';
     if (avgRiskScore >= 45) return 'High Risk';
     return 'Very High Risk';
+}
+
+function calculateMarketPosition(industry: any, allIndustries: any[]): string {
+    const totalCompanies = allIndustries.reduce((sum, ind) => sum + ind.count, 0);
+    const totalExposure = allIndustries.reduce((sum, ind) => sum + ind.total_exposure, 0);
+
+    const companyShare = totalCompanies > 0 ? (industry.count / totalCompanies) * 100 : 0;
+    const exposureShare = totalExposure > 0 ? (industry.total_exposure / totalExposure) * 100 : 0;
+
+    // Calculate position based on both company count and exposure
+    const avgShare = (companyShare + exposureShare) / 2;
+
+    if (avgShare >= 20) return 'Dominant';
+    if (avgShare >= 10) return 'Major Player';
+    if (avgShare >= 5) return 'Significant';
+    if (avgShare >= 2) return 'Moderate';
+    return 'Minor';
 }
 
 function calculateIndustryPeerComparison(companies: any[]) {

@@ -12,7 +12,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { PortfolioAnalyticsService } from '@/lib/services/portfolio-analytics.service';
 import { PortfolioRepository } from '@/lib/repositories/portfolio.repository';
-import { FilterCriteria } from '@/types/portfolio.types';
+import { FilterCriteria, ProcessingStatus } from '@/types/portfolio.types';
 const portfolioRepository = new PortfolioRepository();
 
 export async function GET(request: NextRequest) {
@@ -32,17 +32,79 @@ export async function GET(request: NextRequest) {
         const includeExposure = searchParams.get('include_exposure') === 'true';
         const includeScoreAnalysis = searchParams.get('include_score_analysis') === 'true';
 
-        // Parse filters
+        // Parse comprehensive filters
         const filters: FilterCriteria = {};
 
+        // Risk-based filters (excluding risk_grades to avoid circular filtering)
+        const riskScoreRange = searchParams.get('risk_score_range');
+        if (riskScoreRange) {
+            const [min, max] = riskScoreRange.split(',').map(Number);
+            filters.risk_score_range = [min, max];
+        }
+
+        // Geographic filters
+        const regions = searchParams.get('regions');
+        if (regions) {
+            filters.regions = regions.split(',');
+        }
+
+        const cities = searchParams.get('cities');
+        if (cities) {
+            filters.cities = cities.split(',');
+        }
+
+        // Industry filters
         const industries = searchParams.get('industries');
         if (industries) {
             filters.industries = industries.split(',');
         }
 
-        const regions = searchParams.get('regions');
-        if (regions) {
-            filters.regions = regions.split(',');
+        // Compliance filters
+        const gstCompliance = searchParams.get('gst_compliance_status');
+        if (gstCompliance) {
+            filters.gst_compliance_status = gstCompliance.split(',');
+        }
+
+        const epfoCompliance = searchParams.get('epfo_compliance_status');
+        if (epfoCompliance) {
+            filters.epfo_compliance_status = epfoCompliance.split(',');
+        }
+
+        const auditStatus = searchParams.get('audit_qualification_status');
+        if (auditStatus) {
+            filters.audit_qualification_status = auditStatus.split(',');
+        }
+
+        // Financial filters
+        const revenueRange = searchParams.get('revenue_range');
+        if (revenueRange) {
+            const [min, max] = revenueRange.split(',').map(Number);
+            filters.revenue_range = [min, max];
+        }
+
+        const ebitdaMarginRange = searchParams.get('ebitda_margin_range');
+        if (ebitdaMarginRange) {
+            const [min, max] = ebitdaMarginRange.split(',').map(Number);
+            filters.ebitda_margin_range = [min, max];
+        }
+
+        const debtEquityRange = searchParams.get('debt_equity_range');
+        if (debtEquityRange) {
+            const [min, max] = debtEquityRange.split(',').map(Number);
+            filters.debt_equity_range = [min, max];
+        }
+
+        // Credit assessment filters
+        const recommendedLimitRange = searchParams.get('recommended_limit_range');
+        if (recommendedLimitRange) {
+            const [min, max] = recommendedLimitRange.split(',').map(Number);
+            filters.recommended_limit_range = [min, max];
+        }
+
+        // Processing filters
+        const processingStatus = searchParams.get('processing_status');
+        if (processingStatus) {
+            filters.processing_status = processingStatus.split(',') as ProcessingStatus[];
         }
 
         const dateFrom = searchParams.get('date_from');
@@ -111,6 +173,10 @@ export async function GET(request: NextRequest) {
             scoreAnalysis = calculateScoreAnalysisByGrade(portfolioData.companies);
         }
 
+        // Calculate regional and compliance breakdown
+        const regionalBreakdown = calculateRegionalRiskBreakdown(portfolioData.companies);
+        const complianceBreakdown = calculateComplianceRiskBreakdown(portfolioData.companies);
+
         return NextResponse.json({
             success: true,
             data: {
@@ -119,10 +185,35 @@ export async function GET(request: NextRequest) {
                 exposure_by_grade: exposureByGrade,
                 risk_concentration: riskConcentration,
                 score_analysis: scoreAnalysis,
+                regional_breakdown: regionalBreakdown,
+                compliance_breakdown: complianceBreakdown,
                 metadata: {
                     total_companies_analyzed: portfolioData.companies.length,
                     total_companies_in_portfolio: portfolioData.total_count,
                     filters_applied: Object.keys(filters).length > 0,
+                    applied_filters: {
+                        risk_score_range: filters.risk_score_range ? 1 : 0,
+                        regions: filters.regions?.length || 0,
+                        cities: filters.cities?.length || 0,
+                        industries: filters.industries?.length || 0,
+                        gst_compliance: filters.gst_compliance_status?.length || 0,
+                        epfo_compliance: filters.epfo_compliance_status?.length || 0,
+                        audit_status: filters.audit_qualification_status?.length || 0,
+                        financial_filters: [
+                            filters.revenue_range,
+                            filters.ebitda_margin_range,
+                            filters.debt_equity_range,
+                            filters.recommended_limit_range
+                        ].filter(Boolean).length,
+                        date_range: filters.date_range ? 1 : 0,
+                        processing_status: filters.processing_status?.length || 0
+                    },
+                    filter_impact: {
+                        companies_filtered_out: portfolioData.total_count - portfolioData.companies.length,
+                        filter_efficiency: portfolioData.total_count > 0
+                            ? ((portfolioData.companies.length / portfolioData.total_count) * 100).toFixed(2) + '%'
+                            : '100%'
+                    },
                     include_exposure: includeExposure,
                     include_score_analysis: includeScoreAnalysis,
                     generated_at: new Date().toISOString()
@@ -451,4 +542,143 @@ function calculateGroupedRiskDistribution(companies: any[], groupBy: string) {
     });
 
     return groupedAnalysis;
+}
+
+function calculateRegionalRiskBreakdown(companies: any[]) {
+    const regionalRisk = new Map<string, {
+        companies: any[];
+        riskGrades: Record<string, number>;
+        totalExposure: number;
+        avgRiskScore: number;
+    }>();
+
+    companies.forEach(company => {
+        // Extract region from multiple sources
+        const region = company.extracted_data?.about_company?.registered_address?.state ||
+            company.extracted_data?.about_company?.business_address?.state ||
+            'Unknown';
+
+        if (!regionalRisk.has(region)) {
+            regionalRisk.set(region, {
+                companies: [],
+                riskGrades: {},
+                totalExposure: 0,
+                avgRiskScore: 0
+            });
+        }
+
+        const regionData = regionalRisk.get(region)!;
+        regionData.companies.push(company);
+
+        // Count risk grades
+        const grade = company.risk_grade?.toUpperCase() || 'UNGRADED';
+        regionData.riskGrades[grade] = (regionData.riskGrades[grade] || 0) + 1;
+
+        // Add exposure
+        regionData.totalExposure += company.recommended_limit || 0;
+    });
+
+    // Calculate averages and percentages
+    const breakdown: Record<string, any> = {};
+    regionalRisk.forEach((data, region) => {
+        const avgRiskScore = data.companies.reduce((sum, c) => sum + (c.risk_score || 0), 0) / data.companies.length;
+        const totalCompanies = data.companies.length;
+
+        breakdown[region] = {
+            company_count: totalCompanies,
+            avg_risk_score: avgRiskScore,
+            total_exposure: data.totalExposure,
+            risk_grade_distribution: data.riskGrades,
+            risk_grade_percentages: Object.entries(data.riskGrades).reduce((acc, [grade, count]) => {
+                acc[grade] = ((count / totalCompanies) * 100).toFixed(2) + '%';
+                return acc;
+            }, {} as Record<string, string>),
+            concentration_metrics: {
+                high_risk_percentage: ((
+                    (data.riskGrades['CM4'] || 0) + (data.riskGrades['CM5'] || 0)
+                ) / totalCompanies * 100).toFixed(2) + '%',
+                low_risk_percentage: ((
+                    (data.riskGrades['CM1'] || 0) + (data.riskGrades['CM2'] || 0)
+                ) / totalCompanies * 100).toFixed(2) + '%'
+            }
+        };
+    });
+
+    return breakdown;
+}
+
+function calculateComplianceRiskBreakdown(companies: any[]) {
+    const complianceRisk = {
+        gst_compliance: new Map<string, any[]>(),
+        epfo_compliance: new Map<string, any[]>(),
+        audit_status: new Map<string, any[]>()
+    };
+
+    companies.forEach(company => {
+        const allScores = company.risk_analysis?.allScores || [];
+
+        // GST Compliance
+        const gstData = allScores.find(score => score.parameter === "Statutory Payments (GST)");
+        let gstStatus = 'unknown';
+        if (gstData?.available && gstData.details?.compliance_rate !== undefined) {
+            const rate = gstData.details.compliance_rate;
+            gstStatus = rate >= 85 ? 'compliant' : rate < 70 ? 'non_compliant' : 'partial';
+        }
+
+        if (!complianceRisk.gst_compliance.has(gstStatus)) {
+            complianceRisk.gst_compliance.set(gstStatus, []);
+        }
+        complianceRisk.gst_compliance.get(gstStatus)!.push(company);
+
+        // EPFO Compliance
+        const pfData = allScores.find(score => score.parameter === "Statutory Payments (PF)");
+        let epfoStatus = 'unknown';
+        if (pfData?.available && pfData.details?.effective_compliance_rate !== undefined) {
+            const rate = pfData.details.effective_compliance_rate;
+            epfoStatus = rate >= 85 ? 'compliant' : rate < 70 ? 'non_compliant' : 'partial';
+        }
+
+        if (!complianceRisk.epfo_compliance.has(epfoStatus)) {
+            complianceRisk.epfo_compliance.set(epfoStatus, []);
+        }
+        complianceRisk.epfo_compliance.get(epfoStatus)!.push(company);
+
+        // Audit Status (simplified - would need more detailed extraction)
+        const auditStatus = 'unknown'; // Placeholder - would extract from audit data
+        if (!complianceRisk.audit_status.has(auditStatus)) {
+            complianceRisk.audit_status.set(auditStatus, []);
+        }
+        complianceRisk.audit_status.get(auditStatus)!.push(company);
+    });
+
+    // Calculate risk distribution for each compliance category
+    const breakdown: Record<string, any> = {};
+
+    ['gst_compliance', 'epfo_compliance', 'audit_status'].forEach(complianceType => {
+        breakdown[complianceType] = {};
+        const complianceMap = complianceRisk[complianceType as keyof typeof complianceRisk];
+
+        complianceMap.forEach((companies, status) => {
+            const riskDistribution = PortfolioAnalyticsService.calculateRiskDistribution(companies);
+            const avgRiskScore = companies.reduce((sum, c) => sum + (c.risk_score || 0), 0) / companies.length;
+            const totalExposure = companies.reduce((sum, c) => sum + (c.recommended_limit || 0), 0);
+
+            breakdown[complianceType][status] = {
+                company_count: companies.length,
+                avg_risk_score: avgRiskScore,
+                total_exposure: totalExposure,
+                risk_distribution: riskDistribution,
+                risk_concentration: {
+                    high_risk_count: companies.filter(c =>
+                        ['CM4', 'CM5'].includes(c.risk_grade?.toUpperCase())
+                    ).length,
+                    low_risk_count: companies.filter(c =>
+                        ['CM1', 'CM2'].includes(c.risk_grade?.toUpperCase())
+                    ).length
+                }
+            };
+        });
+    });
+
+    return breakdown;
 }

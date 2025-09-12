@@ -27,3 +27,14 @@ export { CompanyListingDemo } from './CompanyListingDemo';
 export { PaginationControls } from './PaginationControls';
 export { PortfolioLoading, InlineLoading } from './LoadingStates';
 export { NoCompaniesFound, ErrorState } from './EmptyStates';
+
+// Interactive Dashboard Components
+export { ActiveFiltersDisplay } from './ActiveFiltersDisplay';
+export { FilterImpactIndicator } from './FilterImpactIndicator';
+export { FilterSuggestions } from './FilterSuggestions';
+export { FilterPerformanceMonitor } from './FilterPerformanceMonitor';
+// export { SmartFilterPanel } from './SmartFilterPanel';
+// export { SmartComplianceFilterPanel } from './SmartComplianceFilterPanel';
+// export { AdvancedRegionIndustryFilterPanel } from './AdvancedRegionIndustryFilterPanel';
+// export { FinancialMetricsFilterPanel } from './FinancialMetricsFilterPanel';
+// export { EnhancedFilterPanelManager } from './EnhancedFilterPanelManager';

@@ -1,8 +1,13 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Card } from '@/components/ui/Card';
-import { Badge } from '@/components/ui/Badge';
+import { MetricsCardClickData } from '@/types/chart-interactions.types';
+import {
+    getChartElementStyles,
+    getHoverHintClasses,
+    LoadingOverlay
+} from "@/lib/utils/chart-visual-feedback";
 
 interface MetricData {
     label: string;
@@ -14,23 +19,54 @@ interface MetricData {
     };
     format?: 'number' | 'currency' | 'percentage';
     icon?: string;
-    color?: 'blue' | 'green' | 'yellow' | 'red' | 'gray';
+    color?: any;
     subtitle?: string;
+    metricType?: 'total_companies' | 'average_risk_score' | 'total_exposure' | 'compliance_rate';
+    filterType?: 'all' | 'above_average' | 'below_average';
+    clickable?: boolean;
 }
 
 interface MetricsCardProps {
     metrics: MetricData[];
     title?: string;
     className?: string;
+    onMetricClick?: (data: MetricsCardClickData) => void;
+    activeMetricFilters?: string[];
+    isInteractive?: boolean;
+    isLoading?: boolean;
 }
 
-export function MetricsCard({ metrics, title, className = '' }: MetricsCardProps) {
+export function MetricsCard({
+    metrics,
+    title,
+    className = '',
+    onMetricClick,
+    activeMetricFilters = [],
+    isInteractive = false,
+    isLoading = false
+}: MetricsCardProps) {
+    const [hoveredMetric, setHoveredMetric] = useState<number | null>(null);
+
+    const handleMetricClick = (metric: MetricData, index: number) => {
+        if (!isInteractive || !onMetricClick || !metric.clickable) return;
+
+        const clickData: MetricsCardClickData = {
+            label: metric.label,
+            value: typeof metric.value === 'number' ? metric.value : parseFloat(metric.value.toString()) || 0,
+            metricType: metric.metricType || 'total_companies',
+            filterType: metric.filterType || 'all',
+            category: 'metric'
+        };
+
+        onMetricClick(clickData);
+    };
+
     const formatValue = (value: string | number, format?: string) => {
         if (typeof value === 'string') return value;
 
         switch (format) {
             case 'currency':
-                return `₹${(value / 10000000).toFixed(1)}Cr`;
+                return `₹${(value).toFixed(1)}Cr`;
             case 'percentage':
                 return `${value.toFixed(1)}%`;
             case 'number':
@@ -78,51 +114,93 @@ export function MetricsCard({ metrics, title, className = '' }: MetricsCardProps
     };
 
     return (
-        <Card className={`p-6 ${className}`}>
+        <Card className={`p-6 relative ${className}`}>
+            {/* <LoadingOverlay isVisible={isLoading} message="Updating metrics..." /> */}
+
             {title && (
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">{title}</h3>
             )}
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {metrics.map((metric, index) => (
-                    <div key={index} className="space-y-2">
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center space-x-2">
-                                {metric.icon && (
-                                    <div className={`h-8 w-8 rounded-lg flex items-center justify-center ${getColorClasses(metric.color)}`}>
-                                        <span className="text-sm">{metric.icon}</span>
+            <div className="grid grid-cols-1 md:grid-cols-5 lg:grid-cols-5 gap-6">
+                {metrics.map((metric, index) => {
+                    const isSelected = isInteractive && activeMetricFilters.includes(`${metric.metricType}_${metric.filterType}`);
+                    const isHovered = hoveredMetric === index;
+                    const isClickable = isInteractive && metric.clickable;
+
+                    const visualStyles = getChartElementStyles({
+                        isInteractive,
+                        isSelected,
+                        isHovered,
+                        isClickable,
+                        isLoading
+                    });
+
+                    return (
+                        <div
+                            key={index}
+                            className={`group space-y-2 rounded-lg p-3 -m-3 ${visualStyles.containerClasses} ${visualStyles.cursorStyle} ${isClickable ? 'focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2' : ''}`}
+                            onClick={() => handleMetricClick(metric, index)}
+                            onKeyDown={(e) => {
+                                if (isClickable && (e.key === 'Enter' || e.key === ' ')) {
+                                    e.preventDefault();
+                                    handleMetricClick(metric, index);
+                                }
+                            }}
+                            onMouseEnter={() => isClickable && setHoveredMetric(index)}
+                            onMouseLeave={() => setHoveredMetric(null)}
+                            style={visualStyles.barStyles}
+                            tabIndex={isClickable ? 0 : -1}
+                            role={isClickable ? "button" : undefined}
+                            aria-label={isClickable ? `${metric.label}: ${formatValue(metric.value, metric.format)}. Click to filter portfolio.` : undefined}
+                        >
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center space-x-2">
+                                    {/* {metric.icon && (
+                                        <div className={`h-8 w-8 rounded-lg flex items-center justify-center transition-all duration-200 ${getColorClasses(metric.color)
+                                            } ${isSelected ? 'ring-2 ring-white ring-opacity-80 scale-110' : isHovered ? 'scale-105' : ''
+                                            }`}>
+                                            <span className="text-sm">{metric.icon}</span>
+                                        </div>
+                                    )} */}
+                                    <div>
+                                        <p className={`text-sm font-medium ${visualStyles.textClasses}`}>
+                                            {metric.label}
+                                        </p>
+                                        {metric.subtitle && (
+                                            <p className="text-xs text-gray-500">{metric.subtitle}</p>
+                                        )}
+                                        {isClickable && (
+                                            <p className={getHoverHintClasses(isInteractive, isClickable)}>
+                                                Click to filter
+                                            </p>
+                                        )}
                                     </div>
-                                )}
+                                </div>
+                            </div>
+
+                            <div className="flex items-end justify-between">
                                 <div>
-                                    <p className="text-sm font-medium text-gray-600">{metric.label}</p>
-                                    {metric.subtitle && (
-                                        <p className="text-xs text-gray-500">{metric.subtitle}</p>
+                                    <p className={`text-2xl font-bold transition-all duration-200 ${visualStyles.textClasses} ${isHovered ? 'scale-105' : ''
+                                        }`}>
+                                        {formatValue(metric.value, metric.format)}
+                                    </p>
+
+                                    {metric.change && (
+                                        <div className="flex items-center space-x-1 mt-1">
+                                            <span className={`text-sm ${getTrendColor(metric.change.trend)}`}>
+                                                {getTrendIcon(metric.change.trend)}
+                                                {Math.abs(metric.change.value).toFixed(1)}%
+                                            </span>
+                                            <span className="text-xs text-gray-500">
+                                                vs {metric.change.period}
+                                            </span>
+                                        </div>
                                     )}
                                 </div>
                             </div>
                         </div>
-
-                        <div className="flex items-end justify-between">
-                            <div>
-                                <p className="text-2xl font-bold text-gray-900">
-                                    {formatValue(metric.value, metric.format)}
-                                </p>
-
-                                {metric.change && (
-                                    <div className="flex items-center space-x-1 mt-1">
-                                        <span className={`text-sm ${getTrendColor(metric.change.trend)}`}>
-                                            {getTrendIcon(metric.change.trend)}
-                                            {Math.abs(metric.change.value).toFixed(1)}%
-                                        </span>
-                                        <span className="text-xs text-gray-500">
-                                            vs {metric.change.period}
-                                        </span>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-                ))}
+                    )
+                })}
             </div>
         </Card>
     );
