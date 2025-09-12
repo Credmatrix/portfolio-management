@@ -86,7 +86,13 @@ export function Sidebar({ className }: SidebarProps) {
 								<Building2 className="w-6 h-6" />
 							</div>
 							<div>
-								<h2 className="font-bold text-white">Credmatrix</h2>
+								<h2 className="font-bold text-white">
+									{typeof window !== 'undefined' && window.location.hostname === 'app.credmatrix.ai'
+										? 'CREDMATRIX'
+										: typeof window !== 'undefined' && window.location.hostname === 'terra91.credmatrix.ai'
+											? 'TERRA91'
+											: 'CREDMATRIX'}
+								</h2>
 								<p className="text-xs text-neutral-40">Credit Portfolio</p>
 							</div>
 						</div>
