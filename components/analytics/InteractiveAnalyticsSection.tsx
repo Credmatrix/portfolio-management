@@ -271,8 +271,8 @@ export function InteractiveAnalyticsSection({
             },
             {
                 label: 'Accounts Receivable',
-                value: analytics.total_exposure,
-                subtitle: 'As on 12th Sept 2025',
+                value: analytics.total_exposure * 0.13,
+                subtitle: `as on ${new Date().toDateString()}`,
                 format: 'currency' as const,
                 icon: '💰',
                 color: 'green' as const,
@@ -298,27 +298,27 @@ export function InteractiveAnalyticsSection({
                 color: 'yellow' as const,
                 metricType: 'average_risk_score' as const,
                 filterType: 'all' as const,
-                clickable: true
+                clickable: false
             },
             {
                 label: 'Adhoc limits',
-                value: highRiskCount,
+                value: Math.round(highRiskCount * 0.6),
                 // subtitle: 'CM5-CM7 + D rating',
                 icon: '⚠️',
                 color: 'red' as const,
                 metricType: 'total_companies' as const,
                 filterType: 'above_average' as const,
-                clickable: true
+                clickable: false
             },
             {
                 label: 'Watchlist',
-                value: highRiskCount,
+                value: Math.round(highRiskCount * 0.1),
                 // subtitle: 'CM5-CM7 + D rating',
                 icon: '⚠️',
                 color: 'red' as const,
                 metricType: 'total_companies' as const,
                 filterType: 'above_average' as const,
-                clickable: true
+                clickable: false
             },
             {
                 label: 'Compliance Rate',
@@ -328,7 +328,7 @@ export function InteractiveAnalyticsSection({
                 color: complianceRate > 80 ? 'green' : complianceRate > 60 ? 'yellow' : 'red',
                 metricType: 'compliance_rate' as const,
                 filterType: 'all' as const,
-                clickable: true
+                clickable: false
             }
         ];
     }, [analytics]);
