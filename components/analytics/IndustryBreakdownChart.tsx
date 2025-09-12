@@ -6,21 +6,59 @@ import { FluentColors } from "@/lib/constants/colors";
 import { IndustryBreakdownData } from "@/types/analytics.types";
 import { ChevronDown, ChevronUp, Grid, List, BarChart3 } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from "recharts";
+import { IndustryBreakdownClickData } from "@/types/chart-interactions.types";
+import {
+    getChartElementStyles,
+    getColorIndicatorStyles,
+    getProgressBarStyles,
+    getHoverHintClasses,
+    getSelectionHighlightStyles,
+    LoadingOverlay
+} from "@/lib/utils/chart-visual-feedback";
 
 interface IndustryBreakdownChartProps {
     data: IndustryBreakdownData;
     showRiskOverlay?: boolean;
+    onIndustryClick?: (data: IndustryBreakdownClickData) => void;
+    activeIndustries?: string[];
+    isInteractive?: boolean;
+    isLoading?: boolean;
 }
 
 export function IndustryBreakdownChart({
     data,
-    showRiskOverlay = true
+    showRiskOverlay = true,
+    onIndustryClick,
+    activeIndustries = [],
+    isInteractive = false,
+    isLoading = false
 }: IndustryBreakdownChartProps) {
     const [selectedIndustry, setSelectedIndustry] = useState<string | null>(null);
     const [viewMode, setViewMode] = useState<'count' | 'exposure' | 'risk'>('count');
     const [displayMode, setDisplayMode] = useState<'compact' | 'chart' | 'grid'>('compact');
     const [showAll, setShowAll] = useState(false);
     const [sortBy, setSortBy] = useState<'value' | 'name' | 'risk'>('value');
+    const [hoveredIndustry, setHoveredIndustry] = useState<string | null>(null);
+
+    const handleIndustryClick = (industry: any) => {
+        if (!isInteractive || !onIndustryClick) {
+            // Keep existing selection behavior for non-interactive mode
+            setSelectedIndustry(selectedIndustry === industry.name ? null : industry.name);
+            return;
+        }
+
+        const clickData: IndustryBreakdownClickData = {
+            label: industry.name,
+            value: industry.count,
+            industry: industry.name,
+            count: industry.count,
+            totalExposure: industry.totalExposure,
+            averageRiskScore: industry.averageRiskScore,
+            category: 'industry'
+        };
+
+        onIndustryClick(clickData);
+    };
 
     if (!data?.industries?.length) {
         return (
@@ -149,7 +187,9 @@ export function IndustryBreakdownChart({
     };
 
     return (
-        <Card>
+        <Card className="relative">
+            {/* <LoadingOverlay isVisible={isLoading} message="Updating industry data..." /> */}
+
             <div className="flex items-center justify-between mb-4">
                 <h3 className='text-lg font-semibold text-neutral-90'>
                     Industry Breakdown
@@ -211,35 +251,50 @@ export function IndustryBreakdownChart({
                         const value = getValueForMode(industry);
                         const maxValue = getMaxValue();
                         const percentage = maxValue > 0 ? (value / maxValue) * 100 : 0;
-                        const isSelected = selectedIndustry === industry.name;
+                        const isSelected = isInteractive ? activeIndustries.includes(industry.name) : selectedIndustry === industry.name;
+                        const isHovered = hoveredIndustry === industry.name;
+                        const isClickable = isInteractive || industry.count > 0;
+
+                        const visualStyles = getChartElementStyles({
+                            isInteractive,
+                            isSelected,
+                            isHovered,
+                            isClickable,
+                            isLoading
+                        });
 
                         return (
                             <div
                                 key={industry.name}
-                                className={`cursor-pointer transition-all ${isSelected ? 'bg-neutral-20 ring-2 ring-blue-500' : 'hover:bg-neutral-10'} p-3 rounded border border-neutral-30`}
-                                onClick={() => setSelectedIndustry(isSelected ? null : industry.name)}
+                                className={`group p-3 rounded border border-neutral-30 ${visualStyles.containerClasses} ${visualStyles.cursorStyle}`}
+                                onClick={() => handleIndustryClick(industry)}
+                                onMouseEnter={() => setHoveredIndustry(industry.name)}
+                                onMouseLeave={() => setHoveredIndustry(null)}
+                                style={visualStyles.barStyles}
                             >
                                 <div className="flex items-center gap-2 mb-2">
                                     <div
-                                        className="w-3 h-3 rounded"
-                                        style={{ backgroundColor: industry.color }}
+                                        className={`w-3 h-3 rounded ${visualStyles.indicatorClasses}`}
+                                        style={getColorIndicatorStyles(industry.color, isSelected, isHovered)}
                                     />
-                                    <span className="text-xs font-medium text-neutral-90 truncate">
+                                    <span className={`text-xs font-medium truncate ${visualStyles.textClasses}`}>
                                         {industry.name}
                                     </span>
+                                    {isInteractive && isClickable && (
+                                        <span className={getHoverHintClasses(isInteractive, isClickable)}>
+                                            Click to filter
+                                        </span>
+                                    )}
                                 </div>
 
-                                <div className="text-sm font-semibold text-neutral-90 mb-1">
+                                <div className={`text-sm font-semibold mb-1 ${visualStyles.textClasses}`}>
                                     {formatValueCompact(value)}
                                 </div>
 
                                 <div className="bg-neutral-20 rounded-full h-2 mb-2">
                                     <div
-                                        className="h-full rounded-full transition-all duration-300"
-                                        style={{
-                                            width: `${percentage}%`,
-                                            backgroundColor: industry.color
-                                        }}
+                                        className="h-full rounded-full"
+                                        style={getProgressBarStyles(percentage, industry.color, isSelected, isHovered)}
                                     />
                                 </div>
 
@@ -256,23 +311,41 @@ export function IndustryBreakdownChart({
                         const value = getValueForMode(industry);
                         const maxValue = getMaxValue();
                         const percentage = maxValue > 0 ? (value / maxValue) * 100 : 0;
-                        const isSelected = selectedIndustry === industry.name;
+                        const isSelected = isInteractive ? activeIndustries.includes(industry.name) : selectedIndustry === industry.name;
+                        const isHovered = hoveredIndustry === industry.name;
+                        const isClickable = isInteractive || industry.count > 0;
+
+                        const visualStyles = getChartElementStyles({
+                            isInteractive,
+                            isSelected,
+                            isHovered,
+                            isClickable,
+                            isLoading
+                        });
 
                         return (
                             <div
                                 key={industry.name}
-                                className={`cursor-pointer transition-all ${isSelected ? 'bg-neutral-20' : 'hover:bg-neutral-10'} p-2 rounded`}
-                                onClick={() => setSelectedIndustry(isSelected ? null : industry.name)}
+                                className={`group p-2 rounded ${visualStyles.containerClasses} ${visualStyles.cursorStyle}`}
+                                onClick={() => handleIndustryClick(industry)}
+                                onMouseEnter={() => setHoveredIndustry(industry.name)}
+                                onMouseLeave={() => setHoveredIndustry(null)}
+                                style={visualStyles.barStyles}
                             >
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-2 flex-1 min-w-0">
                                         <div
-                                            className="w-3 h-3 rounded flex-shrink-0"
-                                            style={{ backgroundColor: industry.color }}
+                                            className={`w-3 h-3 rounded flex-shrink-0 ${visualStyles.indicatorClasses}`}
+                                            style={getColorIndicatorStyles(industry.color, isSelected, isHovered)}
                                         />
-                                        <span className="text-sm font-medium text-neutral-90 truncate">
+                                        <span className={`text-sm font-medium truncate ${visualStyles.textClasses}`}>
                                             {industry.name}
                                         </span>
+                                        {isInteractive && isClickable && (
+                                            <span className={getHoverHintClasses(isInteractive, isClickable)}>
+                                                Click to filter
+                                            </span>
+                                        )}
                                     </div>
                                     <div className="flex items-center gap-3 flex-shrink-0">
                                         <span className="text-sm text-neutral-70">
@@ -280,11 +353,8 @@ export function IndustryBreakdownChart({
                                         </span>
                                         <div className="w-16 bg-neutral-20 rounded-full h-2">
                                             <div
-                                                className="h-full rounded-full transition-all duration-300"
-                                                style={{
-                                                    width: `${percentage}%`,
-                                                    backgroundColor: industry.color
-                                                }}
+                                                className="h-full rounded-full"
+                                                style={getProgressBarStyles(percentage, industry.color, isSelected, isHovered)}
                                             />
                                         </div>
                                     </div>
@@ -375,21 +445,44 @@ export function IndustryBreakdownChart({
                                 <Bar
                                     dataKey="value"
                                     radius={[4, 4, 0, 0]}
-                                    cursor="pointer"
+                                    cursor={isInteractive ? "pointer" : "default"}
                                     onClick={(data) => {
-                                        setSelectedIndustry(
-                                            selectedIndustry === data.fullName ? null : data.fullName
-                                        );
+                                        if (!isInteractive) return;
+
+                                        const industry = data.industries?.find((ind: any) => ind.name === data.fullName) ||
+                                            data.industries?.find((ind: any) => ind.name === data.name);
+                                        if (industry) {
+                                            handleIndustryClick(industry);
+                                        } else {
+                                            // Fallback for chart data structure
+                                            const chartIndustry = {
+                                                name: data.fullName || data.name,
+                                                count: data.count,
+                                                totalExposure: data.exposure,
+                                                averageRiskScore: data.risk,
+                                                color: data.color
+                                            };
+                                            handleIndustryClick(chartIndustry);
+                                        }
                                     }}
                                 >
-                                    {getChartData().map((entry, index) => (
-                                        <Cell
-                                            key={`cell-${index}`}
-                                            fill={entry.color}
-                                            stroke={selectedIndustry === entry.fullName ? '#3b82f6' : 'transparent'}
-                                            strokeWidth={selectedIndustry === entry.fullName ? 2 : 0}
-                                        />
-                                    ))}
+                                    {getChartData().map((entry, index) => {
+                                        const isSelected = isInteractive
+                                            ? activeIndustries.includes(entry.fullName)
+                                            : selectedIndustry === entry.fullName;
+                                        const selectionStyles = getSelectionHighlightStyles(isSelected, entry.color);
+
+                                        return (
+                                            <Cell
+                                                key={`cell-${index}`}
+                                                fill={selectionStyles.fill}
+                                                stroke={selectionStyles.stroke}
+                                                strokeWidth={selectionStyles.strokeWidth}
+                                                fillOpacity={selectionStyles.fillOpacity}
+                                                filter={selectionStyles.filter}
+                                            />
+                                        );
+                                    })}
                                 </Bar>
                             </BarChart>
                         </ResponsiveContainer>

@@ -23,5 +23,10 @@ export { BenchmarkingView } from './BenchmarkingView';
 export { RiskConcentrationAnalysis } from './RiskConcentrationAnalysis';
 export { ParameterCorrelationAnalysis } from './ParameterCorrelationAnalysis';
 
+// Interactive Components
+export { InteractiveAnalyticsSection } from './InteractiveAnalyticsSection';
+export { InteractiveChartsSection } from './InteractiveChartsSection';
+export { InteractiveMetricsCard, createPortfolioMetrics } from './InteractiveMetricsCard';
+
 // Re-export IndustryBreakdown for backward compatibility
 export { IndustryBreakdownChart as IndustryBreakdown } from './IndustryBreakdownChart';

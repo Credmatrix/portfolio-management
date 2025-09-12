@@ -24,12 +24,12 @@ const navigation = [
 		icon: LayoutDashboard,
 		description: "View all companies and metrics"
 	},
-	{
-		name: "Analytics",
-		href: "/portfolio/analytics",
-		icon: BarChart3,
-		description: "Risk analysis and insights"
-	},
+	// {
+	// 	name: "Analytics",
+	// 	href: "/portfolio/analytics",
+	// 	icon: BarChart3,
+	// 	description: "Risk analysis and insights"
+	// },
 	{
 		name: "Create Request",
 		href: "/upload",
@@ -62,7 +62,7 @@ interface SidebarProps {
 
 export function Sidebar({ className }: SidebarProps) {
 	const pathname = usePathname();
-	const [isCollapsed, setIsCollapsed] = useState(false);
+	const [isCollapsed, setIsCollapsed] = useState(true);
 
 	const isActiveRoute = (href: string) => {
 		if (href === "/portfolio") {

@@ -12,11 +12,20 @@ import { AdvancedFilterPanel } from "./AdvancedFilterPanel";
 import { RiskSortingControls } from "./RiskSortingControls";
 import { PaginationControls } from "./PaginationControls";
 import { PortfolioLoading, InlineLoading, DataRefreshLoading } from "./LoadingStates";
-import { NoCompaniesFound, ErrorState, LargeDatasetWarning } from "./EmptyStates";
+import { NoCompaniesFound, ErrorState } from "./EmptyStates";
+import { FilterStateManager } from "./FilterStateManager";
+import { FilterImpactIndicator } from "./FilterImpactIndicator";
+import { FilterSuggestions } from "./FilterSuggestions";
+import { FilterPerformanceMonitor } from "./FilterPerformanceMonitor";
+import { ActiveFiltersDisplay } from "./ActiveFiltersDisplay";
+// import { EnhancedFilterPanelManager } from "./EnhancedFilterPanelManager";
+// import { SmartFilterPanel } from "./SmartFilterPanel";
 import { FilterCriteria, SortCriteria, PaginationParams } from "@/types/portfolio.types";
+import { DashboardFilterState, FilterSource } from "@/types/chart-interactions.types";
+import { useFilterSystem } from "@/lib/hooks/useFilterSystem";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
-import { Grid, List, Filter, X, ArrowUpDown, TrendingUp, TrendingDown } from "lucide-react";
+import { Grid, List, Filter, X, ArrowUpDown, TrendingUp, TrendingDown, Eye, EyeOff, Settings } from "lucide-react";
 
 interface PortfolioGridProps {
 	initialFilters?: FilterCriteria;
@@ -25,6 +34,42 @@ interface PortfolioGridProps {
 	compactMode?: boolean;
 	onUploadNew?: () => void;
 	enableAdvancedPagination?: boolean;
+	onFiltersChange?: (filters: FilterCriteria) => void;
+	// Enhanced props for bidirectional filter synchronization
+	externalFilters?: FilterCriteria;
+	onManualFiltersChange?: (filters: FilterCriteria) => void;
+	onExternalFiltersChange?: (filters: FilterCriteria) => void;
+	disableInternalFiltering?: boolean;
+	filterSyncMode?: 'merge' | 'replace' | 'independent';
+	filterSource?: 'manual' | 'analytics' | 'search';
+	onFilterSourceChange?: (source: 'manual' | 'analytics' | 'search', filters: FilterCriteria) => void;
+	// Filter state management props
+	enableFilterStateManagement?: boolean;
+	showFilterSummary?: boolean;
+	showConflictResolution?: boolean;
+	// Advanced filter UI props
+	showFilterImpact?: boolean;
+	showFilterSuggestions?: boolean;
+	enableFilterPresets?: boolean;
+	maxVisibleFilters?: number;
+	// Phase 7: Enhanced filter panel props
+	enableEnhancedFiltering?: boolean;
+	filterPanelData?: {
+		portfolioStats?: {
+			totalCompanies: number;
+			industryBreakdown: Record<string, number>;
+			regionBreakdown: Record<string, number>;
+			complianceBreakdown: Record<string, number>;
+			riskGradeBreakdown: Record<string, number>;
+		};
+		complianceStats?: any;
+		regionData?: any[];
+		industryData?: any[];
+		financialMetrics?: any[];
+		benchmarkData?: any;
+	};
+	onExportFilters?: () => void;
+	onImportFilters?: (filters: any) => void;
 }
 
 export function PortfolioGrid({
@@ -33,21 +78,154 @@ export function PortfolioGrid({
 	showFilters = true,
 	compactMode = false,
 	onUploadNew,
-	enableAdvancedPagination = true
+	enableAdvancedPagination = true,
+	onFiltersChange,
+	// Enhanced props for bidirectional filter synchronization
+	externalFilters = {},
+	onManualFiltersChange,
+	onExternalFiltersChange,
+	disableInternalFiltering = false,
+	filterSyncMode = 'merge',
+	filterSource = 'manual',
+	onFilterSourceChange,
+	// Filter state management props
+	enableFilterStateManagement = false,
+	showFilterSummary = true,
+	showConflictResolution = true,
+	// Advanced filter UI props
+	showFilterImpact = true,
+	showFilterSuggestions = true,
+	enableFilterPresets = false,
+	maxVisibleFilters = 10,
+	// Phase 7: Enhanced filter panel props
+	enableEnhancedFiltering = false,
+	filterPanelData,
+	onExportFilters,
+	onImportFilters
 }: PortfolioGridProps) {
 	const router = useRouter();
-	const [filters, setFilters] = useState<FilterCriteria>(initialFilters);
+	const [internalFilters, setInternalFilters] = useState<FilterCriteria>(initialFilters);
 	const [sortCriteria, setSortCriteria] = useState<SortCriteria>(initialSort);
-	const [searchQuery, setSearchQuery] = useState<string>(filters.search_query || '');
+	const [searchQuery, setSearchQuery] = useState<string>(initialFilters.search_query || '');
 	const [pagination, setPagination] = useState<PaginationParams>({ page: 1, limit: 20 });
 	const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 	const [showRiskFilters, setShowRiskFilters] = useState(false);
 	const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+	const [showEnhancedFilters, setShowEnhancedFilters] = useState(false);
 	const [isRefreshing, setIsRefreshing] = useState(false);
+	const abortControllerRef = useRef<AbortController | null>(null);
+
+	// Filter state management integration
+	const filterSystem = null;
+
+	// Filter source tracking state
+	const [currentFilterSource, setCurrentFilterSource] = useState<'manual' | 'analytics' | 'search'>(filterSource);
+	const [filterHistory, setFilterHistory] = useState<Array<{
+		source: 'manual' | 'analytics' | 'search';
+		filters: FilterCriteria;
+		timestamp: number;
+	}>>([]);
+
+	// Bidirectional filter synchronization with merge logic
+	const combinedFilters = useMemo(() => {
+		switch (filterSyncMode) {
+			case 'replace':
+				// External filters completely replace internal filters
+				return Object.keys(externalFilters).length > 0 ? externalFilters : internalFilters;
+
+			case 'independent':
+				// Use only internal filters, ignore external
+				return internalFilters;
+
+			case 'merge':
+			default:
+				// Merge filters with external taking precedence for conflicts
+				const merged = { ...internalFilters };
+
+				// Merge external filters, handling arrays and ranges properly
+				Object.entries(externalFilters).forEach(([key, value]) => {
+					if (value !== undefined && value !== null) {
+						const filterKey = key as keyof FilterCriteria;
+
+						if (Array.isArray(value) && Array.isArray(merged[filterKey])) {
+							// Merge arrays and remove duplicates
+							const existingArray = merged[filterKey] as any[];
+							const newArray = [...new Set([...existingArray, ...value])];
+							(merged as any)[filterKey] = newArray;
+						} else {
+							// Replace with external value
+							(merged as any)[filterKey] = value;
+						}
+					}
+				});
+
+				return merged;
+		}
+	}, [internalFilters, externalFilters, filterSyncMode]);
+
+	// Advanced filter UI state
+	const [showAdvancedUI, setShowAdvancedUI] = useState(false);
+	const [dashboardFilterState, setDashboardFilterState] = useState<DashboardFilterState>({
+		analyticsFilters: {},
+		manualFilters: internalFilters,
+		searchFilters: {},
+		combinedFilters: combinedFilters,
+		activeChartSelections: {},
+		filterHistory: []
+	});
+	const [lastRequestTime, setLastRequestTime] = useState<number>(0);
+
+
+
+	// Initialize internal filters only once on mount
+	useEffect(() => {
+		setInternalFilters(initialFilters);
+		setSearchQuery(initialFilters.search_query || '');
+	}, []); // Empty dependency array - only run on mount
+
+	// Update search query when external filters change
+	const externalSearchQuery = externalFilters.search_query;
+	useEffect(() => {
+		if (externalSearchQuery !== undefined) {
+			setSearchQuery(externalSearchQuery || '');
+		}
+	}, [externalSearchQuery]);
+
+	// Pagination reset is handled in individual filter change handlers instead of useEffect
+
+	// Cleanup abort controller on unmount
+	useEffect(() => {
+		return () => {
+			if (abortControllerRef.current) {
+				abortControllerRef.current.abort();
+			}
+		};
+	}, []);
+
+	// Create stable query key to prevent unnecessary re-fetches
+	const queryKey = useMemo(() => [
+		"portfolio",
+		JSON.stringify(combinedFilters),
+		JSON.stringify(sortCriteria),
+		searchQuery,
+		JSON.stringify(pagination)
+	], [combinedFilters, sortCriteria, searchQuery, pagination]);
 
 	const { data, isLoading, error, refetch, isFetching } = useQuery({
-		queryKey: ["portfolio", filters, sortCriteria, searchQuery, pagination],
+		queryKey,
 		queryFn: async () => {
+			// Track request start time
+			const requestStartTime = performance.now();
+			setLastRequestTime(requestStartTime);
+
+			// Cancel previous request if still pending
+			if (abortControllerRef.current) {
+				abortControllerRef.current.abort();
+			}
+
+			// Create new abort controller for this request
+			abortControllerRef.current = new AbortController();
+
 			// Build query parameters from filters, sort, and pagination
 			const params = new URLSearchParams();
 
@@ -65,73 +243,93 @@ export function PortfolioGrid({
 			}
 
 			// Risk-based filters
-			if (filters.risk_grades && filters.risk_grades.length > 0) {
-				params.append('risk_grades', filters.risk_grades.join(','));
+			if (combinedFilters.risk_grades && combinedFilters.risk_grades.length > 0) {
+				params.append('risk_grades', combinedFilters.risk_grades.join(','));
 			}
-			if (filters.risk_score_range) {
-				params.append('risk_score_min', filters.risk_score_range[0].toString());
-				params.append('risk_score_max', filters.risk_score_range[1].toString());
+			if (combinedFilters.risk_score_range) {
+				params.append('risk_score_min', combinedFilters.risk_score_range[0].toString());
+				params.append('risk_score_max', combinedFilters.risk_score_range[1].toString());
 			}
-			if (filters.overall_grade_categories && filters.overall_grade_categories.length > 0) {
-				params.append('grade_categories', filters.overall_grade_categories.join(','));
+			if (combinedFilters.overall_grade_categories && combinedFilters.overall_grade_categories.length > 0) {
+				params.append('grade_categories', combinedFilters.overall_grade_categories.join(','));
 			}
 
 			// Business filters
-			if (filters.industries && filters.industries.length > 0) {
-				params.append('industries', filters.industries.join(','));
+			if (combinedFilters.industries && combinedFilters.industries.length > 0) {
+				params.append('industries', combinedFilters.industries.join(','));
 			}
-			if (filters.regions && filters.regions.length > 0) {
-				params.append('regions', filters.regions.join(','));
+			if (combinedFilters.sectors && combinedFilters.sectors.length > 0) {
+				params.append('sectors', combinedFilters.sectors.join(','));
 			}
-			if (filters.processing_status && filters.processing_status.length > 0) {
-				params.append('processing_status', filters.processing_status.join(','));
+			if (combinedFilters.regions && combinedFilters.regions.length > 0) {
+				params.append('regions', combinedFilters.regions.join(','));
+			}
+			if (combinedFilters.cities && combinedFilters.cities.length > 0) {
+				params.append('cities', combinedFilters.cities.join(','));
+			}
+			if (combinedFilters.credit_ratings && combinedFilters.credit_ratings.length > 0) {
+				params.append('credit_ratings', combinedFilters.credit_ratings.join(','));
+			}
+			if (combinedFilters.location_search) {
+				params.append('location_search', combinedFilters.location_search);
+			}
+			if (combinedFilters.processing_status && combinedFilters.processing_status.length > 0) {
+				params.append('processing_status', combinedFilters.processing_status.join(','));
 			}
 
 			// Financial filters
-			if (filters.recommended_limit_range) {
-				params.append('limit_min', filters.recommended_limit_range[0].toString());
-				params.append('limit_max', filters.recommended_limit_range[1].toString());
+			if (combinedFilters.recommended_limit_range) {
+				params.append('limit_min', combinedFilters.recommended_limit_range[0].toString());
+				params.append('limit_max', combinedFilters.recommended_limit_range[1].toString());
 			}
-			if (filters.revenue_range) {
-				params.append('revenue_min', filters.revenue_range[0].toString());
-				params.append('revenue_max', filters.revenue_range[1].toString());
+			if (combinedFilters.revenue_range) {
+				params.append('revenue_min', combinedFilters.revenue_range[0].toString());
+				params.append('revenue_max', combinedFilters.revenue_range[1].toString());
 			}
-			if (filters.ebitda_margin_range) {
-				params.append('ebitda_min', filters.ebitda_margin_range[0].toString());
-				params.append('ebitda_max', filters.ebitda_margin_range[1].toString());
+			if (combinedFilters.ebitda_margin_range) {
+				params.append('ebitda_min', combinedFilters.ebitda_margin_range[0].toString());
+				params.append('ebitda_max', combinedFilters.ebitda_margin_range[1].toString());
 			}
-			if (filters.debt_equity_range) {
-				params.append('debt_equity_min', filters.debt_equity_range[0].toString());
-				params.append('debt_equity_max', filters.debt_equity_range[1].toString());
+			if (combinedFilters.debt_equity_range) {
+				params.append('debt_equity_min', combinedFilters.debt_equity_range[0].toString());
+				params.append('debt_equity_max', combinedFilters.debt_equity_range[1].toString());
 			}
-			if (filters.current_ratio_range) {
-				params.append('current_ratio_min', filters.current_ratio_range[0].toString());
-				params.append('current_ratio_max', filters.current_ratio_range[1].toString());
+			if (combinedFilters.current_ratio_range) {
+				params.append('current_ratio_min', combinedFilters.current_ratio_range[0].toString());
+				params.append('current_ratio_max', combinedFilters.current_ratio_range[1].toString());
 			}
 
 			// Compliance filters
-			if (filters.gst_compliance_status && filters.gst_compliance_status.length > 0) {
-				params.append('gst_compliance', filters.gst_compliance_status.join(','));
+			if (combinedFilters.gst_compliance_status && combinedFilters.gst_compliance_status.length > 0) {
+				params.append('gst_compliance', combinedFilters.gst_compliance_status.join(','));
 			}
-			if (filters.epfo_compliance_status && filters.epfo_compliance_status.length > 0) {
-				params.append('epfo_compliance', filters.epfo_compliance_status.join(','));
+			if (combinedFilters.epfo_compliance_status && combinedFilters.epfo_compliance_status.length > 0) {
+				params.append('epfo_compliance', combinedFilters.epfo_compliance_status.join(','));
 			}
-			if (filters.audit_qualification_status && filters.audit_qualification_status.length > 0) {
-				params.append('audit_status', filters.audit_qualification_status.join(','));
+			if (combinedFilters.audit_qualification_status && combinedFilters.audit_qualification_status.length > 0) {
+				params.append('audit_status', combinedFilters.audit_qualification_status.join(','));
 			}
 
 			// Date filters
-			if (filters.date_range) {
-				params.append('date_from', filters.date_range[0].toISOString());
-				params.append('date_to', filters.date_range[1].toISOString());
+			if (combinedFilters.date_range) {
+				params.append('date_from', combinedFilters.date_range[0].toISOString());
+				params.append('date_to', combinedFilters.date_range[1].toISOString());
 			}
 
 			const response = await fetch(`/api/portfolio?${params}`);
+
 			if (!response.ok) {
 				const errorData = await response.json().catch(() => ({}));
 				throw new Error(errorData.error || `HTTP ${response.status}: Failed to fetch portfolio`);
 			}
-			return response.json();
+
+			const result = await response.json();
+
+			// Track request completion time
+			const requestEndTime = performance.now();
+			setLastRequestTime(requestEndTime);
+
+			return result;
 		},
 		retry: (failureCount, error) => {
 			// Retry up to 3 times for network errors, but not for 4xx errors
@@ -152,15 +350,142 @@ export function PortfolioGrid({
 		}, 300),
 		[]
 	);
+	const handleFilterChange = useCallback((newFilters: FilterCriteria, source: 'manual' | 'analytics' | 'search' = 'manual') => {
+		// Track filter history for debugging and analytics
+		setFilterHistory(prev => [...prev.slice(-9), {
+			source,
+			filters: newFilters,
+			timestamp: Date.now()
+		}]);
+
+		// Update current filter source
+		setCurrentFilterSource(source);
+
+		if (!disableInternalFiltering || source !== 'manual') {
+			setInternalFilters(newFilters);
+			setPagination(prev => ({ ...prev, page: 1 })); // Reset to first page
+
+			// Notify parent component based on source
+			if (source === 'manual' && onManualFiltersChange) {
+				onManualFiltersChange(newFilters);
+			} else if (source === 'analytics' && onExternalFiltersChange) {
+				onExternalFiltersChange(newFilters);
+			}
+
+			// Notify parent of filter source changes
+			if (onFilterSourceChange) {
+				onFilterSourceChange(source, newFilters);
+			}
+		}
+
+		// Always notify parent of filter changes for backward compatibility
+		if (onFiltersChange) {
+			onFiltersChange(newFilters);
+		}
+	}, [onFiltersChange, onManualFiltersChange, onExternalFiltersChange, onFilterSourceChange, disableInternalFiltering]);
+
+	// Debounced filter changes to prevent excessive API calls
+	const debouncedFilterChange = useCallback(
+		debounce((filters: FilterCriteria, source: 'manual' | 'analytics' | 'search') => {
+			handleFilterChange(filters, source);
+		}, 250),
+		[handleFilterChange]
+	);
 
 	const handleSearch = useCallback((query: string) => {
+		// Cancel any pending requests for rapid search changes
+		if (abortControllerRef.current) {
+			abortControllerRef.current.abort();
+		}
 		debouncedSearch(query);
 	}, [debouncedSearch]);
 
-	const handleFilterChange = useCallback((newFilters: FilterCriteria) => {
-		setFilters(newFilters);
-		setPagination(prev => ({ ...prev, page: 1 })); // Reset to first page
-	}, []);
+
+	// Handle external filter updates from analytics components
+	const handleExternalFilterUpdate = useCallback((analyticsFilters: FilterCriteria) => {
+		handleFilterChange(analyticsFilters, 'analytics');
+	}, [handleFilterChange]);
+
+	// Update dashboard filter state when filters change
+	useEffect(() => {
+		setDashboardFilterState(prev => ({
+			...prev,
+			manualFilters: currentFilterSource === 'manual' ? combinedFilters : prev.manualFilters,
+			analyticsFilters: currentFilterSource === 'analytics' ? combinedFilters : prev.analyticsFilters,
+			searchFilters: currentFilterSource === 'search' ? combinedFilters : prev.searchFilters,
+			combinedFilters: combinedFilters,
+			filterHistory: filterHistory.map(h => ({
+				source: h.source,
+				filters: h.filters,
+				sourceDetails: {
+					timestamp: h.timestamp
+				}
+			}))
+		}));
+	}, [combinedFilters, currentFilterSource, filterHistory]);
+
+	// Handle filter suggestions
+	const handleApplySuggestion = useCallback((suggestion: any) => {
+		const updatedFilters = { ...combinedFilters, ...suggestion.filterUpdates };
+		handleFilterChange(updatedFilters, 'manual');
+	}, [combinedFilters, handleFilterChange]);
+
+	// Handle filter optimization
+	const handleOptimizeFilters = useCallback(() => {
+		// Remove less impactful filters to improve performance
+		const optimizedFilters: FilterCriteria = {};
+
+		// Keep high-impact filters
+		if (combinedFilters.risk_grades) optimizedFilters.risk_grades = combinedFilters.risk_grades;
+		if (combinedFilters.industries) optimizedFilters.industries = combinedFilters.industries.slice(0, 3);
+		if (combinedFilters.search_query) optimizedFilters.search_query = combinedFilters.search_query;
+
+		handleFilterChange(optimizedFilters, 'manual');
+	}, [combinedFilters, handleFilterChange]);
+
+	// Handle active filter removal
+	const handleRemoveFilter = useCallback((source: FilterSource, filterKey: string, value?: any) => {
+		const currentFilters = source === 'analytics' ? dashboardFilterState.analyticsFilters :
+			source === 'search' ? dashboardFilterState.searchFilters :
+				dashboardFilterState.manualFilters;
+
+		const updatedFilters = { ...currentFilters };
+		const key = filterKey as keyof FilterCriteria;
+
+		if (Array.isArray(updatedFilters[key]) && value !== undefined) {
+			// Remove specific value from array
+			const currentArray = updatedFilters[key] as any[];
+			(updatedFilters as any)[key] = currentArray.filter(item => item !== value);
+
+			// Remove the key entirely if array becomes empty
+			if ((updatedFilters[key] as any[]).length === 0) {
+				delete updatedFilters[key];
+			}
+		} else {
+			// Remove entire filter
+			delete updatedFilters[key];
+		}
+
+		handleFilterChange(updatedFilters, source === 'analytics' ? 'analytics' : 'manual');
+	}, [dashboardFilterState, handleFilterChange]);
+
+	// Handle clearing filters by source
+	const handleClearSource = useCallback((source: FilterSource) => {
+		handleFilterChange({}, source === 'analytics' ? 'analytics' : 'manual');
+	}, [handleFilterChange]);
+
+	// Handle clearing all filters
+	const handleClearAllFilters = useCallback(() => {
+		setDashboardFilterState(prev => ({
+			...prev,
+			analyticsFilters: {},
+			manualFilters: {},
+			searchFilters: {},
+			combinedFilters: {},
+			activeChartSelections: {}
+		}));
+		handleFilterChange({}, 'manual');
+	}, [handleFilterChange]);
 
 	const handleSortChange = useCallback((newSort: SortCriteria) => {
 		setSortCriteria(newSort);
@@ -172,7 +497,7 @@ export function PortfolioGrid({
 	}, []);
 
 	const handleLimitChange = useCallback((limit: number) => {
-		setPagination(prev => ({ page: 1, limit })); // Reset to first page when changing limit
+		setPagination({ page: 1, limit }); // Reset to first page when changing limit
 	}, []);
 
 	const handleCompanyClick = useCallback((company: any) => {
@@ -229,11 +554,26 @@ export function PortfolioGrid({
 	}, [data?.companies, refetch]);
 
 	const clearAllFilters = useCallback(() => {
-		setFilters({});
-		setSearchQuery('');
-		setSortCriteria({ field: 'risk_score', direction: 'desc' });
-		setPagination({ page: 1, limit: 20 });
-	}, []);
+		if (!disableInternalFiltering) {
+			setInternalFilters({});
+			setSearchQuery('');
+			setSortCriteria({ field: 'risk_score', direction: 'desc' });
+			setPagination({ page: 1, limit: 20 });
+
+			// Clear dashboard filter state
+			handleClearAllFilters();
+
+			// Notify parent of manual filter clearing
+			if (onManualFiltersChange) {
+				onManualFiltersChange({});
+			}
+		}
+
+		// Notify parent for backward compatibility
+		if (onFiltersChange) {
+			onFiltersChange({});
+		}
+	}, [onFiltersChange, onManualFiltersChange, disableInternalFiltering, handleClearAllFilters]);
 
 	const handleRetry1 = useCallback(async () => {
 		setIsRefreshing(true);
@@ -253,12 +593,13 @@ export function PortfolioGrid({
 	}, [onUploadNew, router]);
 
 	const getActiveFilterCount = useMemo(() => {
-		return Object.keys(filters).filter(key => {
-			const value = filters[key as keyof FilterCriteria];
+		// Always count combined filters to show the true active filter count
+		return Object.keys(combinedFilters).filter(key => {
+			const value = combinedFilters[key as keyof FilterCriteria];
 			return value !== undefined && value !== null &&
 				(Array.isArray(value) ? value.length > 0 : true);
 		}).length + (searchQuery.trim() ? 1 : 0);
-	}, [filters, searchQuery]);
+	}, [combinedFilters, searchQuery]);
 
 	// Show full loading state on initial load
 	if (isLoading && !data) {
@@ -283,6 +624,88 @@ export function PortfolioGrid({
 
 	return (
 		<div className='space-y-6'>
+			{/* Filter State Management */}
+			{enableFilterStateManagement && filterSystem && (
+				<FilterStateManager
+					showFilterSummary={showFilterSummary}
+					showConflictResolution={showConflictResolution}
+					onFiltersChange={(hasActiveFilters) => {
+						// Handle filter state changes if needed
+						console.log('Filter state changed:', hasActiveFilters);
+					}}
+				/>
+			)}
+
+			{/* Advanced Filter UI Toggle */}
+			{(showFilterImpact || showFilterSuggestions) && (
+				<div className="flex items-center justify-between">
+					<div className="flex items-center gap-2">
+						<span className="text-sm text-neutral-60">Advanced Filtering</span>
+						<Badge variant="outline" size="sm">
+							{getActiveFilterCount} active
+						</Badge>
+					</div>
+					<Button
+						variant="ghost"
+						size="sm"
+						onClick={() => setShowAdvancedUI(!showAdvancedUI)}
+						className="flex items-center gap-2"
+					>
+						{showAdvancedUI ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+						{showAdvancedUI ? 'Hide' : 'Show'} Details
+					</Button>
+				</div>
+			)}
+
+			{/* Advanced Filter Components */}
+			{showAdvancedUI && (
+				<div className="space-y-4">
+					{/* Active Filters Display */}
+					<ActiveFiltersDisplay
+						filterState={dashboardFilterState}
+						onRemoveFilter={handleRemoveFilter}
+						onClearSource={handleClearSource}
+						onClearAll={handleClearAllFilters}
+						showSourceDetails={true}
+						collapsible={false}
+					/>
+
+					{/* Filter Impact Indicator */}
+					{showFilterImpact && (
+						<FilterImpactIndicator
+							filters={combinedFilters}
+							totalCount={totalCount}
+							filteredCount={companies.length}
+							isLoading={isFetching}
+							showDetails={true}
+							onOptimizeFilters={handleOptimizeFilters}
+						/>
+					)}
+
+					{/* Filter Suggestions */}
+					{showFilterSuggestions && (
+						<FilterSuggestions
+							currentFilters={combinedFilters}
+							totalCount={totalCount}
+							filteredCount={companies.length}
+							onApplySuggestion={handleApplySuggestion}
+							onDismissSuggestion={(id) => console.log('Dismissed suggestion:', id)}
+							maxSuggestions={3}
+							showOnlyHighPriority={false}
+						/>
+					)}
+
+					{/* Performance Monitor */}
+					<FilterPerformanceMonitor
+						filters={combinedFilters}
+						isLoading={isFetching}
+						lastRequestTime={lastRequestTime}
+						showDetails={true}
+						onOptimizeRequest={handleOptimizeFilters}
+					/>
+				</div>
+			)}
+
 			{/* Data Refresh Loading Indicator */}
 			<DataRefreshLoading isRefreshing={isRefreshing} />
 
@@ -306,39 +729,61 @@ export function PortfolioGrid({
 			{/* Filter Controls */}
 			{showFilters && (
 				<div className="flex flex-wrap items-center gap-3">
-					<Button
-						variant={showRiskFilters ? 'primary' : 'outline'}
-						size="sm"
-						onClick={() => setShowRiskFilters(!showRiskFilters)}
-						className="flex items-center gap-2"
-					>
-						<Filter className="w-4 h-4" />
-						Risk Filters
-						{Object.keys(filters).some(key =>
-							['risk_grades', 'risk_score_range', 'overall_grade_categories'].includes(key)
-						) && (
+					{enableEnhancedFiltering && filterPanelData ? (
+						<Button
+							variant={showEnhancedFilters ? 'primary' : 'outline'}
+							size="sm"
+							onClick={() => setShowEnhancedFilters(!showEnhancedFilters)}
+							className="flex items-center gap-2"
+							disabled={disableInternalFiltering}
+						>
+							<Settings className="w-4 h-4" />
+							Smart Filters
+							{getActiveFilterCount > 0 && (
 								<Badge variant="secondary" className="text-xs ml-1">
-									Active
+									{getActiveFilterCount}
 								</Badge>
 							)}
-					</Button>
+						</Button>
+					) : (
+						<>
+							<Button
+								variant={showRiskFilters ? 'primary' : 'outline'}
+								size="sm"
+								onClick={() => setShowRiskFilters(!showRiskFilters)}
+								className="flex items-center gap-2"
+								disabled={disableInternalFiltering}
+							>
+								<Filter className="w-4 h-4" />
+								Risk Filters
+								{Object.keys(combinedFilters).some(key =>
+									['risk_grades', 'risk_score_range', 'overall_grade_categories'].includes(key)
+								) && (
+										<Badge variant="secondary" className="text-xs ml-1">
+											Active
+										</Badge>
+									)}
+							</Button>
 
-					<Button
-						variant={showAdvancedFilters ? 'primary' : 'outline'}
-						size="sm"
-						onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
-						className="flex items-center gap-2"
-					>
-						<Filter className="w-4 h-4" />
-						Business Filters
-						{Object.keys(filters).some(key =>
-							!['risk_grades', 'risk_score_range', 'overall_grade_categories', 'search_query'].includes(key)
-						) && (
-								<Badge variant="secondary" className="text-xs ml-1">
-									Active
-								</Badge>
-							)}
-					</Button>
+							<Button
+								variant={showAdvancedFilters ? 'primary' : 'outline'}
+								size="sm"
+								onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
+								className="flex items-center gap-2"
+								disabled={disableInternalFiltering}
+							>
+								<Filter className="w-4 h-4" />
+								Business Filters
+								{Object.keys(combinedFilters).some(key =>
+									!['risk_grades', 'risk_score_range', 'overall_grade_categories', 'search_query'].includes(key)
+								) && (
+										<Badge variant="secondary" className="text-xs ml-1">
+											Active
+										</Badge>
+									)}
+							</Button>
+						</>
+					)}
 
 					{getActiveFilterCount > 0 && (
 						<Button
@@ -350,7 +795,18 @@ export function PortfolioGrid({
 						>
 							<X className="w-4 h-4" />
 							Clear All ({getActiveFilterCount})
+							{isFetching && (
+								<div className="w-3 h-3 border border-red-600 border-t-transparent rounded-full animate-spin ml-1" />
+							)}
 						</Button>
+					)}
+
+					{/* Filter Source Indicator */}
+					{currentFilterSource !== 'manual' && (
+						<Badge variant="info" size="sm" className="flex items-center gap-1">
+							<Settings className="w-3 h-3" />
+							{currentFilterSource === 'analytics' ? 'Chart-driven' : 'Search-driven'}
+						</Badge>
 					)}
 
 					{/* View Mode Toggle */}
@@ -373,19 +829,33 @@ export function PortfolioGrid({
 				</div>
 			)}
 
-			{/* Filter Panels */}
-			{showRiskFilters && (
-				<RiskFilterPanel
-					filters={filters}
-					onFilterChange={handleFilterChange}
+			{/* Enhanced Filter Panels */}
+			{/* {showEnhancedFilters && enableEnhancedFiltering && filterPanelData && !disableInternalFiltering && (
+				<EnhancedFilterPanelManager
+					data={filterPanelData}
+					onFilterChange={(filters) => handleFilterChange(filters, 'manual')}
+					onExportFilters={onExportFilters}
+					onImportFilters={onImportFilters}
 				/>
-			)}
+			)} */}
 
-			{showAdvancedFilters && (
-				<AdvancedFilterPanel
-					filters={filters}
-					onFilterChange={handleFilterChange}
-				/>
+			{/* Traditional Filter Panels */}
+			{!enableEnhancedFiltering && (
+				<>
+					{showRiskFilters && !disableInternalFiltering && (
+						<RiskFilterPanel
+							filters={internalFilters}
+							onFilterChange={(filters) => handleFilterChange(filters, 'manual')}
+						/>
+					)}
+
+					{showAdvancedFilters && !disableInternalFiltering && (
+						<AdvancedFilterPanel
+							filters={internalFilters}
+							onFilterChange={(filters) => handleFilterChange(filters, 'manual')}
+						/>
+					)}
+				</>
 			)}
 
 			{/* Enhanced Sorting Controls */}
@@ -462,22 +932,43 @@ export function PortfolioGrid({
 					<p className='text-neutral-60'>
 						Showing {companies.length} of {totalCount.toLocaleString()} companies
 						{getActiveFilterCount > 0 && (
-							<span className="ml-2">
+							<span className="ml-2 flex items-center gap-2">
 								<Badge variant="secondary" className="text-xs">
 									{getActiveFilterCount} filter{getActiveFilterCount !== 1 ? 's' : ''} active
 								</Badge>
+								{totalCount > 0 && (
+									<Badge
+										variant={companies.length / totalCount < 0.1 ? "destructive" :
+											companies.length / totalCount < 0.3 ? "warning" : "info"}
+										className="text-xs"
+									>
+										{((companies.length / totalCount) * 100).toFixed(1)}% shown
+									</Badge>
+								)}
 							</span>
 						)}
 					</p>
 					{isFetching && (
 						<InlineLoading message="Updating..." size="sm" />
 					)}
+					{currentFilterSource === 'analytics' && (
+						<Badge variant="info" size="sm" className="text-xs">
+							Chart-filtered
+						</Badge>
+					)}
 				</div>
 
 				{totalCount > 0 && (
-					<p className="text-sm text-neutral-60">
-						Page {pagination.page} of {Math.ceil(totalCount / pagination.limit)}
-					</p>
+					<div className="flex items-center gap-3">
+						<p className="text-sm text-neutral-60">
+							Page {pagination.page} of {Math.ceil(totalCount / pagination.limit)}
+						</p>
+						{getActiveFilterCount > 5 && (
+							<Badge variant="warning" size="sm" className="text-xs">
+								Complex filters
+							</Badge>
+						)}
+					</div>
 				)}
 			</div>
 

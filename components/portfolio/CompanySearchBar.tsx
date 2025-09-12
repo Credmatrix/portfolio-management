@@ -12,9 +12,21 @@ interface SearchResponse {
     error_message?: string;
 }
 
-export function CompanySearchBar() {
+interface CompanySearchBarProps {
+    onSearch?: (query: string) => void;
+    value?: string;
+    placeholder?: string;
+    className?: string;
+}
+
+export function CompanySearchBar({
+    onSearch,
+    value: controlledValue,
+    placeholder = "Search companies...",
+    className = ""
+}: CompanySearchBarProps) {
     const router = useRouter();
-    const [searchQuery, setSearchQuery] = useState('');
+    const [internalQuery, setInternalQuery] = useState(controlledValue || '');
     const [searchResults, setSearchResults] = useState<CompanySearchResult[]>([]);
     const [loading, setLoading] = useState(false);
     const [showDropdown, setShowDropdown] = useState(false);
@@ -22,6 +34,16 @@ export function CompanySearchBar() {
     const searchTimeout = useRef<NodeJS.Timeout | null>(null);
     const dropdownRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
+
+    // Use controlled value if provided, otherwise use internal state
+    const searchQuery = controlledValue !== undefined ? controlledValue : internalQuery;
+
+    // Sync controlled value with internal state
+    useEffect(() => {
+        if (controlledValue !== undefined) {
+            setInternalQuery(controlledValue);
+        }
+    }, [controlledValue]);
 
     // Debounced search function
     useEffect(() => {
@@ -32,11 +54,19 @@ export function CompanySearchBar() {
         if (searchQuery.length >= 2) {
             searchTimeout.current = setTimeout(() => {
                 performSearch(searchQuery);
+                // Call onSearch callback for portfolio filtering
+                if (onSearch) {
+                    onSearch(searchQuery);
+                }
             }, 300);
         } else {
             setSearchResults([]);
             setShowDropdown(false);
             setError(null);
+            // Call onSearch with empty string to clear filters
+            if (onSearch) {
+                onSearch('');
+            }
         }
 
         return () => {
@@ -44,7 +74,7 @@ export function CompanySearchBar() {
                 clearTimeout(searchTimeout.current);
             }
         };
-    }, [searchQuery]);
+    }, [searchQuery, onSearch]);
 
     // Close dropdown when clicking outside
     useEffect(() => {
@@ -93,22 +123,53 @@ export function CompanySearchBar() {
     };
 
     const handleCompanySelect = (company: CompanySearchResult) => {
-        setSearchQuery('');
+        const newQuery = '';
+        if (controlledValue !== undefined) {
+            // For controlled component, call onSearch to update parent
+            if (onSearch) {
+                onSearch(newQuery);
+            }
+        } else {
+            // For uncontrolled component, update internal state
+            setInternalQuery(newQuery);
+        }
         setShowDropdown(false);
         setSearchResults([]);
         router.push(`/portfolio/company/${encodeURIComponent(company.id)}`);
     };
 
     const clearSearch = () => {
-        setSearchQuery('');
+        const newQuery = '';
+        if (controlledValue !== undefined) {
+            // For controlled component, call onSearch to update parent
+            if (onSearch) {
+                onSearch(newQuery);
+            }
+        } else {
+            // For uncontrolled component, update internal state
+            setInternalQuery(newQuery);
+        }
         setSearchResults([]);
         setShowDropdown(false);
         setError(null);
         inputRef.current?.focus();
     };
 
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const newQuery = e.target.value;
+        if (controlledValue !== undefined) {
+            // For controlled component, call onSearch to update parent
+            if (onSearch) {
+                onSearch(newQuery);
+            }
+        } else {
+            // For uncontrolled component, update internal state
+            setInternalQuery(newQuery);
+        }
+    };
+
     return (
-        <div className="relative w-full max-w-md" ref={dropdownRef}>
+        <div className={`relative w-full max-w-md ${className}`} ref={dropdownRef}>
             <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                     <Search className="h-4 w-4 text-neutral-60" />
@@ -117,9 +178,9 @@ export function CompanySearchBar() {
                     ref={inputRef}
                     type="text"
                     value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onChange={handleInputChange}
                     className="block w-full pl-10 pr-10 py-2 text-sm border border-neutral-30 rounded-lg focus:ring-2 focus:ring-primary-300 focus:border-primary-500 bg-neutral-0 placeholder-neutral-60"
-                    placeholder="Search companies..."
+                    placeholder={placeholder}
                 />
                 <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
                     {loading && (

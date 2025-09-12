@@ -27,6 +27,13 @@ export interface PortfolioCompany {
     recommended_limit: number | null
     currency: string | null
 
+    // Enhanced Flattened Fields for Better Filtering
+    credit_rating?: string | null // AAA, AA, A, BBB, BB, B, CCC, D
+    sector?: string | null // More granular business sector
+    location_city?: string | null // Primary business city
+    location_state?: string | null // Primary business state
+    location_combined?: string | null // Combined city, state for search
+
     // Processing Status
     status: ProcessingStatus | null
     submitted_at: string | null
@@ -71,7 +78,9 @@ export interface PortfolioCompany {
     updated_at: string | null
 
     // ERP Integration Data (Future)
-    erp_data?: ERPData,
+    erp_data?: ERPData
+    epfo_compliance_status?: string
+    gst_compliance_status?: string
 }
 
 // ============================================================================
@@ -205,10 +214,14 @@ export interface FilterCriteria {
     risk_grades?: string[] // CM1, CM2, CM3, CM4, CM5, etc.
     risk_score_range?: [number, number] // 0-100 percentage
     overall_grade_categories?: number[] // 1, 2, 3, 4, 5
+    credit_ratings?: string[] // AAA, AA, A, BBB, BB, B, CCC, D
 
     // Business Filters
     industries?: any[]
+    sectors?: string[] // More granular than industries
     regions?: string[]
+    cities?: string[] // City-level filtering
+    location_search?: string // Combined location search
     revenue_range?: [number, number]
     employee_range?: [number, number]
     net_worth_range?: [number, number]
@@ -220,10 +233,10 @@ export interface FilterCriteria {
     roce_range?: [number, number]
     interest_coverage_range?: [number, number]
 
-    // Compliance Filters
-    gst_compliance_status?: string[] // "Regular", "Irregular"
-    epfo_compliance_status?: string[]
-    audit_qualification_status?: string[] // "Qualified", "Unqualified"
+    // Compliance Filters (Enhanced with proper status mapping)
+    gst_compliance_status?: string[] // "compliant", "non-compliant", "partial", "unknown"
+    epfo_compliance_status?: string[] // "compliant", "non-compliant", "partial", "unknown"
+    audit_qualification_status?: string[] // "qualified", "unqualified", "adverse", "disclaimer", "unknown"
 
     // Company Type Filters
     listing_status?: string[] // "Listed", "Unlisted"
