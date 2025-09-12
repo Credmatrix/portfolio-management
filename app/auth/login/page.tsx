@@ -103,7 +103,11 @@ export default function LoginPage() {
             <Building2 className="w-8 h-8 text-white" />
           </div>
           <h1 className="text-2xl font-bold text-neutral-90">
-            Credmatrix
+            {typeof window !== 'undefined' && window.location.hostname === 'app.credmatrix.ai'
+              ? 'CREDMATRIX'
+              : typeof window !== 'undefined' && window.location.hostname === 'terra91.credmatrix.ai'
+                ? 'TERRA91'
+                : 'CREDMATRIX'}
           </h1>
           <p className="text-neutral-60 mt-2">
             Enterprise Credit Risk Management
