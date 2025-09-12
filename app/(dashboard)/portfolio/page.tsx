@@ -230,7 +230,7 @@ export default function PortfolioPage() {
 
 				<PortfolioGrid
 					externalFilters={activeFilters}
-					showFilters={true}
+					showFilters={false}
 					onUploadNew={() => router.push('/upload')}
 					onManualFiltersChange={handleManualFiltersChange}
 					disableInternalFiltering={false}

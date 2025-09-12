@@ -75,7 +75,7 @@ interface PortfolioGridProps {
 export function PortfolioGrid({
 	initialFilters = {},
 	initialSort = { field: 'risk_score', direction: 'desc' },
-	showFilters = true,
+	showFilters = false,
 	compactMode = false,
 	onUploadNew,
 	enableAdvancedPagination = true,
@@ -718,13 +718,13 @@ export function PortfolioGrid({
 			/> */}
 
 			{/* Search Bar */}
-			<SearchBar
+			{/* <SearchBar
 				value={searchQuery}
 				onChange={setSearchQuery}
 				onSearch={handleSearch}
 				suggestions={defaultSearchSuggestions}
 				isLoading={isFetching}
-			/>
+			/> */}
 
 			{/* Filter Controls */}
 			{showFilters && (
