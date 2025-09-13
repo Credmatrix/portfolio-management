@@ -21,8 +21,10 @@ import {
     ChartSelectionState
 } from '@/types/chart-interactions.types';
 import { mapChartClickToFilter } from '@/lib/utils/chart-filter-mapping';
-import { AlertCircle, CheckCircle } from 'lucide-react';
+import { AlertCircle, Download } from 'lucide-react';
 import { transformIndustryBreakdownData } from '@/lib/utils/analytics-transformers';
+import { PortfolioExportModal } from '@/components/portfolio/PortfolioExportModal';
+import { Button } from '@/components/ui/Button';
 
 interface InteractiveAnalyticsSectionProps {
     onFiltersChange: (filters: FilterCriteria) => void;
@@ -49,6 +51,8 @@ export function InteractiveAnalyticsSection({
         selectedRiskScoreRange: activeFilters.risk_score_range,
         activeMetricFilters: []
     });
+
+    const [isExportModalOpen, setIsExportModalOpen] = useState(false);
 
     // Fetch analytics data
     const {
@@ -410,15 +414,30 @@ export function InteractiveAnalyticsSection({
                 </div>
             )}
 
-            {/* Key Metrics Cards */}
-            <MetricsCard
-                title="Portfolio Overview"
-                metrics={metricsData}
-                onMetricClick={handleMetricClick}
-                activeMetricFilters={chartSelections.activeMetricFilters}
-                isInteractive={true}
-                isLoading={isLoading}
-            />
+            {/* Key Metrics Cards with Export Button */}
+            <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                    <h2 className="text-lg font-semibold text-neutral-90">Portfolio Overview</h2>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setIsExportModalOpen(true)}
+                        className="flex items-center gap-2"
+                    >
+                        <Download className="w-4 h-4" />
+                        Export Portfolio
+                    </Button>
+                </div>
+
+                <MetricsCard
+                    title=""
+                    metrics={metricsData}
+                    onMetricClick={handleMetricClick}
+                    activeMetricFilters={chartSelections.activeMetricFilters}
+                    isInteractive={true}
+                    isLoading={isLoading}
+                />
+            </div>
 
             {/* Distribution Charts */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
@@ -455,6 +474,13 @@ export function InteractiveAnalyticsSection({
                 />
             </div>
             }
+
+            {/* Export Modal */}
+            <PortfolioExportModal
+                isOpen={isExportModalOpen}
+                onClose={() => setIsExportModalOpen(false)}
+                activeFilters={activeFilters}
+            />
 
             {/* Interactive Feedback */}
             {/* {Object.values(chartSelections).some(selection =>

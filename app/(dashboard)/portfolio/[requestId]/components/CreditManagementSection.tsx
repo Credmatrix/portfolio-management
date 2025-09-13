@@ -633,13 +633,13 @@ export function CreditManagementSection({ requestId }: CreditManagementSectionPr
                                             className="w-full px-4 py-3 bg-white/80 backdrop-blur-sm border border-gray-200/60 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-300 transition-all duration-200"
                                         >
                                             <option value="NA">Not Applicable</option>
-                                            <option value="YES">Yes</option>
-                                            <option value="NO">No</option>
+                                            <option value="Yes">Yes</option>
+                                            <option value="No">No</option>
                                         </select>
                                     ) : (
                                         <div className="p-3 bg-purple-50/50 rounded-xl">
-                                            <Badge className={`${creditData?.lpi_received === 'YES' ? 'bg-green-100 text-green-800 border-green-200' :
-                                                creditData?.lpi_received === 'NO' ? 'bg-red-100 text-red-800 border-red-200' :
+                                            <Badge className={`${creditData?.lpi_received === 'Yes' ? 'bg-green-100 text-green-800 border-green-200' :
+                                                creditData?.lpi_received === 'No' ? 'bg-red-100 text-red-800 border-red-200' :
                                                     'bg-gray-100 text-gray-800 border-gray-200'
                                                 }`}>
                                                 {creditData?.lpi_received || 'NA'}
@@ -682,11 +682,11 @@ export function CreditManagementSection({ requestId }: CreditManagementSectionPr
                                         </select>
                                     ) : (
                                         <div className="p-3 bg-orange-50/50 rounded-xl">
-                                            <Badge className={`${creditData?.collection_feedback === 'EXCELLENT' ? 'bg-green-100 text-green-800 border-green-200' :
-                                                creditData?.collection_feedback === 'GOOD' ? 'bg-blue-100 text-blue-800 border-blue-200' :
-                                                    creditData?.collection_feedback === 'AVERAGE' ? 'bg-yellow-100 text-yellow-800 border-yellow-200' :
-                                                        creditData?.collection_feedback === 'POOR' ? 'bg-orange-100 text-orange-800 border-orange-200' :
-                                                            creditData?.collection_feedback === 'DEFAULTER' ? 'bg-red-100 text-red-800 border-red-200' :
+                                            <Badge className={`${creditData?.collection_feedback === 'Good' ? 'bg-green-100 text-green-800 border-green-200' :
+                                                creditData?.collection_feedback === 'OK' ? 'bg-blue-100 text-blue-800 border-blue-200' :
+                                                    creditData?.collection_feedback === 'Bad' ? 'bg-yellow-100 text-yellow-800 border-yellow-200' :
+                                                        creditData?.collection_feedback === 'No-Go' ? 'bg-orange-100 text-orange-800 border-orange-200' :
+                                                            creditData?.collection_feedback === 'Credit Call' ? 'bg-red-100 text-red-800 border-red-200' :
                                                                 'bg-gray-100 text-gray-800 border-gray-200'
                                                 }`}>
                                                 {creditData?.collection_feedback || 'Not set'}

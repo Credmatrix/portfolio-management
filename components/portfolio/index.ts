@@ -33,6 +33,7 @@ export { ActiveFiltersDisplay } from './ActiveFiltersDisplay';
 export { FilterImpactIndicator } from './FilterImpactIndicator';
 export { FilterSuggestions } from './FilterSuggestions';
 export { FilterPerformanceMonitor } from './FilterPerformanceMonitor';
+export { PortfolioExportModal } from './PortfolioExportModal';
 // export { SmartFilterPanel } from './SmartFilterPanel';
 // export { SmartComplianceFilterPanel } from './SmartComplianceFilterPanel';
 // export { AdvancedRegionIndustryFilterPanel } from './AdvancedRegionIndustryFilterPanel';

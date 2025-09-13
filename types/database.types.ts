@@ -317,70 +317,106 @@ export type Database = {
       credit_management: {
         Row: {
           actual_credit_limit_approved: number | null
+          actual_credit_limit_approved_validity: string | null
           ad_hoc_limit: number | null
+          ad_hoc_limit_validity_date: string | null
           ar_remarks: string | null
           ar_values: number | null
           case_notes: string | null
-          collection_feedback: string | null
+          collection_feedback:
+            | Database["public"]["Enums"]["collection_feedback_type"]
+            | null
           collection_remarks: string | null
           created_at: string | null
           created_by: string | null
+          credit_type: Database["public"]["Enums"]["credit_type"] | null
           dpd_behavior: string | null
           dpd_remarks: string | null
           general_remarks: string | null
           id: string
           insurance_cover: number | null
+          insurance_coverage_requested_amount: number | null
           insurance_remarks: string | null
+          insurance_validity: string | null
           limit_validity_date: string | null
+          lpi: boolean | null
+          lpi_received: Database["public"]["Enums"]["lpi_received_type"] | null
           payment_terms: string | null
+          repayment: Database["public"]["Enums"]["repayment_type"] | null
           request_id: string
-          security_requirements: string | null
+          security_requirements:
+            | Database["public"]["Enums"]["security_requirement_type"]
+            | null
           updated_at: string | null
           updated_by: string | null
         }
         Insert: {
           actual_credit_limit_approved?: number | null
+          actual_credit_limit_approved_validity?: string | null
           ad_hoc_limit?: number | null
+          ad_hoc_limit_validity_date?: string | null
           ar_remarks?: string | null
           ar_values?: number | null
           case_notes?: string | null
-          collection_feedback?: string | null
+          collection_feedback?:
+            | Database["public"]["Enums"]["collection_feedback_type"]
+            | null
           collection_remarks?: string | null
           created_at?: string | null
           created_by?: string | null
+          credit_type?: Database["public"]["Enums"]["credit_type"] | null
           dpd_behavior?: string | null
           dpd_remarks?: string | null
           general_remarks?: string | null
           id?: string
           insurance_cover?: number | null
+          insurance_coverage_requested_amount?: number | null
           insurance_remarks?: string | null
+          insurance_validity?: string | null
           limit_validity_date?: string | null
+          lpi?: boolean | null
+          lpi_received?: Database["public"]["Enums"]["lpi_received_type"] | null
           payment_terms?: string | null
+          repayment?: Database["public"]["Enums"]["repayment_type"] | null
           request_id: string
-          security_requirements?: string | null
+          security_requirements?:
+            | Database["public"]["Enums"]["security_requirement_type"]
+            | null
           updated_at?: string | null
           updated_by?: string | null
         }
         Update: {
           actual_credit_limit_approved?: number | null
+          actual_credit_limit_approved_validity?: string | null
           ad_hoc_limit?: number | null
+          ad_hoc_limit_validity_date?: string | null
           ar_remarks?: string | null
           ar_values?: number | null
           case_notes?: string | null
-          collection_feedback?: string | null
+          collection_feedback?:
+            | Database["public"]["Enums"]["collection_feedback_type"]
+            | null
           collection_remarks?: string | null
           created_at?: string | null
           created_by?: string | null
+          credit_type?: Database["public"]["Enums"]["credit_type"] | null
           dpd_behavior?: string | null
           dpd_remarks?: string | null
           general_remarks?: string | null
           id?: string
           insurance_cover?: number | null
+          insurance_coverage_requested_amount?: number | null
           insurance_remarks?: string | null
+          insurance_validity?: string | null
           limit_validity_date?: string | null
+          lpi?: boolean | null
+          lpi_received?: Database["public"]["Enums"]["lpi_received_type"] | null
           payment_terms?: string | null
+          repayment?: Database["public"]["Enums"]["repayment_type"] | null
           request_id?: string
-          security_requirements?: string | null
+          security_requirements?:
+            | Database["public"]["Enums"]["security_requirement_type"]
+            | null
           updated_at?: string | null
           updated_by?: string | null
         }
@@ -409,15 +445,23 @@ export type Database = {
           company_name: string | null
           completed_at: string | null
           created_at: string | null
+          credit_rating: string | null
           currency: string | null
+          epfo_compliance_rate: number | null
+          epfo_compliance_status: string | null
           error_message: string | null
           extracted_data: Json | null
           file_extension: string
           file_size: number | null
           financial_parameters: number | null
+          gst_compliance_rate: number | null
+          gst_compliance_status: string | null
           hygiene_parameters: number | null
           id: string
           industry: Database["public"]["Enums"]["industry_type"]
+          location_city: string | null
+          location_combined: string | null
+          location_state: string | null
           model_type: Database["public"]["Enums"]["model_type"] | null
           organization_id: string | null
           original_filename: string
@@ -434,6 +478,7 @@ export type Database = {
           risk_score: number | null
           s3_folder_path: string
           s3_upload_key: string
+          sector: string | null
           status: Database["public"]["Enums"]["processing_status"] | null
           submitted_at: string | null
           total_parameters: number | null
@@ -447,15 +492,23 @@ export type Database = {
           company_name?: string | null
           completed_at?: string | null
           created_at?: string | null
+          credit_rating?: string | null
           currency?: string | null
+          epfo_compliance_rate?: number | null
+          epfo_compliance_status?: string | null
           error_message?: string | null
           extracted_data?: Json | null
           file_extension: string
           file_size?: number | null
           financial_parameters?: number | null
+          gst_compliance_rate?: number | null
+          gst_compliance_status?: string | null
           hygiene_parameters?: number | null
           id?: string
           industry?: Database["public"]["Enums"]["industry_type"]
+          location_city?: string | null
+          location_combined?: string | null
+          location_state?: string | null
           model_type?: Database["public"]["Enums"]["model_type"] | null
           organization_id?: string | null
           original_filename: string
@@ -472,6 +525,7 @@ export type Database = {
           risk_score?: number | null
           s3_folder_path: string
           s3_upload_key: string
+          sector?: string | null
           status?: Database["public"]["Enums"]["processing_status"] | null
           submitted_at?: string | null
           total_parameters?: number | null
@@ -485,15 +539,23 @@ export type Database = {
           company_name?: string | null
           completed_at?: string | null
           created_at?: string | null
+          credit_rating?: string | null
           currency?: string | null
+          epfo_compliance_rate?: number | null
+          epfo_compliance_status?: string | null
           error_message?: string | null
           extracted_data?: Json | null
           file_extension?: string
           file_size?: number | null
           financial_parameters?: number | null
+          gst_compliance_rate?: number | null
+          gst_compliance_status?: string | null
           hygiene_parameters?: number | null
           id?: string
           industry?: Database["public"]["Enums"]["industry_type"]
+          location_city?: string | null
+          location_combined?: string | null
+          location_state?: string | null
           model_type?: Database["public"]["Enums"]["model_type"] | null
           organization_id?: string | null
           original_filename?: string
@@ -510,6 +572,7 @@ export type Database = {
           risk_score?: number | null
           s3_folder_path?: string
           s3_upload_key?: string
+          sector?: string | null
           status?: Database["public"]["Enums"]["processing_status"] | null
           submitted_at?: string | null
           total_parameters?: number | null
@@ -724,6 +787,75 @@ export type Database = {
           started_at?: string | null
           sync_status?: string | null
           total_records?: number | null
+        }
+        Relationships: []
+      }
+      organizations: {
+        Row: {
+          address: string | null
+          annual_revenue: number | null
+          city: string | null
+          country: string | null
+          created_at: string | null
+          currency: string | null
+          description: string | null
+          email: string | null
+          employee_count: number | null
+          established_date: string | null
+          id: string
+          industry: Database["public"]["Enums"]["industry_type"] | null
+          is_active: boolean | null
+          logo_key: string | null
+          name: string
+          phone: string | null
+          postal_code: string | null
+          state: string | null
+          updated_at: string | null
+          website: string | null
+        }
+        Insert: {
+          address?: string | null
+          annual_revenue?: number | null
+          city?: string | null
+          country?: string | null
+          created_at?: string | null
+          currency?: string | null
+          description?: string | null
+          email?: string | null
+          employee_count?: number | null
+          established_date?: string | null
+          id?: string
+          industry?: Database["public"]["Enums"]["industry_type"] | null
+          is_active?: boolean | null
+          logo_key?: string | null
+          name: string
+          phone?: string | null
+          postal_code?: string | null
+          state?: string | null
+          updated_at?: string | null
+          website?: string | null
+        }
+        Update: {
+          address?: string | null
+          annual_revenue?: number | null
+          city?: string | null
+          country?: string | null
+          created_at?: string | null
+          currency?: string | null
+          description?: string | null
+          email?: string | null
+          employee_count?: number | null
+          established_date?: string | null
+          id?: string
+          industry?: Database["public"]["Enums"]["industry_type"] | null
+          is_active?: boolean | null
+          logo_key?: string | null
+          name?: string
+          phone?: string | null
+          postal_code?: string | null
+          state?: string | null
+          updated_at?: string | null
+          website?: string | null
         }
         Relationships: []
       }
@@ -1506,6 +1638,41 @@ export type Database = {
           },
         ]
       }
+      user_organizations: {
+        Row: {
+          id: string
+          is_active: boolean | null
+          joined_at: string | null
+          organization_id: string
+          role: string | null
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          is_active?: boolean | null
+          joined_at?: string | null
+          organization_id: string
+          role?: string | null
+          user_id: string
+        }
+        Update: {
+          id?: string
+          is_active?: boolean | null
+          joined_at?: string | null
+          organization_id?: string
+          role?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_organizations_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_quota_usage: {
         Row: {
           base_updates_limit: number | null
@@ -1769,6 +1936,30 @@ export type Database = {
         }
         Relationships: []
       }
+      user_organization_details: {
+        Row: {
+          industry: Database["public"]["Enums"]["industry_type"] | null
+          joined_at: string | null
+          logo_key: string | null
+          membership_active: boolean | null
+          organization_active: boolean | null
+          organization_email: string | null
+          organization_id: string | null
+          organization_name: string | null
+          role: string | null
+          user_id: string | null
+          website: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_organizations_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       autocomplete_companies: {
@@ -1908,6 +2099,17 @@ export type Database = {
           gst_compliance_status: string
         }[]
       }
+      extract_credit_rating: {
+        Args: { risk_analysis_data: Json }
+        Returns: string
+      }
+      extract_epfo_compliance: {
+        Args: { risk_analysis_data: Json }
+        Returns: {
+          rate: number
+          status: string
+        }[]
+      }
       extract_financial_data: {
         Args: { risk_analysis: Json }
         Returns: {
@@ -1921,6 +2123,21 @@ export type Database = {
           total_assets: number
           total_equity: number
         }[]
+      }
+      extract_gst_compliance: {
+        Args: { risk_analysis_data: Json }
+        Returns: {
+          rate: number
+          status: string
+        }[]
+      }
+      extract_location_city: {
+        Args: { extracted_data_json: Json }
+        Returns: string
+      }
+      extract_location_state: {
+        Args: { extracted_data_json: Json }
+        Returns: string
       }
       extract_parameter_scores: {
         Args: { risk_analysis: Json }
@@ -1992,6 +2209,10 @@ export type Database = {
           vintage_score: number
           vintage_value: string
         }[]
+      }
+      extract_sector: {
+        Args: { extracted_data_json: Json }
+        Returns: string
       }
       generate_conversation_title: {
         Args: { conversation_uuid: string }
@@ -2079,6 +2300,10 @@ export type Database = {
           sync_status: string
           total_records: number
         }[]
+      }
+      get_user_primary_organization: {
+        Args: { p_user_id: string }
+        Returns: string
       }
       gtrgm_compress: {
         Args: { "": unknown }
@@ -2272,6 +2497,10 @@ export type Database = {
           status: string
         }[]
       }
+      user_belongs_to_organization: {
+        Args: { p_organization_id: string; p_user_id: string }
+        Returns: boolean
+      }
       validate_analytics_data: {
         Args: { p_request_id?: string }
         Returns: {
@@ -2291,7 +2520,18 @@ export type Database = {
       }
     }
     Enums: {
+      collection_feedback_type:
+        | "Good"
+        | "OK"
+        | "Bad"
+        | "No-Go"
+        | "Credit Call"
+        | "Business Call"
+        | "No Business"
+        | "Limited rotations"
+      credit_type: "Secured" | "Unsecured" | "Secured+Unsecured"
       industry_type: "manufacturing" | "manufacturing-oem" | "epc"
+      lpi_received_type: "NA" | "Yes" | "No"
       model_type: "with_banking" | "without_banking"
       processing_status:
         | "submitted"
@@ -2299,6 +2539,8 @@ export type Database = {
         | "completed"
         | "failed"
         | "upload_pending"
+      repayment_type: "Before time" | "Timely" | "Slight Delay" | "Huge Delay"
+      security_requirement_type: "CC" | "BG" | "Advance" | "Others"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -2426,7 +2668,19 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      collection_feedback_type: [
+        "Good",
+        "OK",
+        "Bad",
+        "No-Go",
+        "Credit Call",
+        "Business Call",
+        "No Business",
+        "Limited rotations",
+      ],
+      credit_type: ["Secured", "Unsecured", "Secured+Unsecured"],
       industry_type: ["manufacturing", "manufacturing-oem", "epc"],
+      lpi_received_type: ["NA", "Yes", "No"],
       model_type: ["with_banking", "without_banking"],
       processing_status: [
         "submitted",
@@ -2435,6 +2689,8 @@ export const Constants = {
         "failed",
         "upload_pending",
       ],
+      repayment_type: ["Before time", "Timely", "Slight Delay", "Huge Delay"],
+      security_requirement_type: ["CC", "BG", "Advance", "Others"],
     },
   },
 } as const
