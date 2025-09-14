@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { Alert } from '@/components/ui/Alert'
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/Tabs'
 // import { useRealtimeStatus } from '@/lib/services/realtime-status.service'
 import {
     ArrowLeft,
@@ -20,7 +21,12 @@ import {
     FileText,
     ExternalLink,
     MessageSquare,
-    Sparkles
+    Sparkles,
+    BarChart3,
+    Users,
+    Shield,
+    TrendingUp,
+    CheckCircle
 } from 'lucide-react'
 
 // Import the section components
@@ -34,7 +40,8 @@ import { ParameterBreakdownSection } from './components/ParameterBreakdownSectio
 import { CreditManagementSection } from './components/CreditManagementSection'
 
 // Import AI Chat components
-import { ChatBot } from '@/components/chat'
+import { EmbeddedChatInterface } from '@/components/chat'
+import { RiskTrendAnalysis } from './components/financial/RiskTrendAnalysis'
 
 interface CompanyDetailPageProps { }
 
@@ -50,6 +57,9 @@ export default function CompanyDetailPage({ }: CompanyDetailPageProps) {
     const [error, setError] = useState<string | null>(null)
     const [isRetrying, setIsRetrying] = useState(false)
     const [isDeleting, setIsDeleting] = useState(false)
+    const [activeTab, setActiveTab] = useState('overview')
+    const [isChatOpen, setIsChatOpen] = useState(false)
+    const [isHeaderCollapsed, setIsHeaderCollapsed] = useState(false)
 
     // Real-time status monitoring
     // const { status: realtimeStatus, isConnected } = useRealtimeStatus(requestId)
@@ -418,103 +428,169 @@ export default function CompanyDetailPage({ }: CompanyDetailPageProps) {
 
             {/* Main Content */}
             <div className="max-w-7xl mx-auto p-6">
-                <div className="space-y-8">
+                <div className="space-y-6">
                     {/* Company Header */}
                     <CompanyHeader
                         company={company}
                         industryBenchmarks={industryBenchmarks}
+                        activeTab={activeTab}
+                        isCollapsed={isHeaderCollapsed}
+                        onToggleCollapse={() => setIsHeaderCollapsed(!isHeaderCollapsed)}
                     />
 
-                    {/* Main Content Grid */}
-                    <div className="grid grid-cols-1 xl:grid-cols-4 gap-8">
-                        {/* Left Column - Main Content */}
-                        <div className="xl:col-span-3 space-y-8">
-                            {/* Risk Assessment Section */}
-                            {/* Credit Management Section */}
-                            <CreditManagementSection
-                                requestId={requestId}
-                            />
-                            <RiskAssessmentSection
-                                company={company}
-                                industryBenchmarks={industryBenchmarks}
-                            />
+                    {/* Tabbed Interface */}
+                    <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+                        <TabsList className="grid w-full grid-cols-6">
+                            <TabsTrigger value="overview" className="flex items-center gap-2">
+                                <BarChart3 className="w-4 h-4" />
+                                Overview
+                            </TabsTrigger>
+                            <TabsTrigger value="financial" className="flex items-center gap-2">
+                                <TrendingUp className="w-4 h-4" />
+                                Financial
+                            </TabsTrigger>
+                            <TabsTrigger value="risk" className="flex items-center gap-2">
+                                <Shield className="w-4 h-4" />
+                                Risk
+                            </TabsTrigger>
+                            <TabsTrigger value="governance" className="flex items-center gap-2">
+                                <Users className="w-4 h-4" />
+                                Governance
+                            </TabsTrigger>
+                            <TabsTrigger value="compliance" className="flex items-center gap-2">
+                                <CheckCircle className="w-4 h-4" />
+                                Compliance
+                            </TabsTrigger>
+                            <TabsTrigger
+                                value="ai-chat"
+                                className="flex items-center gap-2"
+                                disabled={company?.status !== 'completed'}
+                            >
+                                <Sparkles className="w-4 h-4" />
+                                AI Chat
+                            </TabsTrigger>
+                        </TabsList>
 
-                            {/* Financial Data Section */}
+                        {/* Overview Tab */}
+                        <TabsContent value="overview" className="space-y-6">
+                            <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
+                                <div className="xl:col-span-4 space-y-6">
+                                    {/* <RiskAssessmentSection
+                                        company={company}
+                                        industryBenchmarks={industryBenchmarks}
+                                    /> */}
+                                    <CreditManagementSection requestId={requestId} />
+                                </div>
+                                {/* <div className="xl:col-span-1 space-y-6"> */}
+                                {/* <ComplianceSection company={company} /> */}
+                                {/* Related Companies */}
+                                {/* {relatedCompanies.length > 0 && (
+                                        <Card>
+                                            <CardHeader>
+                                                <h3 className="text-lg font-semibold text-neutral-90 flex items-center gap-2">
+                                                    <Building2 className="w-5 h-5" />
+                                                    Related Companies
+                                                </h3>
+                                            </CardHeader>
+                                            <CardContent className="space-y-3">
+                                                {relatedCompanies.slice(0, 3).map((relatedCompany) => (
+                                                    <div
+                                                        key={relatedCompany.request_id}
+                                                        className="p-3 bg-neutral-5 rounded-lg hover:bg-neutral-10 cursor-pointer transition-colors"
+                                                        onClick={() => router.push(`/portfolio/${relatedCompany.request_id}`)}
+                                                    >
+                                                        <div className="font-medium text-sm text-neutral-90 mb-1">
+                                                            {relatedCompany.company_name}
+                                                        </div>
+                                                        <div className="flex items-center justify-between text-xs text-neutral-60">
+                                                            <span>{relatedCompany.industry}</span>
+                                                            <Badge
+                                                                variant={relatedCompany.risk_grade === 'CM1' ? 'success' :
+                                                                    relatedCompany.risk_grade === 'CM2' ? 'info' :
+                                                                        relatedCompany.risk_grade === 'CM3' ? 'warning' : 'error'}
+                                                                size="sm"
+                                                            >
+                                                                {relatedCompany.risk_grade}
+                                                            </Badge>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </CardContent>
+                                        </Card>
+                                    )} */}
+                                {/* </div> */}
+                            </div>
+                        </TabsContent>
+
+                        {/* Financial Tab */}
+                        <TabsContent value="financial" className="space-y-6">
                             <FinancialDataSection
                                 company={company}
                                 industryBenchmarks={industryBenchmarks}
                             />
-                            {/* Directors Section */}
-                            <DirectorsSection
-                                company={company}
-                            />
+                        </TabsContent>
 
+                        {/* Risk Tab */}
+                        <TabsContent value="risk" className="space-y-6">
+                            <div className="grid grid-cols-1 xl:grid-cols-1 gap-6">
+                                <div className="xl:col-span-1">
+                                    {/* Risk Trend Analysis */}
+                                    <RiskTrendAnalysis
+                                        company={company}
+                                        industryBenchmarks={industryBenchmarks}
+                                    />
+                                    <RiskAssessmentSection
+                                        company={company}
+                                        industryBenchmarks={industryBenchmarks}
+                                    />
+                                </div>
+                            </div>
+                        </TabsContent>
 
-                            {/* <ParameterBreakdownSection
-                                company={company}
-                            /> */}
+                        {/* Governance Tab */}
+                        <TabsContent value="governance" className="space-y-6">
+                            <DirectorsSection company={company} />
+                        </TabsContent>
 
-                        </div>
+                        {/* Compliance Tab */}
+                        <TabsContent value="compliance" className="space-y-6">
+                            <div className="grid grid-cols-1 xl:grid-cols-1 gap-6">
+                                <ComplianceSection company={company} />
+                                {/* <CreditEligibilitySection company={company} /> */}
+                            </div>
+                        </TabsContent>
 
-                        {/* Right Column - Sidebar */}
-                        <div className="xl:col-span-1 space-y-6">
-                            {/* Credit Eligibility Section */}
-                            {/* <CreditEligibilitySection
-                                company={company}
-                            /> */}
-
-                            {/* Compliance Section */}
-                            <ComplianceSection
-                                company={company}
-                            />
-
-                            {/* Related Companies */}
-                            {relatedCompanies.length > 0 && (
+                        {/* AI Chat Tab */}
+                        <TabsContent value="ai-chat" className="space-y-6">
+                            {company?.status === 'completed' ? (
+                                <div className="h-[750px] border border-neutral-20 rounded-lg overflow-hidden">
+                                    <EmbeddedChatInterface
+                                        requestId={requestId}
+                                        company={company}
+                                    />
+                                </div>
+                            ) : (
                                 <Card>
-                                    <CardHeader>
-                                        <h3 className="text-lg font-semibold text-neutral-90 flex items-center gap-2">
-                                            <Building2 className="w-5 h-5" />
-                                            Related Companies
+                                    <CardContent className="p-8 text-center">
+                                        <div className="w-16 h-16 bg-neutral-10 rounded-full flex items-center justify-center mx-auto mb-4">
+                                            <Sparkles className="w-8 h-8 text-neutral-50" />
+                                        </div>
+                                        <h3 className="text-lg font-semibold text-neutral-90 mb-2">
+                                            AI Chat Unavailable
                                         </h3>
-                                    </CardHeader>
-                                    <CardContent className="space-y-3">
-                                        {relatedCompanies.slice(0, 3).map((relatedCompany) => (
-                                            <div
-                                                key={relatedCompany.request_id}
-                                                className="p-3 bg-neutral-5 rounded-lg hover:bg-neutral-10 cursor-pointer transition-colors"
-                                                onClick={() => router.push(`/portfolio/${relatedCompany.request_id}`)}
-                                            >
-                                                <div className="font-medium text-sm text-neutral-90 mb-1">
-                                                    {relatedCompany.company_name}
-                                                </div>
-                                                <div className="flex items-center justify-between text-xs text-neutral-60">
-                                                    <span>{relatedCompany.industry}</span>
-                                                    <Badge
-                                                        variant={relatedCompany.risk_grade === 'CM1' ? 'success' :
-                                                            relatedCompany.risk_grade === 'CM2' ? 'info' :
-                                                                relatedCompany.risk_grade === 'CM3' ? 'warning' : 'error'}
-                                                        size="sm"
-                                                    >
-                                                        {relatedCompany.risk_grade}
-                                                    </Badge>
-                                                </div>
-                                            </div>
-                                        ))}
+                                        <p className="text-neutral-60 mb-4">
+                                            AI chat is only available for completed company analyses.
+                                        </p>
+                                        <Badge variant="warning">
+                                            Status: {company?.status || 'Unknown'}
+                                        </Badge>
                                     </CardContent>
                                 </Card>
                             )}
-                        </div>
-                    </div>
+                        </TabsContent>
+                    </Tabs>
                 </div>
             </div>
-
-            {/* AI Chat Bot */}
-            {company?.status === 'completed' && (
-                <ChatBot
-                    requestId={requestId}
-                    company={company}
-                />
-            )}
         </div>
     )
 }

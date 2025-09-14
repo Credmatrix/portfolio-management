@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { Button } from '@/components/ui/Button'
-import { Send, Paperclip, Mic, MicOff } from 'lucide-react'
+import { Send } from 'lucide-react'
 
 interface ChatInputProps {
     onSendMessage: (content: string) => void
@@ -13,7 +13,7 @@ interface ChatInputProps {
 
 export function ChatInput({ onSendMessage, isLoading, disabled, placeholder }: ChatInputProps) {
     const [message, setMessage] = useState('')
-    const [isRecording, setIsRecording] = useState(false)
+
     const textareaRef = useRef<HTMLTextAreaElement>(null)
 
     // Auto-resize textarea
@@ -27,7 +27,7 @@ export function ChatInput({ onSendMessage, isLoading, disabled, placeholder }: C
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault()
-        
+
         const trimmedMessage = message.trim()
         if (!trimmedMessage || isLoading || disabled) return
 
@@ -44,17 +44,21 @@ export function ChatInput({ onSendMessage, isLoading, disabled, placeholder }: C
 
     const handleVoiceInput = () => {
         // TODO: Implement voice input functionality
-        setIsRecording(!isRecording)
+        // setIsRecording(!isRecording)
         console.log('Voice input not yet implemented')
     }
 
     const suggestedQuestions = [
-        "What's the overall risk assessment?",
-        "Analyze the financial ratios",
+        "Prepare a credit assessment report",
+        "Analyze the financial performance",
         "What are the key risk factors?",
-        "How does this compare to industry benchmarks?",
-        "What's the compliance status?",
-        "Explain the credit recommendation"
+        "Show me the compliance status",
+        "Compare with industry benchmarks",
+        "What's the turnover trend?",
+        "Evaluate the directors and shareholding pattern",
+        "Assess the legal and litigation risks",
+        "Review the banking relationships",
+        "Provide credit limit recommendations"
     ]
 
     const handleSuggestedQuestion = (question: string) => {
@@ -65,21 +69,38 @@ export function ChatInput({ onSendMessage, isLoading, disabled, placeholder }: C
 
     return (
         <div className="space-y-2">
-            {/* Suggested Questions - Compact */}
+            {/* Suggested Questions - Enhanced */}
             {message === '' && (
-                <div className="flex flex-wrap gap-1">
-                    {suggestedQuestions.slice(0, 2).map((question, index) => (
-                        <Button
-                            key={index}
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleSuggestedQuestion(question)}
-                            disabled={isLoading || disabled}
-                            className="text-xs h-6 px-2 text-neutral-60 hover:text-neutral-90 border-neutral-20 hover:border-neutral-30"
-                        >
-                            {question}
-                        </Button>
-                    ))}
+                <div className="space-y-2">
+                    <div className="text-xs text-neutral-60 font-medium">Quick Actions:</div>
+                    <div className="flex flex-wrap gap-1">
+                        {suggestedQuestions.slice(0, 3).map((question, index) => (
+                            <Button
+                                key={index}
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleSuggestedQuestion(question)}
+                                disabled={isLoading || disabled}
+                                className="text-xs h-7 px-3 text-neutral-60 hover:text-neutral-90 border-neutral-20 hover:border-blue-300 hover:bg-blue-50 transition-colors"
+                            >
+                                {question}
+                            </Button>
+                        ))}
+                    </div>
+                    <div className="flex flex-wrap gap-1">
+                        {suggestedQuestions.slice(3, 6).map((question, index) => (
+                            <Button
+                                key={index + 3}
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleSuggestedQuestion(question)}
+                                disabled={isLoading || disabled}
+                                className="text-xs h-6 px-2 text-neutral-50 hover:text-neutral-70 hover:bg-neutral-10"
+                            >
+                                {question}
+                            </Button>
+                        ))}
+                    </div>
                 </div>
             )}
 

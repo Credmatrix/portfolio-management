@@ -19,6 +19,7 @@ export interface CompanyInfo {
         registered_address: any
         business_address: any
     }
+    company_info: any
 }
 
 export interface Address {
