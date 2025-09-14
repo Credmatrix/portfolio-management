@@ -12,3 +12,164 @@
 body {
     font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
 }
+
+/* Enhanced Markdown content styles for chat messages */
+.markdown-content {
+    @apply text-sm leading-relaxed;
+    line-height: 1.6;
+}
+
+/* Enhanced Table Styling */
+.markdown-content table {
+    @apply w-full border-collapse shadow-sm rounded-lg overflow-hidden;
+    font-size: 0.875rem;
+    margin: 1rem 0;
+}
+
+.markdown-content table th,
+.markdown-content table td {
+    @apply px-4 py-3 text-left border-b;
+}
+
+.markdown-content table th {
+    @apply bg-gradient-to-r from-blue-50 to-indigo-50 font-semibold text-neutral-90 text-xs uppercase tracking-wider;
+    border-bottom: 2px solid #e5e7eb;
+}
+
+.markdown-content table td {
+    @apply bg-white text-neutral-70 whitespace-nowrap;
+    border-bottom: 1px solid #f3f4f6;
+}
+
+.markdown-content table tr:hover td {
+    @apply bg-neutral-10;
+}
+
+.markdown-content table tr:last-child td {
+    border-bottom: none;
+}
+
+/* Enhanced Headers */
+.markdown-content h1,
+.markdown-content h2,
+.markdown-content h3,
+.markdown-content h4 {
+    @apply text-neutral-90 font-semibold;
+}
+
+.markdown-content h1 {
+    @apply text-xl mb-4 mt-6 first:mt-0 pb-2 border-b border-neutral-200;
+}
+
+.markdown-content h2 {
+    @apply text-lg mb-3 mt-5 first:mt-0 pb-1 border-b border-neutral-100;
+}
+
+.markdown-content h3 {
+    @apply text-base mb-2 mt-4 first:mt-0 text-blue-900;
+}
+
+.markdown-content h4 {
+    @apply text-sm mb-2 mt-3 first:mt-0 text-blue-800;
+}
+
+/* Enhanced Paragraphs */
+.markdown-content p {
+    @apply mb-3 text-neutral-70 leading-relaxed;
+}
+
+/* Enhanced Lists */
+.markdown-content ul,
+.markdown-content ol {
+    @apply mb-3 space-y-1 text-neutral-70;
+}
+
+.markdown-content ul {
+    @apply list-disc list-outside ml-4;
+}
+
+.markdown-content ol {
+    @apply list-decimal list-outside ml-4;
+}
+
+.markdown-content li {
+    @apply text-neutral-70 leading-relaxed;
+}
+
+/* Enhanced Text Formatting */
+.markdown-content strong {
+    @apply font-semibold text-neutral-90 bg-yellow-100 px-1 rounded;
+}
+
+.markdown-content em {
+    @apply italic font-medium;
+}
+
+/* Enhanced Code Styling */
+.markdown-content code {
+    @apply bg-blue-50 text-blue-800 px-2 py-1 rounded text-xs font-mono border border-blue-200;
+}
+
+.markdown-content pre {
+    @apply bg-gray-900 text-gray-100 p-4 rounded-lg overflow-x-auto text-xs font-mono mb-4 border border-gray-700;
+}
+
+.markdown-content pre code {
+    @apply bg-transparent text-gray-100 p-0 border-none;
+}
+
+/* Enhanced Blockquotes */
+.markdown-content blockquote {
+    @apply border-l-4 border-blue-400 pl-4 py-3 my-4 bg-gradient-to-r from-blue-50 to-blue-100 text-neutral-70 italic rounded-r-lg;
+}
+
+/* Enhanced Horizontal Rules */
+.markdown-content hr {
+    @apply border-t-2 border-neutral-300 my-6;
+}
+
+/* Enhanced Links */
+.markdown-content a {
+    @apply text-blue-600 hover:text-blue-800 underline decoration-2 underline-offset-2 hover:bg-blue-50 px-1 rounded transition-colors;
+}
+
+/* Credit Report Specific Styling */
+.markdown-content .credit-report-section {
+    @apply mb-6 p-4 bg-white border border-neutral-200 rounded-lg shadow-sm;
+}
+
+.markdown-content .financial-metrics {
+    @apply grid grid-cols-2 md:grid-cols-4 gap-4 p-4 bg-blue-50 rounded-lg;
+}
+
+.markdown-content .risk-indicator {
+    @apply inline-flex items-center px-2 py-1 rounded-full text-xs font-medium;
+}
+
+.markdown-content .risk-indicator.high {
+    @apply bg-red-100 text-red-800;
+}
+
+.markdown-content .risk-indicator.medium {
+    @apply bg-yellow-100 text-yellow-800;
+}
+
+.markdown-content .risk-indicator.low {
+    @apply bg-green-100 text-green-800;
+}
+
+/* Responsive Table Wrapper */
+.markdown-content .table-wrapper {
+    @apply overflow-x-auto -mx-4 px-4;
+}
+
+@media (max-width: 640px) {
+    .markdown-content table {
+        font-size: 0.75rem;
+    }
+
+    .markdown-content table th,
+    .markdown-content table td {
+        @apply px-2 py-2;
+    }
+}

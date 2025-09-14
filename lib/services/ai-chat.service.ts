@@ -18,7 +18,7 @@ export class AIChatService {
     private static readonly CLAUDE_API_URL = 'https://api.anthropic.com/v1/messages'
     private static readonly DEFAULT_CONFIG: ClaudeConfig = {
         model: 'claude-sonnet-4-20250514',
-        max_tokens: 8000, // Increased from 4000 for more detailed responses
+        max_tokens: 10000, // Increased from 4000 for more detailed responses
         temperature: 0.3, // Reduced for more consistent, professional responses
         system_prompt: `You are a senior credit analyst and portfolio manager with deep expertise in corporate risk assessment and financial analysis. You speak naturally and directly, providing clear insights that help portfolio managers make informed credit decisions.
 
@@ -37,6 +37,35 @@ Your expertise covers:
 - Regulatory compliance and legal risk evaluation
 - Cash flow analysis and working capital management
 - Early warning indicators and risk mitigation strategies
+- Directors and shareholding pattern analysis
+- Legal case assessment and litigation risk
+- Banking relationships and charge analysis
+
+CONFIDENTIALITY REQUIREMENTS:
+- NEVER reveal internal risk scoring parameters, weights, or detailed score breakdowns
+- NEVER disclose specific parameter scores from financialScores, hygieneScores, bankingScores, or businessScores
+- NEVER mention internal risk model weights, multipliers, or calculation methodologies
+- Use the internal scoring data for inference and analysis but present findings in business terms
+- Focus on business implications rather than technical scoring details
+- Present risk assessment in qualitative terms (Excellent, Good, Moderate, Poor) rather than exact scores
+
+CRITICAL FORMATTING REQUIREMENTS:
+- ALWAYS structure responses using markdown tables for data presentation
+- Use clear section headers (### for major sections, #### for subsections)
+- Present all financial data, ratios, and metrics in tabular format
+- Format currency consistently as ₹X.XX Cr for crores, ₹X.XX L for lakhs
+- Include time periods and data sources for all metrics
+- Use bullet points for key observations and recommendations
+- Provide executive summaries for comprehensive reports
+
+For credit assessment reports, follow this structure:
+1. **Company Profile** (table format with key details)
+2. **Credit Ratings Overview** (table with all ratings and dates)
+3. **Key Financials** (separate tables for P&L, Balance Sheet, Ratios)
+4. **Directors & Shareholding** (table format)
+5. **Compliance Status** (structured summary)
+6. **Legal & Banking** (tabular presentation)
+7. **Risk Assessment & Recommendations** (structured analysis)
 
 When analyzing companies:
 - Focus on creditworthiness and repayment ability
@@ -45,8 +74,9 @@ When analyzing companies:
 - Explain the business context behind the numbers
 - Suggest specific monitoring points and action items
 - Consider both quantitative metrics and qualitative factors
+- Present all analysis in structured, tabular format
 
-Always provide context around your analysis - explain why certain metrics matter for credit decisions and what they indicate about the company's financial health and business sustainability.`
+Always provide context around your analysis - explain why certain metrics matter for credit decisions and what they indicate about the company's financial health and business sustainability. Structure every response with proper tables and clear formatting.`
     }
 
     private async getSupabaseClient() {
@@ -313,31 +343,55 @@ Always provide context around your analysis - explain why certain metrics matter
         const apiKey = process.env.ANTHROPIC_API_KEY
 
         if (!apiKey || apiKey.trim() === '') {
-            // Enhanced mock response with more company details
+            // Enhanced mock response with structured table format
             console.warn('Anthropic API key not configured. Using enhanced mock response for development.')
             const riskGrade = company.risk_analysis?.overallGrade?.grade || company.risk_grade || 'N/A'
             const riskScore = company.risk_analysis?.overallPercentage || company.risk_score || 'N/A'
-            const recommendedLimit = company.recommended_limit ? `₹${(company.recommended_limit / 10000000).toFixed(2)} Cr` : 'N/A'
+            const recommendedLimit = company.recommended_limit ? `₹${(company.recommended_limit).toFixed(2)} Cr` : 'N/A'
+            const latestYear = company.risk_analysis?.latestYear || 'N/A'
 
             return {
-                content: `I've analyzed ${company.company_name} and here's what stands out:
+                content: `### Credit Assessment Summary - ${company.company_name}
 
-**Credit Assessment Summary:**
-- Current Risk Grade: ${riskGrade}
-- Risk Score: ${riskScore}${typeof riskScore === 'number' ? '%' : ''}
-- Recommended Credit Limit: ${recommendedLimit}
+#### Company Overview
+| Parameter | Details |
+|-----------|---------|
+| Company Name | ${company.company_name} |
+| Industry | ${company.industry || 'N/A'} |
+| Risk Grade | ${riskGrade} |
+| Risk Score | ${riskScore}${typeof riskScore === 'number' ? '%' : ''} |
+| Recommended Limit | ${recommendedLimit} |
+| Assessment Date | ${new Date().toLocaleDateString()} |
 
-**Key Observations:**
-The company operates in the ${company.industry || 'specified'} sector${company.risk_analysis?.financialData ? ` with revenue trends showing ${this.getRevenueGrowthContext(company.risk_analysis.financialData)}` : ''}. 
+#### Key Financial Metrics (${latestYear})
+| Metric | Value | Status |
+|--------|-------|--------|
+| Revenue Growth | ${this.getRevenueGrowthContext(company.risk_analysis?.financialData)} | ${this.getMockTrendStatus(company)} |
+| Profitability | ${this.getMockProfitabilityStatus(company)} | Monitoring Required |
+| Liquidity Position | ${this.getMockLiquidityStatus(company)} | Adequate |
+| Leverage | ${this.getMockLeverageStatus(company)} | Within Limits |
 
-${this.getMockRiskInsights(company)}
+#### Risk Assessment
+| Category | Score | Benchmark | Status |
+|----------|-------|-----------|--------|
+| Financial | ${this.getMockCategoryScore('financial')} | Industry Average | ${this.getMockPerformanceStatus('financial')} |
+| Business | ${this.getMockCategoryScore('business')} | Peer Median | ${this.getMockPerformanceStatus('business')} |
+| Compliance | ${this.getMockCategoryScore('compliance')} | Regulatory Standard | ${this.getMockPerformanceStatus('compliance')} |
+| Overall | ${riskScore}${typeof riskScore === 'number' ? '%' : ''} | ${riskGrade} | ${this.getMockBottomLine(riskGrade, riskScore)} |
 
-**Bottom Line:** ${this.getMockBottomLine(riskGrade, riskScore)}
+#### Key Observations
+- **Strengths:** ${this.getMockStrengths(company)}
+- **Areas of Concern:** ${this.getMockConcerns(company)}
+- **Monitoring Points:** ${this.getMockMonitoringPoints(company)}
 
+#### Recommendation
+${this.getMockRecommendation(riskGrade, riskScore)}
+
+---
 *Note: This is a development mock response. Configure ANTHROPIC_API_KEY for full AI analysis.*
 
-What specific aspect would you like me to dive deeper into?`,
-                usage: { input_tokens: 150, output_tokens: 200 },
+What specific aspect would you like me to analyze in detail?`,
+                usage: { input_tokens: 150, output_tokens: 400 },
                 model: finalConfig.model
             }
         }
@@ -450,6 +504,7 @@ What specific aspect would you like me to dive deeper into?`,
             const financialData = riskAnalysis?.financialData
             const companyData = riskAnalysis?.companyData
             const allScores = riskAnalysis?.allScores || []
+            const extractedData = company.extracted_data
 
             const enhancedContext = `
 
@@ -460,17 +515,40 @@ Segment: ${companyData?.addresses?.business_address?.['segment(s)'] || 'N/A'}
 Entity Type: ${companyData?.addresses?.business_address?.type_of_entity || 'N/A'}
 Business Vintage: ${this.getBusinessVintage(allScores)}
 Location: ${this.getCompanyLocation(companyData)}
+CIN: ${companyData?.company_info?.cin || 'N/A'}
+PAN: ${companyData?.company_info?.pan || 'N/A'}
+Website: ${companyData?.addresses?.business_address?.website || 'N/A'}
+Incorporation Date: ${companyData?.addresses?.business_address?.date_of_incorporation || 'N/A'}
+Paid-up Capital: ${companyData?.addresses?.business_address?.paid_up_capital || 'N/A'}
+Authorized Capital: ${companyData?.addresses?.business_address?.authorized_capital || 'N/A'}
 
 === CURRENT RISK ASSESSMENT ===
 Overall Risk Grade: ${riskAnalysis?.overallGrade?.grade || company.risk_grade || 'N/A'}
 Risk Score: ${riskAnalysis?.overallPercentage || company.risk_score || 'N/A'}${typeof riskAnalysis?.overallPercentage === 'number' ? '%' : ''}
 Risk Category: ${riskAnalysis?.overallGrade?.description || 'N/A'}
-Recommended Credit Limit: ${company.recommended_limit ? `₹${(company.recommended_limit / 10000000).toFixed(2)} Cr` : 'N/A'}
+Risk Multiplier: ${riskAnalysis?.overallGrade?.multiplier || 'N/A'}
+Recommended Credit Limit: ${company.recommended_limit ? `₹${(company.recommended_limit).toFixed(2)} Cr` : 'N/A'}
+Model Used: ${riskAnalysis?.industryModel || 'N/A'} v${riskAnalysis?.modelVersion || 'N/A'}
 
 === FINANCIAL PERFORMANCE (Latest Year: ${riskAnalysis?.latestYear || 'N/A'}) ===
 ${this.formatEnhancedFinancialMetrics(financialData, riskAnalysis?.latestYear)}
 
-=== DETAILED RISK PARAMETER SCORES ===
+=== BALANCE SHEET ANALYSIS ===
+${this.buildBalanceSheetContext(financialData)}
+
+=== PROFIT & LOSS ANALYSIS ===
+${this.buildProfitabilityContext(financialData)}
+
+=== CASH FLOW ANALYSIS ===
+${this.buildCashFlowContext(financialData)}
+
+=== FINANCIAL RATIOS ANALYSIS ===
+${this.buildRatiosContext(financialData)}
+
+=== DIRECTORS & SHAREHOLDING PATTERN ===
+${this.formatDirectorsAndShareholding(extractedData)}
+
+=== RISK ASSESSMENT SUMMARY ===
 ${this.formatDetailedRiskScores(allScores, riskAnalysis?.categories)}
 
 === BUSINESS & OPERATIONAL CONTEXT ===
@@ -479,15 +557,41 @@ ${this.formatBusinessContext(companyData, company.extracted_data)}
 === COMPLIANCE & REGULATORY STATUS ===
 ${this.formatEnhancedComplianceStatus(company.extracted_data, allScores)}
 
+=== LEGAL CASES & LITIGATION ===
+${this.formatLegalCasesContext(extractedData)}
+
+=== CREDIT RATINGS HISTORY ===
+${this.formatCreditRatingsContext(extractedData)}
+
+=== BANKING RELATIONSHIPS & CHARGES ===
+${this.formatBankingContext(extractedData)}
+
 === KEY MONITORING POINTS ===
 ${this.identifyMonitoringPoints(allScores, financialData)}
 
+=== RISK TREND ANALYSIS ===
+${this.buildRiskTrendContext(allScores, financialData)}
+
+IMPORTANT RESPONSE FORMATTING INSTRUCTIONS:
+- ALWAYS provide structured responses using markdown tables for data presentation
+- Use clear section headers with ### for major sections
+- Present financial data, ratios, and metrics in tabular format
+- Include comparative analysis where possible
+- Provide executive summary at the beginning for complex reports
+- Use bullet points for key observations and recommendations
+- Format currency amounts consistently (₹ X.XX Cr for crores)
+- Include data sources and time periods for all metrics
+- Structure credit assessment reports following the sample format provided
+- Always include risk assessment and recommendations sections
+
 When responding:
-- Reference specific metrics and scores from this data
+- Reference specific metrics and scores from this comprehensive data
 - Compare performance to industry benchmarks where available
-- Explain what the numbers mean for credit risk
+- Explain what the numbers mean for credit risk and business sustainability
 - Provide actionable insights for portfolio management decisions
-- Use the company's actual performance data to support your analysis`
+- Use the company's actual performance data to support your analysis
+- Format all responses with proper tables and structured layout
+- Include trend analysis and forward-looking insights where relevant`
 
             return prompt + enhancedContext
         } catch (error) {
@@ -535,15 +639,15 @@ When responding:
 
             // Revenue and Growth
             const revenue = financialData.profit_loss?.revenue?.net_revenue?.[latestYear]
-            const revenueGrowth = financialData.ratios?.growth_ratios?.revenue_growth_?.[latestYear]
+            const revenueGrowth = financialData.ratios?.growth_ratios?.["revenue_growth_()"]?.[latestYear]
             if (revenue) {
                 const growthText = revenueGrowth ? ` (${revenueGrowth > 0 ? '+' : ''}${revenueGrowth}% growth)` : ''
                 metrics.push(`Revenue: ₹${(revenue / 10).toFixed(1)} Cr${growthText}`)
             }
 
             // Profitability
-            const ebitda = financialData.profit_loss?.profitability?.ebitda?.[latestYear]
-            const ebitdaMargin = financialData.ratios?.profitability?.ebitda_margin?.[latestYear]
+            const ebitda = financialData.profit_loss?.profitability?.["operating_profit_(_ebitda_)"]?.[latestYear]
+            const ebitdaMargin = financialData.ratios?.profitability?.["ebitda_margin_()"]?.[latestYear]
             if (ebitda && ebitdaMargin !== undefined) {
                 metrics.push(`EBITDA: ₹${(ebitda / 10).toFixed(1)} Cr (${ebitdaMargin.toFixed(1)}% margin)`)
             }
@@ -561,7 +665,7 @@ When responding:
             }
 
             // Cash Flow
-            const operatingCF = financialData.cash_flow?.operating_activities?.net_cash_flows_from_operating_activities?.[latestYear]
+            const operatingCF = financialData.cash_flow?.operating_activities?.["net_cash_flows_from_(_used_in_)_operating_activities"]?.[latestYear]
             if (operatingCF) {
                 metrics.push(`Operating Cash Flow: ₹${(operatingCF / 10).toFixed(1)} Cr`)
             }
@@ -574,55 +678,39 @@ When responding:
     }
 
     /**
-     * Format detailed risk scores by category
+     * Format detailed risk scores by category (confidential - for internal analysis only)
      */
     private formatDetailedRiskScores(allScores: any[], categories: any[] | undefined): string {
-        if (!allScores || allScores.length === 0) return 'Risk parameter scores not available'
+        if (!allScores || allScores.length === 0) return 'Risk parameter analysis not available'
 
         try {
             const formattedScores: string[] = []
 
-            // Group scores by category if categories are available
+            // Analyze risk categories without exposing internal scores
             if (categories && categories.length > 0) {
                 categories.forEach(category => {
-                    const categoryScores = allScores.filter(score => {
-                        // This is a simplified grouping - you might need to adjust based on actual categorization logic
-                        const param = score.parameter?.toLowerCase() || ''
-                        if (category.id === 'financial') {
-                            return param.includes('revenue') || param.includes('ebitda') || param.includes('ratio') ||
-                                param.includes('cash') || param.includes('debt') || param.includes('finance')
-                        } else if (category.id === 'business') {
-                            return param.includes('vintage') || param.includes('customer') || param.includes('constitution')
-                        } else if (category.id === 'hygiene') {
-                            return param.includes('hygiene') || param.includes('compliance')
-                        }
-                        return false
-                    })
+                    if (category.result?.percentage !== undefined) {
+                        let performanceLevel = 'Moderate'
+                        if (category.result.percentage >= 75) performanceLevel = 'Excellent'
+                        else if (category.result.percentage >= 60) performanceLevel = 'Good'
+                        else if (category.result.percentage < 40) performanceLevel = 'Needs Attention'
 
-                    if (categoryScores.length > 0) {
-                        const topScores = categoryScores
-                            .sort((a, b) => (b.score / b.maxScore) - (a.score / a.maxScore))
-                            .slice(0, 3)
-                            .map(score => `${score.parameter}: ${score.score}/${score.maxScore} (${score.benchmark})`)
-                            .join(', ')
-
-                        formattedScores.push(`${category.label}: ${category.result?.percentage?.toFixed(1)}% - ${topScores}`)
+                        formattedScores.push(`${category.label}: ${performanceLevel} performance`)
                     }
                 })
             } else {
-                // Fallback: show top performing and concerning parameters
-                const sortedScores = allScores
-                    .filter(score => score.available)
-                    .sort((a, b) => (b.score / b.maxScore) - (a.score / a.maxScore))
+                // Fallback: provide general risk assessment without specific scores
+                const availableParams = allScores.filter(score => score.available)
+                const strongParams = availableParams.filter(score => (score.score / score.maxScore) >= 0.7)
+                const weakParams = availableParams.filter(score => (score.score / score.maxScore) < 0.4)
 
-                const topPerformers = sortedScores.slice(0, 3)
-                const concerns = sortedScores.slice(-3).reverse()
-
-                if (topPerformers.length > 0) {
-                    formattedScores.push(`Strengths: ${topPerformers.map(s => `${s.parameter} (${s.score}/${s.maxScore})`).join(', ')}`)
+                if (strongParams.length > 0) {
+                    const strongAreas = strongParams.slice(0, 3).map(s => this.getBusinessParameterName(s.parameter)).join(', ')
+                    formattedScores.push(`Strength Areas: ${strongAreas}`)
                 }
-                if (concerns.length > 0) {
-                    formattedScores.push(`Areas of Concern: ${concerns.map(s => `${s.parameter} (${s.score}/${s.maxScore})`).join(', ')}`)
+                if (weakParams.length > 0) {
+                    const weakAreas = weakParams.slice(0, 3).map(s => this.getBusinessParameterName(s.parameter)).join(', ')
+                    formattedScores.push(`Areas Requiring Attention: ${weakAreas}`)
                 }
             }
 
@@ -631,6 +719,31 @@ When responding:
             console.error('Error formatting detailed risk scores:', error)
             return 'Risk parameter analysis unavailable'
         }
+    }
+
+    /**
+     * Convert technical parameter names to business-friendly terms
+     */
+    private getBusinessParameterName(parameter: string): string {
+        const paramMap: { [key: string]: string } = {
+            'revenue_growth': 'Revenue Growth',
+            'ebitda_margin': 'Profitability',
+            'current_ratio': 'Liquidity Position',
+            'debt_equity': 'Leverage Management',
+            'gst_compliance': 'Tax Compliance',
+            'epfo_compliance': 'Regulatory Compliance',
+            'business_vintage': 'Business Maturity',
+            'promoter_experience': 'Management Experience',
+            'cash_flow': 'Cash Generation',
+            'working_capital': 'Working Capital Management'
+        }
+
+        const lowerParam = parameter?.toLowerCase() || ''
+        for (const [key, value] of Object.entries(paramMap)) {
+            if (lowerParam.includes(key)) return value
+        }
+
+        return parameter || 'Business Parameter'
     }
 
     /**
@@ -661,13 +774,13 @@ When responding:
     }
 
     /**
-     * Format enhanced compliance status
+     * Format enhanced compliance status (without exposing internal scores)
      */
     private formatEnhancedComplianceStatus(extractedData: any, allScores: any[]): string {
         const compliance: string[] = []
 
         try {
-            // Get compliance scores from risk parameters
+            // Analyze compliance parameters without exposing internal scores
             const complianceScores = allScores.filter(score =>
                 score.parameter?.toLowerCase().includes('compliance') ||
                 score.parameter?.toLowerCase().includes('gst') ||
@@ -675,11 +788,15 @@ When responding:
                 score.parameter?.toLowerCase().includes('hygiene')
             )
 
+            // Provide qualitative assessment instead of raw scores
             complianceScores.forEach(score => {
-                compliance.push(`${score.parameter}: ${score.score}/${score.maxScore} (${score.benchmark}) - ${score.value}`)
+                const performance = (score.score / score.maxScore) >= 0.7 ? 'Good' :
+                    (score.score / score.maxScore) >= 0.4 ? 'Moderate' : 'Needs Improvement'
+                const paramName = this.getBusinessParameterName(score.parameter)
+                compliance.push(`${paramName}: ${performance} compliance status`)
             })
 
-            // Add extracted compliance data
+            // Add extracted compliance data (this is factual, not internal scoring)
             if (extractedData?.gst_records?.compliance_summary) {
                 const gst = extractedData.gst_records.compliance_summary
                 compliance.push(`GST Filing: ${gst.compliance_rate}% compliance rate, ${gst.total_returns} returns filed`)
@@ -698,20 +815,21 @@ When responding:
     }
 
     /**
-     * Identify key monitoring points based on risk analysis
+     * Identify key monitoring points based on risk analysis (without exposing internal scores)
      */
     private identifyMonitoringPoints(allScores: any[], financialData: any): string {
         const monitoringPoints: string[] = []
 
         try {
-            // Find parameters with poor scores
+            // Identify areas needing attention without exposing scores
             const poorPerformers = allScores
                 .filter(score => score.available && (score.score / score.maxScore) < 0.4)
                 .sort((a, b) => b.weightage - a.weightage)
                 .slice(0, 3)
 
             poorPerformers.forEach(score => {
-                monitoringPoints.push(`Monitor ${score.parameter}: Currently ${score.score}/${score.maxScore} (${score.benchmark})`)
+                const paramName = this.getBusinessParameterName(score.parameter)
+                monitoringPoints.push(`Monitor ${paramName}: Requires enhanced oversight and improvement`)
             })
 
             // Add financial trend monitoring
@@ -719,11 +837,17 @@ When responding:
                 const revenueGrowths: number[] = Object.values(financialData.ratios.growth_ratios.revenue_growth_)
                 const avgGrowth = revenueGrowths.reduce((a: number, b: number) => a + b, 0) / revenueGrowths.length
                 if (avgGrowth < 5) {
-                    monitoringPoints.push('Track revenue growth trends - currently below 5% average')
+                    monitoringPoints.push('Track revenue growth trends - currently below industry expectations')
                 }
             }
 
-            return monitoringPoints.length > 0 ? monitoringPoints.join('\n') : 'No critical monitoring points identified'
+            // Add standard monitoring recommendations
+            if (monitoringPoints.length === 0) {
+                monitoringPoints.push('Regular quarterly financial reviews recommended')
+                monitoringPoints.push('Monitor compliance status and regulatory changes')
+            }
+
+            return monitoringPoints.length > 0 ? monitoringPoints.join('\n') : 'Standard monitoring protocols apply'
         } catch (error) {
             console.error('Error identifying monitoring points:', error)
             return 'Monitoring points analysis unavailable'
@@ -1050,7 +1174,7 @@ When responding:
 
             context.push(`Financial Health Score: ${Math.min(100, healthScore)}/100`)
 
-            return context.join('\n')
+            return context.join('\n' + financialData)
         } catch (error) {
             console.error('Error building ratios context:', error)
             return 'Ratios analysis unavailable'
@@ -1058,45 +1182,51 @@ When responding:
     }
 
     /**
-     * Build risk trend analysis context
+     * Build risk trend analysis context (without exposing internal scores)
      */
     private buildRiskTrendContext(allScores: any[], financialData: any): string {
         try {
             const context: string[] = []
 
-            // Risk factor identification
+            // Risk factor identification without exposing scores
             const poorPerformers = allScores
-                .filter(score => score.available && score.score <= 2)
-                .sort((a, b) => (a.score - b.score) || (b.weightage - a.weightage))
+                .filter(score => score.available && (score.score / score.maxScore) <= 0.4)
+                .sort((a, b) => (a.score / a.maxScore) - (b.score / b.maxScore))
                 .slice(0, 3)
 
             const goodPerformers = allScores
-                .filter(score => score.available && score.score >= 4)
-                .sort((a, b) => (b.score - a.score) || (b.weightage - a.weightage))
+                .filter(score => score.available && (score.score / score.maxScore) >= 0.7)
+                .sort((a, b) => (b.score / b.maxScore) - (a.score / a.maxScore))
                 .slice(0, 3)
 
             if (poorPerformers.length > 0) {
-                context.push(`Key Risk Factors: ${poorPerformers.map(p => `${p.parameter} (${p.score}/${p.maxScore})`).join(', ')}`)
+                const riskAreas = poorPerformers.map(p => this.getBusinessParameterName(p.parameter)).join(', ')
+                context.push(`Key Risk Factors: ${riskAreas}`)
             }
 
             if (goodPerformers.length > 0) {
-                context.push(`Strength Areas: ${goodPerformers.map(p => `${p.parameter} (${p.score}/${p.maxScore})`).join(', ')}`)
+                const strengthAreas = goodPerformers.map(p => this.getBusinessParameterName(p.parameter)).join(', ')
+                context.push(`Strength Areas: ${strengthAreas}`)
             }
 
-            // Revenue and margin trend analysis
+            // Revenue and margin trend analysis (factual data, not internal scoring)
             if (financialData?.ratios?.growth_ratios?.revenue_growth_) {
                 const revenueGrowths: number[] = Object.values(financialData.ratios.growth_ratios.revenue_growth_)
                 const avgGrowth = revenueGrowths.reduce((a: number, b: number) => a + b, 0) / revenueGrowths.length
                 context.push(`Revenue Trend: ${avgGrowth.toFixed(1)}% average growth (recent 3 years)`)
             }
 
-            // Risk trajectory assessment
-            const overallScore = allScores.reduce((sum, score) => sum + score.score * score.weightage, 0) /
-                allScores.reduce((sum, score) => sum + score.maxScore * score.weightage, 0) * 100
+            // Risk trajectory assessment without exposing calculation methodology
+            const strongParams = allScores.filter(score => score.available && (score.score / score.maxScore) >= 0.7).length
+            const weakParams = allScores.filter(score => score.available && (score.score / score.maxScore) < 0.4).length
+            const totalParams = allScores.filter(score => score.available).length
 
-            const trajectory = overallScore >= 70 ? 'IMPROVING - Strong fundamentals support positive outlook' :
-                overallScore >= 50 ? 'STABLE - Moderate performance with mixed indicators' :
-                    'DETERIORATING - Multiple risk factors require attention'
+            let trajectory = 'STABLE - Mixed performance indicators'
+            if (strongParams > weakParams && strongParams / totalParams > 0.6) {
+                trajectory = 'IMPROVING - Strong fundamentals support positive outlook'
+            } else if (weakParams > strongParams && weakParams / totalParams > 0.4) {
+                trajectory = 'DETERIORATING - Multiple risk factors require attention'
+            }
 
             context.push(`Risk Trajectory: ${trajectory}`)
 
@@ -1104,6 +1234,256 @@ When responding:
         } catch (error) {
             console.error('Error building risk trend context:', error)
             return 'Risk trend analysis unavailable'
+        }
+    }
+
+    /**
+     * Format directors and shareholding pattern context
+     */
+    private formatDirectorsAndShareholding(extractedData: any): string {
+        try {
+            const context: string[] = []
+            const directors = extractedData?.['Directors']
+            const shareholding = extractedData?.['Shareholding More Than 5%']
+            const directorShareholding = extractedData?.['Director Shareholding']
+
+            // Active Directors Summary
+            if (directors?.data) {
+                const activeDirectors = directors.data.filter((d: any) => !d.date_of_cessation || d.date_of_cessation === '' || d.date_of_cessation === '-')
+                const inactiveDirectors = directors.data.filter((d: any) => d.date_of_cessation && d.date_of_cessation !== '' && d.date_of_cessation !== '-')
+
+                context.push(`Board Composition: ${activeDirectors.length} active directors, ${inactiveDirectors.length} former directors`)
+
+                if (activeDirectors.length > 0) {
+                    const directorsList = activeDirectors.slice(0, 5).map((d: any) =>
+                        `${d.name} (${d.present_designation}, DIN: ${d.din})`
+                    ).join(', ')
+                    context.push(`Key Directors: ${directorsList}${activeDirectors.length > 5 ? ` and ${activeDirectors.length - 5} more` : ''}`)
+                }
+            }
+
+            // Shareholding Pattern
+            if (shareholding?.data) {
+                let latestYear = ''
+                for (const item of shareholding.data) {
+                    const year = item.financial_year_ending_on || ''
+                    if (!latestYear || year > latestYear) {
+                        latestYear = year
+                    }
+                }
+
+                if (latestYear) {
+                    const latestShareholding = shareholding.data
+                        .filter((item: any) => item.financial_year_ending_on === latestYear)
+                        .sort((a: any, b: any) => parseFloat(b.shareholding || '0') - parseFloat(a.shareholding || '0'))
+                        .slice(0, 5)
+
+                    if (latestShareholding.length > 0) {
+                        const shareholdingList = latestShareholding.map((s: any) =>
+                            `${s.entity_name}: ${s.shareholding}%`
+                        ).join(', ')
+                        context.push(`Major Shareholders (${latestYear}): ${shareholdingList}`)
+
+                        const totalHolding = latestShareholding.reduce((sum: number, s: any) =>
+                            sum + parseFloat(s.shareholding || '0'), 0
+                        )
+                        context.push(`Top 5 Shareholders Control: ${totalHolding.toFixed(1)}% of equity`)
+                    }
+                }
+            }
+
+            // Director Shareholding Summary
+            if (directorShareholding?.data) {
+                const totalDirectorHolding = directorShareholding.data.reduce((sum: number, ds: any) =>
+                    sum + parseFloat(ds.shareholding || '0'), 0
+                )
+                const directorsWithShares = directorShareholding.data.filter((ds: any) =>
+                    parseFloat(ds.shareholding || '0') > 0
+                ).length
+
+                context.push(`Director Shareholding: ${directorsWithShares} directors hold ${totalDirectorHolding.toFixed(1)}% total equity`)
+            }
+
+            return context.length > 0 ? context.join('\n') : 'Directors and shareholding data not available'
+        } catch (error) {
+            console.error('Error formatting directors and shareholding:', error)
+            return 'Directors and shareholding analysis unavailable'
+        }
+    }
+
+    /**
+     * Format legal cases context
+     */
+    private formatLegalCasesContext(extractedData: any): string {
+        try {
+            const context: string[] = []
+            const legalData = extractedData?.['Legal History']
+
+            if (legalData?.data) {
+                // Filter for valid cases (exclude header rows)
+                const validCases = legalData.data.filter((case_: any) =>
+                    case_.court && case_.case_no && case_._row_index < 450
+                )
+
+                const pendingCases = validCases.filter((case_: any) =>
+                    case_.case_status?.toLowerCase() === 'pending'
+                )
+                const disposedCases = validCases.filter((case_: any) =>
+                    case_.case_status?.toLowerCase() === 'disposed'
+                )
+
+                context.push(`Legal Cases Summary: ${validCases.length} total cases (${pendingCases.length} pending, ${disposedCases.length} disposed)`)
+
+                // Case categories breakdown
+                const casesByCategory = validCases.reduce((acc: any, case_: any) => {
+                    const category = case_.case_category || 'Other'
+                    acc[category] = (acc[category] || 0) + 1
+                    return acc
+                }, {})
+
+                if (Object.keys(casesByCategory).length > 0) {
+                    const categoriesList = Object.entries(casesByCategory)
+                        .sort(([, a]: any, [, b]: any) => b - a)
+                        .slice(0, 3)
+                        .map(([category, count]) => `${category}: ${count}`)
+                        .join(', ')
+                    context.push(`Case Categories: ${categoriesList}`)
+                }
+
+                // Recent activity (last 12 months)
+                const oneYearAgo = new Date('2024-08-30')
+                const recentCases = pendingCases.filter((case_: any) => {
+                    if (case_.date_of_last_hearing_judgement && case_.date_of_last_hearing_judgement !== '-') {
+                        try {
+                            const hearingDate = new Date(case_.date_of_last_hearing_judgement)
+                            return hearingDate >= oneYearAgo
+                        } catch (e) {
+                            return false
+                        }
+                    }
+                    return false
+                })
+
+                if (recentCases.length > 0) {
+                    context.push(`Recent Legal Activity: ${recentCases.length} cases with hearings in last 12 months`)
+                }
+            }
+
+            return context.length > 0 ? context.join('\n') : 'No significant legal cases on record'
+        } catch (error) {
+            console.error('Error formatting legal cases context:', error)
+            return 'Legal cases analysis unavailable'
+        }
+    }
+
+    /**
+     * Format credit ratings context
+     */
+    private formatCreditRatingsContext(extractedData: any): string {
+        try {
+            const context: string[] = []
+            const ratingsData = extractedData?.['Credit Ratings']
+
+            if (ratingsData?.data && ratingsData.data.length > 0) {
+                // Get latest ratings by agency
+                const latestRatings = ratingsData.data
+                    .filter((rating: any) => rating.rating_agency && rating.rating)
+                    .sort((a: any, b: any) => new Date(b.date || '1900-01-01').getTime() - new Date(a.date || '1900-01-01').getTime())
+
+                const ratingsByAgency = latestRatings.reduce((acc: any, rating: any) => {
+                    const agency = rating.rating_agency
+                    if (!acc[agency] || new Date(rating.date || '1900-01-01') > new Date(acc[agency].date || '1900-01-01')) {
+                        acc[agency] = rating
+                    }
+                    return acc
+                }, {})
+
+                if (Object.keys(ratingsByAgency).length > 0) {
+                    const ratingsList = Object.entries(ratingsByAgency)
+                        .map(([agency, rating]: any) => `${agency}: ${rating.rating} (${rating.outlook || 'N/A'})`)
+                        .join(', ')
+                    context.push(`Current Credit Ratings: ${ratingsList}`)
+
+                    // Total rated facilities
+                    const totalRatedAmount = latestRatings.reduce((sum: number, rating: any) => {
+                        const amount = parseFloat(rating.amount_rated?.replace(/[^\d.]/g, '') || '0')
+                        return sum + amount
+                    }, 0)
+
+                    if (totalRatedAmount > 0) {
+                        context.push(`Total Rated Facilities: ₹${(totalRatedAmount / 10000000).toFixed(0)} Cr`)
+                    }
+
+                    // Recent rating actions
+                    const recentActions = latestRatings
+                        .filter((rating: any) => rating.rating_action && rating.rating_action !== 'N/A')
+                        .slice(0, 3)
+                        .map((rating: any) => `${rating.rating_agency}: ${rating.rating_action}`)
+                        .join(', ')
+
+                    if (recentActions) {
+                        context.push(`Recent Rating Actions: ${recentActions}`)
+                    }
+                }
+            }
+
+            return context.length > 0 ? context.join('\n') : 'No credit ratings available'
+        } catch (error) {
+            console.error('Error formatting credit ratings context:', error)
+            return 'Credit ratings analysis unavailable'
+        }
+    }
+
+    /**
+     * Format banking relationships and charges context
+     */
+    private formatBankingContext(extractedData: any): string {
+        try {
+            const context: string[] = []
+            const chargesData = extractedData?.['Open Charges Sequence']
+
+            // Charges summary
+            if (chargesData?.data && chargesData.data.length > 0) {
+                const activeCharges = chargesData.data.filter((charge: any) =>
+                    charge["STATUS"]?.toLowerCase() === 'creation' || charge["STATUS"]?.toLowerCase() === 'modification'
+                )
+                const satisfiedCharges = chargesData.data.filter((charge: any) =>
+                    charge["STATUS"]?.toLowerCase() === 'satisfied' || charge["STATUS"]?.toLowerCase() === 'closed'
+                )
+
+                context.push(`Registered Charges: ${chargesData.data.length} total (${activeCharges.length} active, ${satisfiedCharges.length} satisfied)`)
+
+                // Sum of charge amounts
+                const totalChargeAmount = chargesData.data.reduce((sum: number, charge: any) => {
+                    const amount = parseFloat(charge["CHARGE AMOUNT (Rs. Crore)"]?.replace(/[^\d.]/g, '') || '0')
+                    return sum + amount
+                }, 0)
+
+                if (totalChargeAmount > 0) {
+                    context.push(`Total Charge Amount: ₹${(totalChargeAmount).toFixed(0)} Cr`)
+                }
+
+                // Charge types
+                const chargeTypes = chargesData.data.reduce((acc: any, charge: any) => {
+                    const type = charge.charge_type || 'Other'
+                    acc[type] = (acc[type] || 0) + 1
+                    return acc
+                }, {})
+
+                if (Object.keys(chargeTypes).length > 0) {
+                    const typesList = Object.entries(chargeTypes)
+                        .sort(([, a]: any, [, b]: any) => b - a)
+                        .slice(0, 3)
+                        .map(([type, count]) => `${type}: ${count}`)
+                        .join(', ')
+                    context.push(`Charge Types: ${typesList}`)
+                }
+            }
+
+            return context.length > 0 ? context.join('\n') : 'Banking relationships and charges data not available'
+        } catch (error) {
+            console.error('Error formatting banking context:', error)
+            return 'Banking relationships analysis unavailable'
         }
     }
 
@@ -1139,6 +1519,67 @@ When responding:
             return 'Requires senior approval and strong risk mitigation measures.'
         }
         return 'Detailed risk assessment needed before credit decision.'
+    }
+
+    private getMockTrendStatus(company: PortfolioCompany): string {
+        const riskScore = company.risk_analysis?.overallPercentage || company.risk_score
+        if (typeof riskScore === 'number') {
+            if (riskScore >= 70) return 'Positive'
+            if (riskScore >= 50) return 'Stable'
+            return 'Declining'
+        }
+        return 'Mixed'
+    }
+
+    private getMockProfitabilityStatus(company: PortfolioCompany): string {
+        return 'EBITDA margins stable, net profitability improving'
+    }
+
+    private getMockLiquidityStatus(company: PortfolioCompany): string {
+        return 'Current ratio above 1.5x, adequate working capital'
+    }
+
+    private getMockLeverageStatus(company: PortfolioCompany): string {
+        return 'Debt-to-equity within industry norms'
+    }
+
+    private getMockCategoryScore(category: string): string {
+        const scores = {
+            financial: '72%',
+            business: '68%',
+            compliance: '85%'
+        }
+        return scores[category as keyof typeof scores] || '65%'
+    }
+
+    private getMockPerformanceStatus(category: string): string {
+        const statuses = {
+            financial: 'Above Average',
+            business: 'Average',
+            compliance: 'Excellent'
+        }
+        return statuses[category as keyof typeof statuses] || 'Average'
+    }
+
+    private getMockStrengths(company: PortfolioCompany): string {
+        return 'Strong market position, consistent revenue growth, good compliance track record'
+    }
+
+    private getMockConcerns(company: PortfolioCompany): string {
+        return 'Working capital cycle optimization needed, monitor receivables collection'
+    }
+
+    private getMockMonitoringPoints(company: PortfolioCompany): string {
+        return 'Quarterly financial reviews, compliance status updates, market position assessment'
+    }
+
+    private getMockRecommendation(riskGrade: any, riskScore: any): string {
+        if (typeof riskScore === 'number') {
+            if (riskScore >= 70) return '**APPROVE:** Credit facility recommended with standard terms and conditions.'
+            if (riskScore >= 50) return '**CONDITIONAL APPROVAL:** Proceed with enhanced monitoring and periodic reviews.'
+            return '**REFER TO COMMITTEE:** Requires senior management approval with strict risk mitigation measures.'
+        }
+        return '**PENDING:** Complete risk assessment required before final recommendation.'
     }
 
     /**

@@ -2,6 +2,7 @@
 // Centralized exports for all chat-related components
 
 export { ChatInterface } from './ChatInterface'
+export { EmbeddedChatInterface } from './EmbeddedChatInterface'
 export { ChatBot } from './ChatBot'
 export { ChatMessageComponent } from './ChatMessage'
 export { ChatInput } from './ChatInput'

@@ -17,16 +17,30 @@ import {
     XCircle,
     AlertTriangle,
     Star,
-    Info
+    Info,
+    ChevronDown,
+    ChevronUp,
+    Maximize2,
+    Minimize2
 } from 'lucide-react'
 import { formatCurrency, formatDate } from '@/lib/utils'
+import { Button } from '@/components/ui'
 
 interface CompanyHeaderProps {
     company: PortfolioCompany
     industryBenchmarks?: any
+    activeTab?: string
+    isCollapsed?: boolean
+    onToggleCollapse?: () => void
 }
 
-export function CompanyHeader({ company, industryBenchmarks }: CompanyHeaderProps) {
+export function CompanyHeader({
+    company,
+    industryBenchmarks,
+    activeTab = 'overview',
+    isCollapsed = false,
+    onToggleCollapse
+}: CompanyHeaderProps) {
     // Helper function to extract rating details from Rating Type parameter
     const extractRatingDetails = (riskAnalysis: any) => {
         try {
@@ -166,261 +180,346 @@ export function CompanyHeader({ company, industryBenchmarks }: CompanyHeaderProp
         ? (company.available_parameters / company.total_parameters) * 100
         : 0
 
-    return (
-        <Card className="overflow-hidden">
-            <CardContent className="p-0">
-                {/* Header Background */}
-                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 px-8 py-6 border-b border-neutral-20">
-                    <div className="flex items-start justify-between">
-                        {/* Company Info */}
-                        <div className="flex items-start gap-6">
-                            {/* Company Icon */}
-                            <div className="p-4 bg-white rounded-xl shadow-sm border border-neutral-20">
-                                <Building2 className="w-8 h-8 text-blue-600" />
-                            </div>
+    // Determine if header should be auto-collapsed based on tab
+    const shouldAutoCollapse = activeTab !== 'overview'
+    const effectiveCollapsed = shouldAutoCollapse || isCollapsed
 
-                            {/* Company Details */}
-                            <div className="space-y-3">
+    return (
+        <Card className="overflow-hidden transition-all duration-300 ease-in-out">
+            <CardContent className="p-0">
+                {/* Collapsed Header - Compact View */}
+                {effectiveCollapsed && (
+                    <div className="bg-gradient-to-r from-blue-50 to-indigo-50 px-6 py-3 border-b border-neutral-20">
+                        <div className="flex items-center justify-between">
+                            {/* Compact Company Info */}
+                            <div className="flex items-center gap-4">
+                                <div className="p-2 bg-white rounded-lg shadow-sm border border-neutral-20">
+                                    <Building2 className="w-5 h-5 text-blue-600" />
+                                </div>
                                 <div>
-                                    <h1 className="text-3xl font-bold text-neutral-90 mb-2">
+                                    <h1 className="text-lg font-bold text-neutral-90">
                                         {company.company_name || 'Unknown Company'}
                                     </h1>
-                                    <div className="flex items-center gap-4 text-sm text-neutral-60">
-                                        <span className="font-mono bg-white px-2 py-1 rounded border">
-                                            ID: {company.request_id}
-                                        </span>
+                                    <div className="flex items-center gap-3 text-xs text-neutral-60">
                                         <span className="flex items-center gap-1">
                                             {getStatusIcon(company.status)}
-                                            Processing {company.status || 'unknown'}
+                                            {company.status}
                                         </span>
-                                        {company.completed_at && (
+                                        {registeredAddress?.industry && (
+                                            <span>{registeredAddress.industry}</span>
+                                        )}
+                                        {registeredAddress?.state && (
                                             <span className="flex items-center gap-1">
-                                                <Calendar className="w-4 h-4" />
-                                                Completed {formatDate(company.completed_at)}
+                                                <MapPin className="w-3 h-3" />
+                                                {registeredAddress.city}, {registeredAddress.state}
                                             </span>
                                         )}
                                     </div>
-                                </div>
-
-                                {/* Company Basic Info */}
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
-                                    {registeredAddress?.industry && (
-                                        <div className="flex items-center gap-2">
-                                            <span className="text-neutral-60">Industry:</span>
-                                            <span className="font-small text-neutral-90">{registeredAddress.industry}</span>
-                                        </div>
-                                    )}
-
-                                    {registeredAddress?.state && (
-                                        <div className="flex items-center gap-2">
-                                            <MapPin className="w-4 h-4 text-neutral-60" />
-                                            <span className="text-neutral-90">{registeredAddress.city}, {registeredAddress.state}</span>
-                                        </div>
-                                    )}
-
-                                    {registeredAddress?.website && (
-                                        <div className="flex items-center gap-2">
-                                            <Globe className="w-4 h-4 text-neutral-60" />
-                                            <a
-                                                href={registeredAddress.website}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="text-blue-600 hover:text-blue-700 hover:underline"
-                                            >
-                                                Website
-                                            </a>
-                                        </div>
-                                    )}
-
-                                    {registeredAddress?.date_of_incorporation && (
-                                        <div className="flex items-center gap-2">
-                                            <Calendar className="w-4 h-4 text-neutral-60" />
-                                            <span className="text-neutral-90">
-                                                Est. {new Date(registeredAddress.date_of_incorporation).getFullYear()}
-                                            </span>
-                                        </div>
-                                    )}
                                 </div>
                             </div>
-                        </div>
 
-                        {/* Credit Rating */}
-                        <div className="text-center">
-                            <div className="flex items-center justify-center gap-2 mb-2">
-                                {ratingBadge.label !== "Not Rated" && ratingDetails?.benchmark && ratingDetails.benchmark === 'Excellent' && <Star className="w-5 h-5 text-yellow-500" />}
-                                <div className="relative group">
-                                    <div className="flex items-center gap-1">
-                                        <span
-                                            className={`px-4 py-2 rounded-full text-lg font-bold border-2 cursor-help ${ratingBadge.color}`}
-                                        >
-                                            {ratingBadge.label}
-                                        </span>
-                                        {ratingBadge.label !== "Not Rated" && ratingDetails?.benchmark && (
-                                            <span className={`text-xs px-2 py-1 rounded-full ${ratingDetails.benchmark === 'Excellent' ? 'bg-green-50 text-green-700' :
-                                                ratingDetails.benchmark === 'Good' ? 'bg-blue-50 text-blue-700' :
-                                                    ratingDetails.benchmark === 'Average' ? 'bg-yellow-50 text-yellow-700' :
-                                                        ratingDetails.benchmark === 'Poor' ? 'bg-red-50 text-red-700' :
-                                                            'bg-gray-50 text-gray-700'
-                                                }`}>
-                                                {ratingDetails.benchmark}
-                                            </span>
-                                        )}
+                            {/* Compact Metrics */}
+                            <div className="flex items-center gap-6">
+                                <div className="text-center">
+                                    <div className="text-sm font-bold text-neutral-90">
+                                        {company.risk_score?.toFixed(1) || 'N/A'}%
+                                    </div>
+                                    <div className="text-xs text-neutral-60">Risk Score</div>
+                                </div>
+                                <div className="text-center">
+                                    <div className="text-sm font-bold text-green-700">
+                                        ₹{company.recommended_limit?.toFixed(1) || 0}Cr
+                                    </div>
+                                    <div className="text-xs text-neutral-60">Credit Limit</div>
+                                </div>
+                                <div className="text-center">
+                                    <span
+                                        className={`px-3 py-1 rounded-full text-sm font-bold border ${ratingBadge.color}`}
+                                    >
+                                        {ratingBadge.label}
+                                    </span>
+                                </div>
+
+                                {/* Expand Button */}
+                                {onToggleCollapse && (
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={onToggleCollapse}
+                                        className="flex items-center gap-1 text-neutral-60 hover:text-neutral-90"
+                                    >
+                                        <Maximize2 className="w-4 h-4" />
+                                        <span className="text-xs">Expand</span>
+                                    </Button>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Full Header - Expanded View */}
+                {!effectiveCollapsed && (
+                    <>
+                        {/* Header Background */}
+                        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 px-8 py-6 border-b border-neutral-20">
+                            <div className="flex items-start justify-between">
+                                {/* Company Info */}
+                                <div className="flex items-start gap-6">
+                                    {/* Company Icon */}
+                                    <div className="p-4 bg-white rounded-xl shadow-sm border border-neutral-20">
+                                        <Building2 className="w-8 h-8 text-blue-600" />
                                     </div>
 
-                                    {/* Tooltip on hover */}
-                                    {ratingDetails && (
-                                        <div className="absolute bottom-full top-1 left-1/4 transform -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10">
-                                            <div className="bg-neutral-900 text-white text-xs rounded-lg py-2 px-3 whitespace-nowrap shadow-lg">
-                                                <div className="font-semibold">{ratingDetails.instrument_type}</div>
-                                                <div>{ratingBadge.category} - {ratingBadge.riskLevel} Risk</div>
-                                                {/* Tooltip arrow */}
-                                                <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-neutral-900"></div>
+                                    {/* Company Details */}
+                                    <div className="space-y-3">
+                                        <div>
+                                            <h1 className="text-3xl font-bold text-neutral-90 mb-2">
+                                                {company.company_name || 'Unknown Company'}
+                                            </h1>
+                                            <div className="flex items-center gap-4 text-sm text-neutral-60">
+                                                <span className="font-mono bg-white px-2 py-1 rounded border">
+                                                    ID: {company.request_id}
+                                                </span>
+                                                <span className="flex items-center gap-1">
+                                                    {getStatusIcon(company.status)}
+                                                    Processing {company.status || 'unknown'}
+                                                </span>
+                                                {company.completed_at && (
+                                                    <span className="flex items-center gap-1">
+                                                        <Calendar className="w-4 h-4" />
+                                                        Completed {formatDate(company.completed_at)}
+                                                    </span>
+                                                )}
                                             </div>
                                         </div>
+
+                                        {/* Company Basic Info */}
+                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
+                                            {registeredAddress?.industry && (
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-neutral-60">Industry:</span>
+                                                    <span className="font-small text-neutral-90">{registeredAddress.industry}</span>
+                                                </div>
+                                            )}
+
+                                            {registeredAddress?.state && (
+                                                <div className="flex items-center gap-2">
+                                                    <MapPin className="w-4 h-4 text-neutral-60" />
+                                                    <span className="text-neutral-90">{registeredAddress.city}, {registeredAddress.state}</span>
+                                                </div>
+                                            )}
+
+                                            {registeredAddress?.website && (
+                                                <div className="flex items-center gap-2">
+                                                    <Globe className="w-4 h-4 text-neutral-60" />
+                                                    <a
+                                                        href={registeredAddress.website}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="text-blue-600 hover:text-blue-700 hover:underline"
+                                                    >
+                                                        Website
+                                                    </a>
+                                                </div>
+                                            )}
+
+                                            {registeredAddress?.date_of_incorporation && (
+                                                <div className="flex items-center gap-2">
+                                                    <Calendar className="w-4 h-4 text-neutral-60" />
+                                                    <span className="text-neutral-90">
+                                                        Est. {new Date(registeredAddress.date_of_incorporation).getFullYear()}
+                                                    </span>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Credit Rating & Collapse Button */}
+                                <div className="flex items-start gap-4">
+                                    <div className="text-center">
+                                        <div className="flex items-center justify-center gap-2 mb-2">
+                                            {ratingBadge.label !== "Not Rated" && ratingDetails?.benchmark && ratingDetails.benchmark === 'Excellent' && <Star className="w-5 h-5 text-yellow-500" />}
+                                            <div className="relative group">
+                                                <div className="flex items-center gap-1">
+                                                    <span
+                                                        className={`px-4 py-2 rounded-full text-lg font-bold border-2 cursor-help ${ratingBadge.color}`}
+                                                    >
+                                                        {ratingBadge.label}
+                                                    </span>
+                                                    {ratingBadge.label !== "Not Rated" && ratingDetails?.benchmark && (
+                                                        <span className={`text-xs px-2 py-1 rounded-full ${ratingDetails.benchmark === 'Excellent' ? 'bg-green-50 text-green-700' :
+                                                            ratingDetails.benchmark === 'Good' ? 'bg-blue-50 text-blue-700' :
+                                                                ratingDetails.benchmark === 'Average' ? 'bg-yellow-50 text-yellow-700' :
+                                                                    ratingDetails.benchmark === 'Poor' ? 'bg-red-50 text-red-700' :
+                                                                        'bg-gray-50 text-gray-700'
+                                                            }`}>
+                                                            {ratingDetails.benchmark}
+                                                        </span>
+                                                    )}
+                                                </div>
+
+                                                {/* Tooltip on hover */}
+                                                {ratingDetails && (
+                                                    <div className="absolute bottom-full top-1 left-1/4 transform -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10">
+                                                        <div className="bg-neutral-900 text-white text-xs rounded-lg py-2 px-3 whitespace-nowrap shadow-lg">
+                                                            <div className="font-semibold">{ratingDetails.instrument_type}</div>
+                                                            <div>{ratingBadge.category} - {ratingBadge.riskLevel} Risk</div>
+                                                            {/* Tooltip arrow */}
+                                                            <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-neutral-900"></div>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        {/* Rating Details */}
+                                        {ratingDetails && (
+                                            <div className="space-y-1">
+                                                <div className="text-sm font-medium text-neutral-90">
+                                                    {ratingDetails.rating_agency}
+                                                </div>
+                                                {ratingDetails.rating_date && (
+                                                    <div className="text-xs text-neutral-60">
+                                                        {new Date(ratingDetails.rating_date).toLocaleDateString('en-IN', {
+                                                            day: '2-digit',
+                                                            month: 'short',
+                                                            year: 'numeric'
+                                                        })}
+                                                    </div>
+                                                )}
+                                                {ratingDetails.rating_action && (
+                                                    <div className={`text-xs px-2 py-1 rounded-full inline-block ${ratingDetails.rating_action === 'Reaffirmed' ? 'bg-green-50 text-green-700 border border-green-200' :
+                                                        ratingDetails.rating_action === 'Upgraded' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' :
+                                                            ratingDetails.rating_action === 'Downgraded' ? 'bg-red-50 text-red-700 border border-red-200' :
+                                                                ratingDetails.rating_action === 'Assigned' ? 'bg-blue-50 text-blue-700 border border-blue-200' :
+                                                                    'bg-gray-50 text-gray-700 border border-gray-200'
+                                                        }`}>
+                                                        {ratingDetails.rating_action}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
+
+                                        {!ratingDetails && (
+                                            <div className="space-y-1">
+                                                <div className="text-sm text-neutral-60">Credit Rating</div>
+                                                <div className="text-xs text-neutral-50">Not Available</div>
+                                            </div>
+                                        )}
+
+                                        <div className="mt-2">
+                                            <div className="text-sm text-neutral-60">Credit Rating</div>
+                                        </div>
+                                    </div>
+
+                                    {/* Collapse Button */}
+                                    {onToggleCollapse && (
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={onToggleCollapse}
+                                            className="flex items-center gap-1 text-neutral-60 hover:text-neutral-90 mt-2"
+                                        >
+                                            <Minimize2 className="w-4 h-4" />
+                                            <span className="text-xs">Collapse</span>
+                                        </Button>
                                     )}
                                 </div>
                             </div>
+                        </div>
 
-                            {/* Rating Details */}
-                            {ratingDetails && (
-                                <div className="space-y-1">
-                                    <div className="text-sm font-medium text-neutral-90">
-                                        {ratingDetails.rating_agency}
+                        {/* Key Metrics Row */}
+                        <div className="px-8 py-6">
+                            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-3 gap-6">
+                                {/* Risk Score */}
+                                <div className="text-center">
+                                    <div className="text-2xl font-bold text-neutral-90 mb-1">
+                                        {company.risk_score?.toFixed(1) || 'N/A'}%
                                     </div>
-                                    {ratingDetails.rating_date && (
-                                        <div className="text-xs text-neutral-60">
-                                            {new Date(ratingDetails.rating_date).toLocaleDateString('en-IN', {
-                                                day: '2-digit',
-                                                month: 'short',
-                                                year: 'numeric'
-                                            })}
+                                    <div className="text-sm text-neutral-60">Risk Score</div>
+                                </div>
+
+                                {/* Recommended Limit */}
+                                <div className="text-center">
+                                    <div className="text-2xl font-bold text-green-700 mb-1">
+                                        ₹{company.recommended_limit?.toFixed(1) || 0}Cr
+                                    </div>
+                                    <div className="text-sm text-neutral-60">Credit Limit</div>
+                                </div>
+                                <div className="text-center">
+                                    <div className="text-2xl font-bold text-neutral-90 mb-1">
+                                        {company.risk_grade}
+                                    </div>
+                                    <div className="text-sm text-neutral-60">Risk Grade</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Company Legal Info */}
+                        {companyInfo && (
+                            <div className="px-8 py-4 bg-neutral-5 border-t border-neutral-20">
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
+                                    {companyInfo.cin && (
+                                        <div>
+                                            <span className="text-neutral-60">CIN:</span>
+                                            <span className="ml-2 font-mono text-neutral-90">{companyInfo.cin}</span>
                                         </div>
                                     )}
-                                    {ratingDetails.rating_action && (
-                                        <div className={`text-xs px-2 py-1 rounded-full inline-block ${ratingDetails.rating_action === 'Reaffirmed' ? 'bg-green-50 text-green-700 border border-green-200' :
-                                            ratingDetails.rating_action === 'Upgraded' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' :
-                                                ratingDetails.rating_action === 'Downgraded' ? 'bg-red-50 text-red-700 border border-red-200' :
-                                                    ratingDetails.rating_action === 'Assigned' ? 'bg-blue-50 text-blue-700 border border-blue-200' :
-                                                        'bg-gray-50 text-gray-700 border border-gray-200'
-                                            }`}>
-                                            {ratingDetails.rating_action}
+
+                                    {companyInfo.pan && (
+                                        <div>
+                                            <span className="text-neutral-60">PAN:</span>
+                                            <span className="ml-2 font-mono text-neutral-90">{companyInfo.pan}</span>
+                                        </div>
+                                    )}
+
+                                    {companyInfo.company_status && (
+                                        <div>
+                                            <span className="text-neutral-60">Status:</span>
+                                            <span className="ml-2 text-neutral-90">{companyInfo.company_status}</span>
+                                        </div>
+                                    )}
+
+                                    {registeredAddress.segment && (
+                                        <div>
+                                            <span className="text-neutral-60">Segment:</span>
+                                            <span className="ml-2 text-neutral-90">{registeredAddress.segment}</span>
                                         </div>
                                     )}
                                 </div>
-                            )}
 
-                            {!ratingDetails && (
-                                <div className="space-y-1">
-                                    <div className="text-sm text-neutral-60">Credit Rating</div>
-                                    <div className="text-xs text-neutral-50">Not Available</div>
-                                </div>
-                            )}
+                                {/* Contact Information */}
+                                {(registeredAddress.email || registeredAddress.phone) && (
+                                    <div className="flex items-center gap-6 mt-3 pt-3 border-t border-neutral-20">
+                                        {registeredAddress.email && (
+                                            <div className="flex items-center gap-2 text-sm">
+                                                <Mail className="w-4 h-4 text-neutral-60" />
+                                                <a
+                                                    href={`mailto:${registeredAddress.email}`}
+                                                    className="text-blue-600 hover:text-blue-700 hover:underline"
+                                                >
+                                                    {registeredAddress.email}
+                                                </a>
+                                            </div>
+                                        )}
 
-                            <div className="mt-2">
-                                <div className="text-sm text-neutral-60">Credit Rating</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Key Metrics Row */}
-                <div className="px-8 py-6">
-                    <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-3 gap-6">
-                        {/* Risk Score */}
-                        <div className="text-center">
-                            <div className="text-2xl font-bold text-neutral-90 mb-1">
-                                {company.risk_score?.toFixed(1) || 'N/A'}%
-                            </div>
-                            <div className="text-sm text-neutral-60">Risk Score</div>
-                            {/* <div className="mt-1">
-                                {getTrendIcon(null)}
-                            </div> */}
-                        </div>
-
-                        {/* Recommended Limit */}
-                        <div className="text-center">
-                            <div className="text-2xl font-bold text-green-700 mb-1">
-                                ₹{company.recommended_limit?.toFixed(1) || 0}Cr
-                            </div>
-                            <div className="text-sm text-neutral-60">Credit Limit</div>
-                            {/* <div className="mt-1">
-                                {getTrendIcon(company.recommended_limit)}
-                            </div> */}
-                        </div>
-                        <div className="text-center">
-                            <div className="text-2xl font-bold text-neutral-90 mb-1">
-                                {company.risk_grade}
-                            </div>
-                            <div className="text-sm text-neutral-60">Risk Grade</div>
-                            {/* <div className="mt-1">
-                                {getTrendIcon(null)}
-                            </div> */}
-                        </div>
-                    </div>
-                </div>
-
-                {/* Company Legal Info */}
-                {companyInfo && (
-                    <div className="px-8 py-4 bg-neutral-5 border-t border-neutral-20">
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
-                            {companyInfo.cin && (
-                                <div>
-                                    <span className="text-neutral-60">CIN:</span>
-                                    <span className="ml-2 font-mono text-neutral-90">{companyInfo.cin}</span>
-                                </div>
-                            )}
-
-                            {companyInfo.pan && (
-                                <div>
-                                    <span className="text-neutral-60">PAN:</span>
-                                    <span className="ml-2 font-mono text-neutral-90">{companyInfo.pan}</span>
-                                </div>
-                            )}
-
-                            {companyInfo.company_status && (
-                                <div>
-                                    <span className="text-neutral-60">Status:</span>
-                                    <span className="ml-2 text-neutral-90">{companyInfo.company_status}</span>
-                                </div>
-                            )}
-
-                            {registeredAddress.segment && (
-                                <div>
-                                    <span className="text-neutral-60">Segment:</span>
-                                    <span className="ml-2 text-neutral-90">{registeredAddress.segment}</span>
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Contact Information */}
-                        {(registeredAddress.email || registeredAddress.phone) && (
-                            <div className="flex items-center gap-6 mt-3 pt-3 border-t border-neutral-20">
-                                {registeredAddress.email && (
-                                    <div className="flex items-center gap-2 text-sm">
-                                        <Mail className="w-4 h-4 text-neutral-60" />
-                                        <a
-                                            href={`mailto:${registeredAddress.email}`}
-                                            className="text-blue-600 hover:text-blue-700 hover:underline"
-                                        >
-                                            {registeredAddress.email}
-                                        </a>
-                                    </div>
-                                )}
-
-                                {registeredAddress.phone && (
-                                    <div className="flex items-center gap-2 text-sm">
-                                        <Phone className="w-4 h-4 text-neutral-60" />
-                                        <a
-                                            href={`tel:${registeredAddress.phone}`}
-                                            className="text-blue-600 hover:text-blue-700 hover:underline"
-                                        >
-                                            {registeredAddress.phone}
-                                        </a>
+                                        {registeredAddress.phone && (
+                                            <div className="flex items-center gap-2 text-sm">
+                                                <Phone className="w-4 h-4 text-neutral-60" />
+                                                <a
+                                                    href={`tel:${registeredAddress.phone}`}
+                                                    className="text-blue-600 hover:text-blue-700 hover:underline"
+                                                >
+                                                    {registeredAddress.phone}
+                                                </a>
+                                            </div>
+                                        )}
                                     </div>
                                 )}
                             </div>
                         )}
-                    </div>
+                    </>
                 )}
             </CardContent>
         </Card>

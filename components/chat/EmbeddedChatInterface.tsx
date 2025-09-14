@@ -8,32 +8,29 @@ import {
     CreateConversationRequest,
     SendMessageRequest
 } from '@/types/ai-chat.types'
-import { Card, CardContent, CardHeader } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { Alert } from '@/components/ui/Alert'
 import {
     MessageSquare,
-    X,
     Plus,
     Bot,
     Sparkles,
     AlertCircle,
-    RefreshCw
+    RefreshCw,
+    X
 } from 'lucide-react'
 import { ChatMessageComponent } from './ChatMessage'
 import { ChatInput } from './ChatInput'
 import { ConversationList } from './ConversationList'
 
-interface ChatInterfaceProps {
+interface EmbeddedChatInterfaceProps {
     requestId: string
     company: PortfolioCompany
-    isOpen: boolean
-    onClose: () => void
 }
 
-export function ChatInterface({ requestId, company, isOpen, onClose }: ChatInterfaceProps) {
+export function EmbeddedChatInterface({ requestId, company }: EmbeddedChatInterfaceProps) {
     const [conversations, setConversations] = useState<ChatConversation[]>([])
     const [activeConversation, setActiveConversation] = useState<ChatConversation | null>(null)
     const [messages, setMessages] = useState<ChatMessage[]>([])
@@ -41,16 +38,14 @@ export function ChatInterface({ requestId, company, isOpen, onClose }: ChatInter
     const [messagesLoading, setMessagesLoading] = useState(false)
     const [sendingMessage, setSendingMessage] = useState(false)
     const [error, setError] = useState<string | null>(null)
-    const [showConversationList, setShowConversationList] = useState(true)
+    const [showConversationList, setShowConversationList] = useState(false)
 
     const messagesEndRef = useRef<HTMLDivElement>(null)
 
-    // Load conversations when chat opens
+    // Load conversations when component mounts
     useEffect(() => {
-        if (isOpen && requestId) {
-            loadConversations()
-        }
-    }, [isOpen, requestId])
+        loadConversations()
+    }, [requestId])
 
     // Auto-scroll to bottom when new messages arrive
     useEffect(() => {
@@ -277,20 +272,64 @@ export function ChatInterface({ requestId, company, isOpen, onClose }: ChatInter
         }
     }
 
-    if (!isOpen) return null
-
     return (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-            <Card className="w-full max-w-6xl h-[80vh] flex flex-col bg-white shadow-2xl">
+        <div className="flex h-full bg-white rounded-lg overflow-hidden">
+            {/* Conversation List Sidebar */}
+            {showConversationList && (
+                <div className="w-80 border-r border-neutral-20 flex flex-col">
+                    <div className="p-4 border-b border-neutral-20 bg-neutral-5">
+                        <div className="flex items-center justify-between mb-3">
+                            <h3 className="font-semibold text-neutral-90">Conversations</h3>
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => setShowConversationList(false)}
+                            >
+                                <X className="w-4 h-4" />
+                            </Button>
+                        </div>
+                        <Button
+                            onClick={() => createNewConversation()}
+                            disabled={loading}
+                            className="w-full flex items-center gap-2"
+                            size="sm"
+                        >
+                            <Plus className="w-4 h-4" />
+                            New Conversation
+                        </Button>
+                    </div>
+
+                    <div className="flex-1 overflow-y-auto">
+                        {loading ? (
+                            <div className="p-4 space-y-3">
+                                {[...Array(3)].map((_, i) => (
+                                    <Skeleton key={i} className="w-full h-16" />
+                                ))}
+                            </div>
+                        ) : (
+                            <ConversationList
+                                conversations={conversations}
+                                activeConversationId={activeConversation?.id}
+                                onSelectConversation={selectConversation}
+                                onDeleteConversation={deleteConversation}
+                                onArchiveConversation={archiveConversation}
+                            />
+                        )}
+                    </div>
+                </div>
+            )}
+
+            {/* Chat Area */}
+            <div className="flex-1 flex flex-col">
                 {/* Header */}
-                <CardHeader className="flex-shrink-0 border-b border-neutral-20 bg-neutral-5">
+                <div className="p-4 border-b border-neutral-20 bg-neutral-5">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
                             <div className="p-2 bg-blue-100 rounded-lg">
                                 <Sparkles className="w-5 h-5 text-blue-600" />
                             </div>
                             <div>
-                                <h2 className="text-lg font-semibold text-neutral-90 flex items-center gap-2">
+                                <h2 className="font-semibold text-neutral-90 flex items-center gap-2">
                                     AI Assistant
                                     <Badge variant="info" size="sm">Beta</Badge>
                                 </h2>
@@ -300,7 +339,7 @@ export function ChatInterface({ requestId, company, isOpen, onClose }: ChatInter
                             </div>
                         </div>
                         <div className="flex items-center gap-2">
-                            {!showConversationList && activeConversation && (
+                            {!showConversationList && conversations.length > 0 && (
                                 <Button
                                     variant="ghost"
                                     size="sm"
@@ -308,137 +347,89 @@ export function ChatInterface({ requestId, company, isOpen, onClose }: ChatInter
                                     className="flex items-center gap-2"
                                 >
                                     <MessageSquare className="w-4 h-4" />
-                                    Conversations
+                                    Conversations ({conversations.length})
                                 </Button>
                             )}
+                        </div>
+                    </div>
+                </div>
+
+                {activeConversation ? (
+                    <>
+                        {/* Messages */}
+                        <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                            {messagesLoading ? (
+                                <div className="space-y-4">
+                                    {[...Array(3)].map((_, i) => (
+                                        <div key={i} className="flex gap-3">
+                                            <Skeleton className="w-8 h-8 rounded-full" />
+                                            <Skeleton className="flex-1 h-16" />
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <>
+                                    {messages.map((message) => (
+                                        <ChatMessageComponent
+                                            key={message.id}
+                                            message={message}
+                                            company={company}
+                                        />
+                                    ))}
+                                    {sendingMessage && (
+                                        <div className="flex gap-3">
+                                            <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                                                <Bot className="w-4 h-4 text-blue-600" />
+                                            </div>
+                                            <div className="flex-1 bg-neutral-5 rounded-lg p-3">
+                                                <div className="flex items-center gap-2 text-neutral-60">
+                                                    <RefreshCw className="w-4 h-4 animate-spin" />
+                                                    Thinking...
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+                                    <div ref={messagesEndRef} />
+                                </>
+                            )}
+                        </div>
+
+                        {/* Input */}
+                        <div className="border-t border-neutral-20 p-4">
+                            <ChatInput
+                                onSendMessage={sendMessage}
+                                isLoading={sendingMessage}
+                                disabled={messagesLoading}
+                                placeholder={`Ask about ${company.company_name}...`}
+                            />
+                        </div>
+                    </>
+                ) : (
+                    /* Welcome Screen */
+                    <div className="flex-1 flex items-center justify-center p-8">
+                        <div className="text-center max-w-md">
+                            <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <Sparkles className="w-8 h-8 text-blue-600" />
+                            </div>
+                            <h3 className="text-lg font-semibold text-neutral-90 mb-2">
+                                AI-Powered Analysis
+                            </h3>
+                            <p className="text-neutral-60 mb-6">
+                                Get instant insights about {company.company_name}'s financial health,
+                                risk factors, and credit assessment. Ask questions about ratios,
+                                compliance, or get recommendations.
+                            </p>
                             <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={onClose}
+                                onClick={() => createNewConversation()}
+                                disabled={loading}
                                 className="flex items-center gap-2"
                             >
-                                <X className="w-4 h-4" />
+                                <Plus className="w-4 h-4" />
+                                Start New Conversation
                             </Button>
                         </div>
                     </div>
-                </CardHeader>
-
-                {/* Content */}
-                <CardContent className="flex-1 flex overflow-hidden p-0">
-                    {/* Conversation List Sidebar */}
-                    {showConversationList && (
-                        <div className="w-80 border-r border-neutral-20 flex flex-col">
-                            <div className="p-4 border-b border-neutral-20">
-                                <Button
-                                    onClick={() => createNewConversation()}
-                                    disabled={loading}
-                                    className="w-full flex items-center gap-2"
-                                >
-                                    <Plus className="w-4 h-4" />
-                                    New Conversation
-                                </Button>
-                            </div>
-
-                            <div className="flex-1 overflow-y-auto">
-                                {loading ? (
-                                    <div className="p-4 space-y-3">
-                                        {[...Array(3)].map((_, i) => (
-                                            <Skeleton key={i} className="w-full h-16" />
-                                        ))}
-                                    </div>
-                                ) : (
-                                    <ConversationList
-                                        conversations={conversations}
-                                        activeConversationId={activeConversation?.id}
-                                        onSelectConversation={selectConversation}
-                                        onDeleteConversation={deleteConversation}
-                                        onArchiveConversation={archiveConversation}
-                                    />
-                                )}
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Chat Area */}
-                    <div className="flex-1 flex flex-col">
-                        {activeConversation ? (
-                            <>
-                                {/* Messages */}
-                                <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                                    {messagesLoading ? (
-                                        <div className="space-y-4">
-                                            {[...Array(3)].map((_, i) => (
-                                                <div key={i} className="flex gap-3">
-                                                    <Skeleton className="w-8 h-8 rounded-full" />
-                                                    <Skeleton className="flex-1 h-16" />
-                                                </div>
-                                            ))}
-                                        </div>
-                                    ) : (
-                                        <>
-                                            {messages.map((message) => (
-                                                <ChatMessageComponent
-                                                    key={message.id}
-                                                    message={message}
-                                                    company={company}
-                                                />
-                                            ))}
-                                            {sendingMessage && (
-                                                <div className="flex gap-3">
-                                                    <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                                                        <Bot className="w-4 h-4 text-blue-600" />
-                                                    </div>
-                                                    <div className="flex-1 bg-neutral-5 rounded-lg p-3">
-                                                        <div className="flex items-center gap-2 text-neutral-60">
-                                                            <RefreshCw className="w-4 h-4 animate-spin" />
-                                                            Thinking...
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            )}
-                                            <div ref={messagesEndRef} />
-                                        </>
-                                    )}
-                                </div>
-
-                                {/* Input */}
-                                <div className="border-t border-neutral-20 p-4">
-                                    <ChatInput
-                                        onSendMessage={sendMessage}
-                                        isLoading={sendingMessage}
-                                        disabled={messagesLoading}
-                                        placeholder={`Ask about ${company.company_name}...`}
-                                    />
-                                </div>
-                            </>
-                        ) : (
-                            /* Welcome Screen */
-                            <div className="flex-1 flex items-center justify-center p-8">
-                                <div className="text-center max-w-md">
-                                    <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                                        <Sparkles className="w-8 h-8 text-blue-600" />
-                                    </div>
-                                    <h3 className="text-lg font-semibold text-neutral-90 mb-2">
-                                        AI-Powered Analysis
-                                    </h3>
-                                    <p className="text-neutral-60 mb-6">
-                                        Get instant insights about {company.company_name}'s financial health,
-                                        risk factors, and credit assessment. Ask questions about ratios,
-                                        compliance, or get recommendations.
-                                    </p>
-                                    <Button
-                                        onClick={() => createNewConversation()}
-                                        disabled={loading}
-                                        className="flex items-center gap-2"
-                                    >
-                                        <Plus className="w-4 h-4" />
-                                        Start New Conversation
-                                    </Button>
-                                </div>
-                            </div>
-                        )}
-                    </div>
-                </CardContent>
+                )}
 
                 {/* Error Alert */}
                 {error && (
@@ -457,7 +448,7 @@ export function ChatInterface({ requestId, company, isOpen, onClose }: ChatInter
                         </Alert>
                     </div>
                 )}
-            </Card>
+            </div>
         </div>
     )
 }

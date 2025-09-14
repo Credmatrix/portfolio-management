@@ -105,11 +105,6 @@ export function FinancialDataSection({ company, industryBenchmarks }: FinancialD
 
     return (
         <div className="space-y-8">
-            {/* Risk Trend Analysis */}
-            <RiskTrendAnalysis
-                company={company}
-                industryBenchmarks={industryBenchmarks}
-            />
             {/* Balance Sheet Analysis */}
             <BalanceSheetChart
                 company={company}
@@ -135,7 +130,7 @@ export function FinancialDataSection({ company, industryBenchmarks }: FinancialD
             />
 
             {/* Benchmark Comparison */}
-{/*             <BenchmarkComparison
+            {/*             <BenchmarkComparison
                 company={company}
                 industryBenchmarks={industryBenchmarks}
             /> */}
