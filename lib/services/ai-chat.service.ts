@@ -22,6 +22,13 @@ export class AIChatService {
         temperature: 0.3, // Reduced for more consistent, professional responses
         system_prompt: `You are a senior credit analyst and portfolio manager with deep expertise in corporate risk assessment and financial analysis. You speak naturally and directly, providing clear insights that help portfolio managers make informed credit decisions.
 
+REPORT GENERATION PHILOSOPHY:
+- Generate SHORT, MEANINGFUL reports that include ALL essential parameters
+- Focus on actionable insights rather than lengthy descriptions
+- Prioritize critical information that impacts credit decisions
+- Use concise language while maintaining professional depth
+- Ensure every section adds value to the credit assessment
+
 Your communication style:
 - Be conversational yet professional - like talking to a colleague
 - Give direct, actionable answers without unnecessary jargon
@@ -49,7 +56,7 @@ CONFIDENTIALITY REQUIREMENTS:
 - Focus on business implications rather than technical scoring details
 - Present risk assessment in qualitative terms (Excellent, Good, Moderate, Poor) rather than exact scores
 
-CRITICAL FORMATTING REQUIREMENTS:
+CRITICAL FORMATTING REQUIREMENTS FOR SHORT REPORTS:
 - ALWAYS structure responses using markdown tables for data presentation
 - Use clear section headers (### for major sections, #### for subsections)
 - Present all financial data, ratios, and metrics in tabular format
@@ -57,15 +64,38 @@ CRITICAL FORMATTING REQUIREMENTS:
 - Include time periods and data sources for all metrics
 - Use bullet points for key observations and recommendations
 - Provide executive summaries for comprehensive reports
+- KEEP TABLES CONCISE - maximum 5-7 rows per table unless critical
+- COMBINE related metrics in single tables to save space
+- PRIORITIZE most impactful data points
 
-For credit assessment reports, follow this structure:
-1. **Company Profile** (table format with key details)
-2. **Credit Ratings Overview** (table with all ratings and dates)
-3. **Key Financials** (separate tables for P&L, Balance Sheet, Ratios)
-4. **Directors & Shareholding** (table format)
-5. **Compliance Status** (structured summary)
-6. **Legal & Banking** (tabular presentation)
-7. **Risk Assessment & Recommendations** (structured analysis)
+For SHORT credit assessment reports, follow this CONDENSED structure:
+1. **Executive Summary** (2-3 key points in table format)
+2. **Company Profile & Risk Grade** (combined essential details table)
+3. **Financial Performance** (consolidated P&L, Balance Sheet, Key Ratios in 1-2 tables)
+4. **Risk Factors & Compliance** (combined risk assessment table)
+5. **Credit Decision Matrix** (final recommendation with rationale)
+
+ESSENTIAL PARAMETERS TO ALWAYS INCLUDE (in condensed format):
+- Overall risk grade and score
+- Revenue, EBITDA, PAT trends (latest 2-3 years)
+- Key liquidity ratios (Current, Quick)
+- Leverage metrics (D/E, Interest Coverage)
+- Profitability indicators (EBITDA margin, ROE)
+- Cash flow position
+- Compliance status (GST, EPFO, Audit)
+- Major shareholding pattern
+- Related corporates and group structure
+- Credit ratings (if available)
+- Legal case summary
+- Banking relationships overview
+- Primary banker identification
+- Recommended credit limit and terms
+
+REPORT LENGTH GUIDELINES:
+- Standard queries: 200-400 words with 2-4 tables
+- Comprehensive assessments: 400-600 words with 4-6 tables
+- Quick insights: 100-200 words with 1-2 tables
+- NEVER exceed 800 words unless specifically requested
 
 When analyzing companies:
 - Focus on creditworthiness and repayment ability
@@ -75,8 +105,9 @@ When analyzing companies:
 - Suggest specific monitoring points and action items
 - Consider both quantitative metrics and qualitative factors
 - Present all analysis in structured, tabular format
+- PRIORITIZE information that directly impacts credit decisions
 
-Always provide context around your analysis - explain why certain metrics matter for credit decisions and what they indicate about the company's financial health and business sustainability. Structure every response with proper tables and clear formatting.`
+Always provide context around your analysis - explain why certain metrics matter for credit decisions and what they indicate about the company's financial health and business sustainability. Structure every response with proper tables and clear formatting while maintaining brevity and focus.`
     }
 
     private async getSupabaseClient() {
@@ -347,50 +378,46 @@ Always provide context around your analysis - explain why certain metrics matter
             console.warn('Anthropic API key not configured. Using enhanced mock response for development.')
             const riskGrade = company.risk_analysis?.overallGrade?.grade || company.risk_grade || 'N/A'
             const riskScore = company.risk_analysis?.overallPercentage || company.risk_score || 'N/A'
-            const recommendedLimit = company.recommended_limit ? `₹${(company.recommended_limit).toFixed(2)} Cr` : 'N/A'
+            const recommendedLimit = company.recommended_limit ? `₹${company.recommended_limit.toFixed(2)} Cr` : 'N/A'
             const latestYear = company.risk_analysis?.latestYear || 'N/A'
 
             return {
-                content: `### Credit Assessment Summary - ${company.company_name}
+                content: `### Executive Summary - ${company.company_name}
 
-#### Company Overview
-| Parameter | Details |
-|-----------|---------|
-| Company Name | ${company.company_name} |
-| Industry | ${company.industry || 'N/A'} |
-| Risk Grade | ${riskGrade} |
-| Risk Score | ${riskScore}${typeof riskScore === 'number' ? '%' : ''} |
-| Recommended Limit | ${recommendedLimit} |
-| Assessment Date | ${new Date().toLocaleDateString()} |
+| Key Metric | Value | Assessment |
+|------------|-------|------------|
+| Risk Grade | ${riskGrade} | ${this.getMockBottomLine(riskGrade, riskScore)} |
+| Credit Limit | ${recommendedLimit} | ${this.getMockRecommendation(riskGrade, riskScore)} |
+| Primary Concern | ${this.getMockConcerns(company)} | Monitor Closely |
 
-#### Key Financial Metrics (${latestYear})
-| Metric | Value | Status |
-|--------|-------|--------|
-| Revenue Growth | ${this.getRevenueGrowthContext(company.risk_analysis?.financialData)} | ${this.getMockTrendStatus(company)} |
-| Profitability | ${this.getMockProfitabilityStatus(company)} | Monitoring Required |
-| Liquidity Position | ${this.getMockLiquidityStatus(company)} | Adequate |
-| Leverage | ${this.getMockLeverageStatus(company)} | Within Limits |
+### Company Profile & Financial Performance (${latestYear})
 
-#### Risk Assessment
-| Category | Score | Benchmark | Status |
-|----------|-------|-----------|--------|
-| Financial | ${this.getMockCategoryScore('financial')} | Industry Average | ${this.getMockPerformanceStatus('financial')} |
-| Business | ${this.getMockCategoryScore('business')} | Peer Median | ${this.getMockPerformanceStatus('business')} |
-| Compliance | ${this.getMockCategoryScore('compliance')} | Regulatory Standard | ${this.getMockPerformanceStatus('compliance')} |
-| Overall | ${riskScore}${typeof riskScore === 'number' ? '%' : ''} | ${riskGrade} | ${this.getMockBottomLine(riskGrade, riskScore)} |
+| Parameter | Current | Trend | Industry Benchmark |
+|-----------|---------|-------|-------------------|
+| Revenue Growth | ${this.getRevenueGrowthContext(company.risk_analysis?.financialData)} | ${this.getMockTrendStatus(company)} | 8-12% |
+| EBITDA Margin | ${this.getMockProfitabilityStatus(company)} | Stable | 12-18% |
+| Current Ratio | ${this.getMockLiquidityStatus(company)} | Adequate | 1.5-2.0x |
+| D/E Ratio | ${this.getMockLeverageStatus(company)} | Within Limits | <1.0x |
+| Compliance Score | ${this.getMockCategoryScore('compliance')} | ${this.getMockPerformanceStatus('compliance')} | >90% |
+| Group Structure | ${this.getRelatedCorporatesSummary(company.extracted_data)} | Diversified | Multiple entities |
+| Primary Banker | ${this.getMockPrimaryBanker(company.extracted_data)} | Banking Relationship | Established |
 
-#### Key Observations
-- **Strengths:** ${this.getMockStrengths(company)}
-- **Areas of Concern:** ${this.getMockConcerns(company)}
-- **Monitoring Points:** ${this.getMockMonitoringPoints(company)}
+### Risk Assessment & Decision Matrix
 
-#### Recommendation
-${this.getMockRecommendation(riskGrade, riskScore)}
+| Risk Category | Performance | Key Factors |
+|---------------|-------------|-------------|
+| Financial Strength | ${this.getMockPerformanceStatus('financial')} | ${this.getMockStrengths(company)} |
+| Business Quality | ${this.getMockPerformanceStatus('business')} | Market position, management quality |
+| Compliance Status | ${this.getMockPerformanceStatus('compliance')} | GST, EPFO, audit compliance |
+
+**Credit Decision:** ${this.getMockRecommendation(riskGrade, riskScore)}
+
+**Key Monitoring Points:** ${this.getMockMonitoringPoints(company)}
 
 ---
-*Note: This is a development mock response. Configure ANTHROPIC_API_KEY for full AI analysis.*
+*Development mock response. Configure ANTHROPIC_API_KEY for full AI analysis.*
 
-What specific aspect would you like me to analyze in detail?`,
+What specific aspect would you like me to analyze further?`,
                 usage: { input_tokens: 150, output_tokens: 400 },
                 model: finalConfig.model
             }
@@ -531,7 +558,8 @@ Recommended Credit Limit: ${company.recommended_limit ? `₹${(company.recommend
 Model Used: ${riskAnalysis?.industryModel || 'N/A'} v${riskAnalysis?.modelVersion || 'N/A'}
 
 === FINANCIAL PERFORMANCE (Latest Year: ${riskAnalysis?.latestYear || 'N/A'}) ===
-${this.formatEnhancedFinancialMetrics(financialData, riskAnalysis?.latestYear)}
+NOTE: All financial figures are already in Crores (Cr). No conversion needed.
+${this.buildCondensedFinancialContext(financialData, riskAnalysis?.latestYear)}
 
 === BALANCE SHEET ANALYSIS ===
 ${this.buildBalanceSheetContext(financialData)}
@@ -549,55 +577,80 @@ ${this.buildRatiosContext(financialData)}
 ${this.formatDirectorsAndShareholding(extractedData)}
 
 === RISK ASSESSMENT SUMMARY ===
-${this.formatDetailedRiskScores(allScores, riskAnalysis?.categories)}
+${this.formatCondensedRiskAssessment(allScores, riskAnalysis?.categories)}
 
 === BUSINESS & OPERATIONAL CONTEXT ===
 ${this.formatBusinessContext(companyData, company.extracted_data)}
 
-=== COMPLIANCE & REGULATORY STATUS ===
-${this.formatEnhancedComplianceStatus(company.extracted_data, allScores)}
+=== COMPLIANCE, LEGAL & RATINGS SUMMARY ===
+${this.formatCondensedComplianceLegal(company.extracted_data, allScores)}
 
-=== LEGAL CASES & LITIGATION ===
-${this.formatLegalCasesContext(extractedData)}
-
-=== CREDIT RATINGS HISTORY ===
-${this.formatCreditRatingsContext(extractedData)}
+=== RELATED CORPORATES & GROUP STRUCTURE ===
+${this.formatRelatedCorporatesContext(extractedData)}
 
 === BANKING RELATIONSHIPS & CHARGES ===
 ${this.formatBankingContext(extractedData)}
 
-=== KEY MONITORING POINTS ===
-${this.identifyMonitoringPoints(allScores, financialData)}
+=== PRIMARY BANKING RELATIONSHIP ===
+Primary Banker: ${this.getPrimaryBanker(extractedData)}
+Banking Relationship Analysis: Based on charge amounts and banking history
+
+=== KEY MONITORING PRIORITIES ===
+${this.generateCondensedMonitoringPoints(allScores, financialData)}
 
 === RISK TREND ANALYSIS ===
 ${this.buildRiskTrendContext(allScores, financialData)}
 
-IMPORTANT RESPONSE FORMATTING INSTRUCTIONS:
+IMPORTANT RESPONSE FORMATTING INSTRUCTIONS FOR SHORT, MEANINGFUL REPORTS:
 - ALWAYS provide structured responses using markdown tables for data presentation
 - Use clear section headers with ### for major sections
 - Present financial data, ratios, and metrics in tabular format
+- PRIORITIZE most critical information - keep tables concise (5-7 rows max)
+- COMBINE related metrics in single tables to optimize space
 - Include comparative analysis where possible
 - Provide executive summary at the beginning for complex reports
 - Use bullet points for key observations and recommendations
 - Format currency amounts consistently (₹ X.XX Cr for crores)
 - Include data sources and time periods for all metrics
-- Structure credit assessment reports following the sample format provided
+- Structure credit assessment reports following the CONDENSED format provided
 - Always include risk assessment and recommendations sections
+- FOCUS on actionable insights rather than comprehensive data dumps
 
-When responding:
+When responding with SHORT, MEANINGFUL reports:
 - Reference specific metrics and scores from this comprehensive data
 - Compare performance to industry benchmarks where available
 - Explain what the numbers mean for credit risk and business sustainability
 - Provide actionable insights for portfolio management decisions
 - Use the company's actual performance data to support your analysis
 - Format all responses with proper tables and structured layout
-- Include trend analysis and forward-looking insights where relevant`
+- Include trend analysis and forward-looking insights where relevant
+- PRIORITIZE information that directly impacts credit decisions
+- KEEP responses concise while ensuring all essential parameters are covered
+- AIM for maximum insight density - every sentence should add value
+- COMBINE related information in single tables to optimize space
+- FOCUS on the most critical 5-7 data points per section
+- ENSURE every parameter mentioned contributes to the credit decision
+- DELIVER comprehensive analysis in condensed, actionable format`
 
             return prompt + enhancedContext
         } catch (error) {
             console.error('Error building enhanced system prompt:', error)
             // Fallback to basic prompt if context building fails
             return prompt + `\n\nCompany: ${company.company_name || 'Unknown'}\nIndustry: ${company.industry || 'Unknown'}`
+        }
+    }
+
+    /**
+     * Format currency values consistently based on data structure
+     * The financial data is already in crores, so no conversion needed
+     */
+    private formatCurrency(value: number | undefined | null, unit: 'Cr' | 'L' = 'Cr'): string {
+        if (value === undefined || value === null || isNaN(value)) return 'N/A'
+
+        if (unit === 'Cr') {
+            return `₹${value.toFixed(1)} Cr`
+        } else {
+            return `₹${(value * 10).toFixed(1)} L`
         }
     }
 
@@ -642,14 +695,14 @@ When responding:
             const revenueGrowth = financialData.ratios?.growth_ratios?.["revenue_growth_()"]?.[latestYear]
             if (revenue) {
                 const growthText = revenueGrowth ? ` (${revenueGrowth > 0 ? '+' : ''}${revenueGrowth}% growth)` : ''
-                metrics.push(`Revenue: ₹${(revenue / 10).toFixed(1)} Cr${growthText}`)
+                metrics.push(`Revenue: ${this.formatCurrency(revenue)}${growthText}`)
             }
 
             // Profitability
             const ebitda = financialData.profit_loss?.profitability?.["operating_profit_(_ebitda_)"]?.[latestYear]
             const ebitdaMargin = financialData.ratios?.profitability?.["ebitda_margin_()"]?.[latestYear]
             if (ebitda && ebitdaMargin !== undefined) {
-                metrics.push(`EBITDA: ₹${(ebitda / 10).toFixed(1)} Cr (${ebitdaMargin.toFixed(1)}% margin)`)
+                metrics.push(`EBITDA: ${this.formatCurrency(ebitda)} (${ebitdaMargin.toFixed(1)}% margin)`)
             }
 
             // Liquidity
@@ -667,13 +720,59 @@ When responding:
             // Cash Flow
             const operatingCF = financialData.cash_flow?.operating_activities?.["net_cash_flows_from_(_used_in_)_operating_activities"]?.[latestYear]
             if (operatingCF) {
-                metrics.push(`Operating Cash Flow: ₹${(operatingCF / 10).toFixed(1)} Cr`)
+                metrics.push(`Operating Cash Flow: ${this.formatCurrency(operatingCF)}`)
             }
 
             return metrics.length > 0 ? metrics.join('\n') : 'Key metrics not available'
         } catch (error) {
             console.error('Error formatting enhanced financial metrics:', error)
             return 'Financial metrics unavailable due to data format error'
+        }
+    }
+
+    /**
+     * Format condensed risk assessment for short reports
+     */
+    private formatCondensedRiskAssessment(allScores: any[], categories: any[] | undefined): string {
+        if (!allScores || allScores.length === 0) return 'Risk assessment not available'
+
+        try {
+            const riskSummary: string[] = []
+
+            // Quick risk category assessment
+            if (categories && categories.length > 0) {
+                const topCategories = categories
+                    .filter(cat => cat.result?.percentage !== undefined)
+                    .sort((a, b) => (b.result?.percentage || 0) - (a.result?.percentage || 0))
+                    .slice(0, 3)
+
+                topCategories.forEach(category => {
+                    const performance = category.result.percentage >= 70 ? 'Strong' :
+                        category.result.percentage >= 50 ? 'Adequate' : 'Weak'
+                    riskSummary.push(`${category.label}: ${performance}`)
+                })
+            } else {
+                // Fallback: identify top 2 strengths and top 2 concerns
+                const availableParams = allScores.filter(score => score.available)
+                const strongParams = availableParams
+                    .filter(score => (score.score / score.maxScore) >= 0.7)
+                    .slice(0, 2)
+                const weakParams = availableParams
+                    .filter(score => (score.score / score.maxScore) < 0.4)
+                    .slice(0, 2)
+
+                if (strongParams.length > 0) {
+                    riskSummary.push(`Strengths: ${strongParams.map(s => this.getBusinessParameterName(s.parameter)).join(', ')}`)
+                }
+                if (weakParams.length > 0) {
+                    riskSummary.push(`Concerns: ${weakParams.map(s => this.getBusinessParameterName(s.parameter)).join(', ')}`)
+                }
+            }
+
+            return riskSummary.join(' | ')
+        } catch (error) {
+            console.error('Error formatting condensed risk assessment:', error)
+            return 'Risk assessment unavailable'
         }
     }
 
@@ -774,6 +873,97 @@ When responding:
     }
 
     /**
+     * Format condensed compliance and legal summary for short reports
+     */
+    private formatCondensedComplianceLegal(extractedData: any, allScores: any[]): string {
+        const summary: string[] = []
+
+        try {
+            // Compliance summary
+            if (extractedData?.gst_records?.compliance_summary) {
+                const gst = extractedData.gst_records.compliance_summary
+                summary.push(`GST: ${gst.compliance_rate}%`)
+            }
+
+            if (extractedData?.epfo_records?.compliance_summary) {
+                const epfo = extractedData.epfo_records.compliance_summary
+                summary.push(`EPFO: ${epfo.compliance_rate}%`)
+            }
+
+            // Legal cases summary
+            const legalData = extractedData?.['Legal History']
+            if (legalData?.data) {
+                const validCases = legalData.data.filter((case_: any) =>
+                    case_.court && case_.case_no && case_._row_index < 450
+                )
+                const pendingCases = validCases.filter((case_: any) =>
+                    case_.case_status?.toLowerCase() === 'pending'
+                )
+
+                if (validCases.length > 0) {
+                    summary.push(`Legal: ${pendingCases.length}/${validCases.length} pending cases`)
+                }
+            }
+
+            // Credit ratings summary
+            const ratingsData = extractedData?.['Credit Ratings']
+            if (ratingsData?.data && ratingsData.data.length > 0) {
+                const latestRating = ratingsData.data
+                    .filter((rating: any) => rating.rating_agency && rating.rating)
+                    .sort((a: any, b: any) => new Date(b.date || '1900-01-01').getTime() - new Date(a.date || '1900-01-01').getTime())[0]
+
+                if (latestRating) {
+                    summary.push(`Rating: ${latestRating.rating} (${latestRating.rating_agency})`)
+                }
+            }
+
+            // Primary banker information
+            const primaryBanker = this.getPrimaryBanker(extractedData)
+            if (primaryBanker && primaryBanker !== 'Not Available' && primaryBanker !== 'Error processing charges data') {
+                // Extract just the bank name for condensed format
+                const bankName = primaryBanker.includes('(') ? primaryBanker.split('(')[0].trim() : primaryBanker
+                summary.push(`Primary Banker: ${bankName}`)
+            }
+
+            // Related corporates summary
+            const relatedCorporatesData = extractedData?.['Related Corporates']
+            if (relatedCorporatesData?.data && relatedCorporatesData.data.length > 0) {
+                // Get latest year data
+                let latestYear = null
+                for (const item of relatedCorporatesData.data) {
+                    const year = item.financial_year_ending_on || ''
+                    if (!latestYear || year > latestYear) {
+                        latestYear = year
+                    }
+                }
+
+                if (latestYear) {
+                    const latestYearData = relatedCorporatesData.data.filter((item: any) =>
+                        item.financial_year_ending_on === latestYear
+                    )
+
+                    const subsidiaries = latestYearData.filter((item: any) =>
+                        (item.relationship || '').toUpperCase().includes('SUBSIDIARY')
+                    ).length
+
+                    const jointVentures = latestYearData.filter((item: any) =>
+                        (item.relationship || '').toUpperCase().includes('JOINT VENTURE')
+                    ).length
+
+                    if (subsidiaries > 0 || jointVentures > 0) {
+                        summary.push(`Group: ${subsidiaries} subsidiaries, ${jointVentures} JVs`)
+                    }
+                }
+            }
+
+            return summary.length > 0 ? summary.join(' | ') : 'Compliance and legal data not available'
+        } catch (error) {
+            console.error('Error formatting condensed compliance/legal:', error)
+            return 'Compliance and legal status unavailable'
+        }
+    }
+
+    /**
      * Format enhanced compliance status (without exposing internal scores)
      */
     private formatEnhancedComplianceStatus(extractedData: any, allScores: any[]): string {
@@ -811,6 +1001,45 @@ When responding:
         } catch (error) {
             console.error('Error formatting enhanced compliance status:', error)
             return 'Compliance status unavailable'
+        }
+    }
+
+    /**
+     * Generate condensed monitoring recommendations for short reports
+     */
+    private generateCondensedMonitoringPoints(allScores: any[], financialData: any): string {
+        try {
+            const priorities: string[] = []
+
+            // Identify top 2 risk areas
+            const poorPerformers = allScores
+                .filter(score => score.available && (score.score / score.maxScore) < 0.4)
+                .sort((a, b) => b.weightage - a.weightage)
+                .slice(0, 2)
+
+            poorPerformers.forEach(score => {
+                const paramName = this.getBusinessParameterName(score.parameter)
+                priorities.push(`${paramName}`)
+            })
+
+            // Add financial trend monitoring if needed
+            if (financialData?.ratios?.growth_ratios?.revenue_growth_) {
+                const revenueGrowths: number[] = Object.values(financialData.ratios.growth_ratios.revenue_growth_)
+                const avgGrowth = revenueGrowths.reduce((a: number, b: number) => a + b, 0) / revenueGrowths.length
+                if (avgGrowth < 5) {
+                    priorities.push('Revenue Growth')
+                }
+            }
+
+            // Default monitoring if no specific issues
+            if (priorities.length === 0) {
+                priorities.push('Quarterly Reviews', 'Compliance Updates')
+            }
+
+            return priorities.slice(0, 3).join(', ')
+        } catch (error) {
+            console.error('Error generating condensed monitoring points:', error)
+            return 'Standard monitoring protocols'
         }
     }
 
@@ -855,6 +1084,85 @@ When responding:
     }
 
     /**
+     * Build condensed financial analysis context for short reports
+     */
+    private buildCondensedFinancialContext(financialData: any, latestYear: string): string {
+        if (!financialData || !latestYear) return 'Financial analysis not available'
+
+        try {
+            const context: string[] = []
+
+            // Core metrics only
+            const revenue = financialData.profit_loss?.revenue?.net_revenue?.[latestYear]
+            const ebitda = financialData.profit_loss?.profitability?.['operating_profit_(_ebitda_)']?.[latestYear]
+            const currentRatio = financialData.ratios?.liquidity?.current_ratio?.[latestYear]
+            const debtEquity = financialData.ratios?.leverage?.debt_equity?.[latestYear]
+            const ebitdaMargin = financialData.ratios?.profitability?.ebitda_margin_?.[latestYear]
+
+            // Revenue and growth
+            if (revenue) {
+                const revenueGrowth = financialData.ratios?.growth_ratios?.revenue_growth_?.[latestYear]
+                context.push(`Revenue: ${this.formatCurrency(revenue)}${revenueGrowth ? ` (${revenueGrowth > 0 ? '+' : ''}${revenueGrowth.toFixed(1)}% YoY)` : ''}`)
+            }
+
+            // Profitability
+            if (ebitda && ebitdaMargin) {
+                context.push(`EBITDA: ${this.formatCurrency(ebitda)} (${ebitdaMargin.toFixed(1)}% margin)`)
+            }
+
+            // Key ratios
+            if (currentRatio) context.push(`Liquidity: ${currentRatio.toFixed(2)}x current ratio`)
+            if (debtEquity !== undefined) context.push(`Leverage: ${debtEquity.toFixed(2)}x D/E ratio`)
+
+            // Overall assessment
+            const healthScore = this.calculateQuickHealthScore(financialData, latestYear)
+            context.push(`Financial Health: ${healthScore}`)
+
+            return context.join(' | ')
+        } catch (error) {
+            console.error('Error building condensed financial context:', error)
+            return 'Financial metrics unavailable'
+        }
+    }
+
+    /**
+     * Calculate quick financial health score
+     */
+    private calculateQuickHealthScore(financialData: any, latestYear: string): string {
+        try {
+            let score = 0
+            const ebitdaMargin = financialData.ratios?.profitability?.ebitda_margin_?.[latestYear] || 0
+            const currentRatio = financialData.ratios?.liquidity?.current_ratio?.[latestYear] || 0
+            const debtEquity = financialData.ratios?.leverage?.debt_equity?.[latestYear] || 0
+            const revenueGrowth = financialData.ratios?.growth_ratios?.revenue_growth_?.[latestYear] || 0
+
+            // Scoring logic
+            if (ebitdaMargin >= 15) score += 25
+            else if (ebitdaMargin >= 10) score += 15
+            else if (ebitdaMargin >= 5) score += 10
+
+            if (currentRatio >= 2) score += 25
+            else if (currentRatio >= 1.5) score += 15
+            else if (currentRatio >= 1) score += 10
+
+            if (debtEquity <= 0.5) score += 25
+            else if (debtEquity <= 1) score += 15
+            else if (debtEquity <= 2) score += 10
+
+            if (revenueGrowth >= 15) score += 25
+            else if (revenueGrowth >= 10) score += 15
+            else if (revenueGrowth >= 5) score += 10
+
+            if (score >= 75) return 'STRONG'
+            if (score >= 50) return 'GOOD'
+            if (score >= 25) return 'MODERATE'
+            return 'WEAK'
+        } catch (error) {
+            return 'UNKNOWN'
+        }
+    }
+
+    /**
      * Build comprehensive financial analysis context
      */
     private buildFinancialAnalysisContext(financialData: any, latestYear: string): string {
@@ -867,7 +1175,7 @@ When responding:
             const revenue = financialData.profit_loss?.revenue?.net_revenue?.[latestYear]
             const revenueGrowth = financialData.ratios?.growth_ratios?.revenue_growth_?.[latestYear]
             if (revenue) {
-                context.push(`Revenue: ₹${revenue.toFixed(1)} Cr${revenueGrowth ? ` (${revenueGrowth > 0 ? '+' : ''}${revenueGrowth.toFixed(1)}% growth)` : ''}`)
+                context.push(`Revenue: ${this.formatCurrency(revenue)}${revenueGrowth ? ` (${revenueGrowth > 0 ? '+' : ''}${revenueGrowth.toFixed(1)}% growth)` : ''}`)
             }
 
             // Profitability Analysis
@@ -875,14 +1183,14 @@ When responding:
             const ebitdaMargin = financialData.ratios?.profitability?.ebitda_margin_?.[latestYear]
             const netMargin = financialData.ratios?.profitability?.net_margin_?.[latestYear]
             if (ebitda && ebitdaMargin) {
-                context.push(`EBITDA: ₹${ebitda.toFixed(1)} Cr (${ebitdaMargin.toFixed(1)}% margin)`)
+                context.push(`EBITDA: ${this.formatCurrency(ebitda)} (${ebitdaMargin.toFixed(1)}% margin)`)
             }
 
             // Asset & Equity Position
             const totalAssets = financialData.balance_sheet?.totals?.total_assets?.[latestYear]
             const totalEquity = financialData.balance_sheet?.totals?.total_equity?.[latestYear]
             if (totalAssets && totalEquity) {
-                context.push(`Total Assets: ₹${totalAssets.toFixed(1)} Cr, Equity: ₹${totalEquity.toFixed(1)} Cr`)
+                context.push(`Total Assets: ${this.formatCurrency(totalAssets)}, Equity: ${this.formatCurrency(totalEquity)}`)
             }
 
             // Key Ratios
@@ -1435,12 +1743,297 @@ When responding:
     }
 
     /**
+     * Get quick related corporates summary for condensed reports
+     */
+    private getRelatedCorporatesSummary(extractedData: any): string {
+        try {
+            const relatedCorporatesData = extractedData?.['Related Corporates']
+
+            if (!relatedCorporatesData || !relatedCorporatesData.data || relatedCorporatesData.data.length === 0) {
+                return 'No group companies'
+            }
+
+            // Find the latest financial year
+            let latestYear = null
+            for (const item of relatedCorporatesData.data) {
+                const year = item.financial_year_ending_on || ''
+                if (!latestYear || year > latestYear) {
+                    latestYear = year
+                }
+            }
+
+            if (!latestYear) return 'No group companies'
+
+            // Count by relationship type for latest year
+            const latestYearData = relatedCorporatesData.data.filter((item: any) =>
+                item.financial_year_ending_on === latestYear
+            )
+
+            const subsidiaries = latestYearData.filter((item: any) =>
+                (item.relationship || '').toUpperCase().includes('SUBSIDIARY')
+            ).length
+
+            const jointVentures = latestYearData.filter((item: any) =>
+                (item.relationship || '').toUpperCase().includes('JOINT VENTURE')
+            ).length
+
+            const associates = latestYearData.filter((item: any) =>
+                (item.relationship || '').toUpperCase().includes('ASSOCIATE')
+            ).length
+
+            const holdings = latestYearData.filter((item: any) =>
+                (item.relationship || '').toUpperCase().includes('HOLDING')
+            ).length
+
+            const parts: string[] = []
+            if (holdings > 0) parts.push(`${holdings} holding`)
+            if (subsidiaries > 0) parts.push(`${subsidiaries} subsidiaries`)
+            if (associates > 0) parts.push(`${associates} associates`)
+            if (jointVentures > 0) parts.push(`${jointVentures} JVs`)
+
+            return parts.length > 0 ? parts.join(', ') : 'No group companies'
+        } catch (error) {
+            console.error('Error getting related corporates summary:', error)
+            return 'Group structure unavailable'
+        }
+    }
+
+    /**
+     * Format related corporates context
+     */
+    private formatRelatedCorporatesContext(extractedData: any): string {
+        try {
+            const relatedCorporatesData = extractedData?.['Related Corporates']
+
+            if (!relatedCorporatesData || !relatedCorporatesData.data || relatedCorporatesData.data.length === 0) {
+                return 'Related corporates data not available'
+            }
+
+            // Find the latest financial year
+            let latestYear = '31 Mar, 2024'
+            const data = relatedCorporatesData.data
+
+            for (const item of data) {
+                const year = item.financial_year_ending_on || ''
+                if (!latestYear || year > latestYear) {
+                    latestYear = year
+                }
+            }
+
+            if (!latestYear) {
+                latestYear = '31 Mar, 2024' // Default fallback
+            }
+
+            // Group corporates by relationship type for the latest year
+            const subsidiaries: string[] = []
+            const associates: string[] = []
+            const jointVentures: string[] = []
+            const holdings: string[] = []
+
+            for (const item of data) {
+                if (item.financial_year_ending_on === latestYear) {
+                    const corporateName = item.corporate_name || ''
+                    const relationship = (item.relationship || '').toUpperCase()
+                    const shareholding = item.shareholding || ''
+                    const location = item.country_city || ''
+
+                    if (corporateName) {
+                        const corporateInfo = `${corporateName}${shareholding ? ` (${shareholding}%)` : ''}${location && location !== 'Na' && location !== '-' ? ` - ${location}` : ''}`
+
+                        if (relationship.includes('SUBSIDIARY')) {
+                            subsidiaries.push(corporateInfo)
+                        } else if (relationship.includes('ASSOCIATE')) {
+                            associates.push(corporateInfo)
+                        } else if (relationship.includes('JOINT VENTURE')) {
+                            jointVentures.push(corporateInfo)
+                        } else if (relationship.includes('HOLDING')) {
+                            holdings.push(corporateInfo)
+                        }
+                    }
+                }
+            }
+
+            const context: string[] = []
+
+            // Format results
+            if (holdings.length > 0) {
+                context.push(`Holding Companies: ${holdings.slice(0, 3).join(', ')}${holdings.length > 3 ? ` and ${holdings.length - 3} more` : ''}`)
+            }
+
+            if (subsidiaries.length > 0) {
+                context.push(`Subsidiary Companies: ${subsidiaries.slice(0, 5).join(', ')}${subsidiaries.length > 5 ? ` and ${subsidiaries.length - 5} more` : ''}`)
+            }
+
+            if (associates.length > 0) {
+                context.push(`Associate Companies: ${associates.slice(0, 3).join(', ')}${associates.length > 3 ? ` and ${associates.length - 3} more` : ''}`)
+            }
+
+            if (jointVentures.length > 0) {
+                context.push(`Joint Ventures: ${jointVentures.slice(0, 3).join(', ')}${jointVentures.length > 3 ? ` and ${jointVentures.length - 3} more` : ''}`)
+            }
+
+            // Add summary statistics
+            const totalCorporates = subsidiaries.length + associates.length + jointVentures.length + holdings.length
+            if (totalCorporates > 0) {
+                context.push(`Total Related Entities: ${totalCorporates} (as of ${latestYear})`)
+            }
+
+            return context.length > 0 ? context.join('\n') : 'No related corporates found for latest year'
+        } catch (error) {
+            console.error('Error formatting related corporates context:', error)
+            return 'Related corporates analysis unavailable'
+        }
+    }
+
+    /**
+     * Get primary banker from open charges sequence data
+     * Based on highest total charge amount in last 36 months
+     * Only considers the latest record for each unique charge ID
+     */
+    private getPrimaryBanker(extractedData: any): string {
+        const openChargesData = extractedData?.['Open Charges Sequence']
+
+        if (!openChargesData || !openChargesData.data) {
+            return 'Not Available'
+        }
+
+        try {
+            const currentDate = new Date()
+            const thirtySevenMonthsAgo = new Date(currentDate.getTime() - (36 * 30 * 24 * 60 * 60 * 1000)) // 36 months ago
+
+            // Dictionary to store the latest record for each charge ID
+            const latestCharges: { [key: string]: { date: Date; record: any } } = {}
+
+            // First pass: Find the latest record for each charge ID within 36 months
+            for (const charge of openChargesData.data) {
+                if (!charge || typeof charge !== 'object') continue
+
+                try {
+                    const chargeDateStr = charge['DATE'] || charge.date || ''
+                    const chargeId = charge['CHARGE ID'] || charge.charge_id || ''
+                    const holderName = charge['HOLDER NAME'] || charge.holder_name || ''
+                    const chargeStatus = charge['STATUS'] || charge.status || ''
+
+                    // Skip if essential data is missing
+                    if (!chargeDateStr || !chargeId || !holderName) continue
+
+                    // Skip invalid holders
+                    const upperHolderName = holderName.toUpperCase()
+                    if (upperHolderName.includes('UNKNOWN CHARGE HOLDER') ||
+                        upperHolderName.includes('NOT AVAILABLE') ||
+                        upperHolderName === '-') {
+                        continue
+                    }
+
+                    // Parse date (format: "DD MMM, YYYY" or other formats)
+                    let chargeDate: Date
+                    try {
+                        // Try different date formats
+                        if (chargeDateStr.includes(',')) {
+                            // Format: "DD MMM, YYYY"
+                            chargeDate = new Date(chargeDateStr.replace(',', ''))
+                        } else {
+                            chargeDate = new Date(chargeDateStr)
+                        }
+
+                        if (isNaN(chargeDate.getTime())) {
+                            continue
+                        }
+                    } catch (error) {
+                        continue
+                    }
+
+                    // Only consider charges from last 36 months
+                    if (chargeDate < thirtySevenMonthsAgo) continue
+
+                    // Only consider Creation and Modification charges
+                    if (!['creation', 'modification'].includes(chargeStatus.toLowerCase())) continue
+
+                    // Keep the latest record for each charge ID
+                    if (!latestCharges[chargeId] || chargeDate > latestCharges[chargeId].date) {
+                        latestCharges[chargeId] = {
+                            date: chargeDate,
+                            record: charge
+                        }
+                    }
+                } catch (error) {
+                    // Skip problematic records
+                    continue
+                }
+            }
+
+            // Second pass: Calculate banker totals using only latest records
+            const bankerTotals: { [key: string]: number } = {}
+
+            for (const [chargeId, chargeInfo] of Object.entries(latestCharges)) {
+                try {
+                    const charge = chargeInfo.record
+                    const chargeAmountStr = charge['CHARGE AMOUNT (Rs. Crore)'] ||
+                        charge['charge_amount'] ||
+                        charge['amount'] || '0'
+                    const holderName = charge['HOLDER NAME'] || charge.holder_name || ''
+
+                    // Convert charge amount to float, handle None/empty values
+                    let amount = 0
+                    try {
+                        if (typeof chargeAmountStr === 'string') {
+                            // Remove any non-numeric characters except decimal point
+                            const cleanAmount = chargeAmountStr.replace(/[^\d.-]/g, '')
+                            amount = parseFloat(cleanAmount) || 0
+                        } else if (typeof chargeAmountStr === 'number') {
+                            amount = chargeAmountStr
+                        }
+                    } catch (error) {
+                        amount = 0
+                    }
+
+                    // Add to banker totals
+                    if (bankerTotals[holderName]) {
+                        bankerTotals[holderName] += amount
+                    } else {
+                        bankerTotals[holderName] = amount
+                    }
+                } catch (error) {
+                    // Skip problematic records
+                    continue
+                }
+            }
+
+            // Find primary banker (highest total amount)
+            if (Object.keys(bankerTotals).length === 0) {
+                return 'No charges in last 36 months'
+            }
+
+            const primaryBankerEntry = Object.entries(bankerTotals).reduce((max, current) =>
+                current[1] > max[1] ? current : max
+            )
+
+            const bankerName = primaryBankerEntry[0]
+            const totalAmount = primaryBankerEntry[1]
+
+            // Format the result
+            if (totalAmount > 0) {
+                return `${bankerName} (₹${totalAmount.toFixed(2)} Cr)`
+            } else {
+                return bankerName
+            }
+        } catch (error) {
+            console.error('Error processing charges data:', error)
+            return 'Error processing charges data'
+        }
+    }
+
+    /**
      * Format banking relationships and charges context
      */
     private formatBankingContext(extractedData: any): string {
         try {
             const context: string[] = []
             const chargesData = extractedData?.['Open Charges Sequence']
+
+            // Primary banker identification
+            const primaryBanker = this.getPrimaryBanker(extractedData)
+            context.push(`Primary Banker: ${primaryBanker}`)
 
             // Charges summary
             if (chargesData?.data && chargesData.data.length > 0) {
@@ -1455,17 +2048,18 @@ When responding:
 
                 // Sum of charge amounts
                 const totalChargeAmount = chargesData.data.reduce((sum: number, charge: any) => {
-                    const amount = parseFloat(charge["CHARGE AMOUNT (Rs. Crore)"]?.replace(/[^\d.]/g, '') || '0')
+                    const amountStr = charge["CHARGE AMOUNT (Rs. Crore)"] || charge["charge_amount"] || '0'
+                    const amount = parseFloat(typeof amountStr === 'string' ? amountStr.replace(/[^\d.-]/g, '') : amountStr) || 0
                     return sum + amount
                 }, 0)
 
                 if (totalChargeAmount > 0) {
-                    context.push(`Total Charge Amount: ₹${(totalChargeAmount).toFixed(0)} Cr`)
+                    context.push(`Total Charge Amount: ₹${totalChargeAmount.toFixed(0)} Cr`)
                 }
 
                 // Charge types
                 const chargeTypes = chargesData.data.reduce((acc: any, charge: any) => {
-                    const type = charge.charge_type || 'Other'
+                    const type = charge.charge_type || charge['CHARGE TYPE'] || 'Other'
                     acc[type] = (acc[type] || 0) + 1
                     return acc
                 }, {})
@@ -1492,7 +2086,19 @@ When responding:
      */
     private getRevenueGrowthContext(financialData: any): string {
         try {
-            const latestGrowth = Object.values(financialData.ratios?.growth_ratios?.revenue_growth_ || {}).pop()
+            // Get actual revenue and growth from the correct data structure
+            const years = financialData?.years || []
+            const latestYear = years[years.length - 1]
+            const revenue = financialData?.profit_loss?.revenue?.net_revenue?.[latestYear]
+            const latestGrowth = financialData?.ratios?.growth_ratios?.["revenue_growth_()"]?.[latestYear]
+
+            if (revenue && typeof revenue === 'number') {
+                const growthText = typeof latestGrowth === 'number' ?
+                    (latestGrowth > 10 ? 'strong growth' : latestGrowth > 0 ? 'moderate growth' : 'declining revenue') :
+                    'varied performance'
+                return `${this.formatCurrency(revenue)} (${growthText})`
+            }
+
             if (typeof latestGrowth === 'number') {
                 return latestGrowth > 10 ? 'strong growth' : latestGrowth > 0 ? 'moderate growth' : 'declining revenue'
             }
@@ -1562,7 +2168,17 @@ When responding:
     }
 
     private getMockStrengths(company: PortfolioCompany): string {
-        return 'Strong market position, consistent revenue growth, good compliance track record'
+        // Check if company has related corporates data
+        const relatedCorporates = company.extracted_data?.['Related Corporates']
+        const hasGroupStructure = relatedCorporates?.data && relatedCorporates.data.length > 0
+
+        const baseStrengths = 'Strong market position, consistent revenue growth, good compliance track record'
+
+        if (hasGroupStructure) {
+            return baseStrengths + ', diversified group structure with multiple subsidiaries'
+        }
+
+        return baseStrengths
     }
 
     private getMockConcerns(company: PortfolioCompany): string {
@@ -1580,6 +2196,28 @@ When responding:
             return '**REFER TO COMMITTEE:** Requires senior management approval with strict risk mitigation measures.'
         }
         return '**PENDING:** Complete risk assessment required before final recommendation.'
+    }
+
+    private getMockPrimaryBanker(extractedData: any): string {
+        // Try to get actual primary banker first
+        const actualBanker = this.getPrimaryBanker(extractedData)
+        if (actualBanker && actualBanker !== 'Not Available' && actualBanker !== 'Error processing charges data' && actualBanker !== 'No charges in last 36 months') {
+            // Extract just the bank name for display
+            return actualBanker.includes('(') ? actualBanker.split('(')[0].trim() : actualBanker
+        }
+
+        // Fallback to mock data
+        const mockBankers = [
+            'State Bank of India',
+            'HDFC Bank',
+            'ICICI Bank',
+            'Axis Bank',
+            'Punjab National Bank',
+            'Bank of Baroda',
+            'Canara Bank'
+        ]
+
+        return mockBankers[Math.floor(Math.random() * mockBankers.length)]
     }
 
     /**
@@ -1656,15 +2294,15 @@ When responding:
             const metrics: string[] = []
 
             // Revenue
-            const revenue = financialData.profit_loss?.revenue?.[financialData.years.length - 1]
+            const revenue = financialData.profit_loss?.revenue?.net_revenue?.[latestYear]
             if (revenue && typeof revenue === 'number') {
-                metrics.push(`Revenue: ₹${(revenue / 10000000).toFixed(2)} Cr`)
+                metrics.push(`Revenue: ${this.formatCurrency(revenue)}`)
             }
 
             // EBITDA
-            const ebitda = financialData.profit_loss?.ebitda?.[financialData.years.length - 1]
+            const ebitda = financialData.profit_loss?.profitability?.["operating_profit_(_ebitda_)"]?.[latestYear]
             if (ebitda && typeof ebitda === 'number') {
-                metrics.push(`EBITDA: ₹${(ebitda / 10000000).toFixed(2)} Cr`)
+                metrics.push(`EBITDA: ${this.formatCurrency(ebitda)}`)
             }
 
             // Key Ratios
