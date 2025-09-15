@@ -181,6 +181,7 @@ export function PortfolioGrid({
 	useEffect(() => {
 		setInternalFilters(initialFilters);
 		setSearchQuery(initialFilters.search_query || '');
+		setSearchInput(initialFilters.search_query || '');
 	}, []); // Empty dependency array - only run on mount
 
 	// Update search query when external filters change
@@ -188,6 +189,7 @@ export function PortfolioGrid({
 	useEffect(() => {
 		if (externalSearchQuery !== undefined) {
 			setSearchQuery(externalSearchQuery || '');
+			setSearchInput(externalSearchQuery || '');
 		}
 	}, [externalSearchQuery]);
 
@@ -342,12 +344,15 @@ export function PortfolioGrid({
 		retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
 	});
 
+	// Local search input state for immediate UI updates
+	const [searchInput, setSearchInput] = useState<string>(initialFilters.search_query || '');
+
 	// Debounced search to improve performance
 	const debouncedSearch = useCallback(
 		debounce((query: string) => {
 			setSearchQuery(query);
 			setPagination(prev => ({ ...prev, page: 1 }));
-		}, 300),
+		}, 1500),
 		[]
 	);
 	const handleFilterChange = useCallback((newFilters: FilterCriteria, source: 'manual' | 'analytics' | 'search' = 'manual') => {
@@ -392,13 +397,21 @@ export function PortfolioGrid({
 		[handleFilterChange]
 	);
 
+	// Handle input change with immediate UI update and debounced search
+	const handleSearchInputChange = useCallback((query: string) => {
+		setSearchInput(query); // Update UI immediately
+		debouncedSearch(query); // Debounce the actual search
+	}, [debouncedSearch]);
+
 	const handleSearch = useCallback((query: string) => {
 		// Cancel any pending requests for rapid search changes
 		if (abortControllerRef.current) {
 			abortControllerRef.current.abort();
 		}
-		debouncedSearch(query);
-	}, [debouncedSearch]);
+		setSearchInput(query);
+		setSearchQuery(query);
+		setPagination(prev => ({ ...prev, page: 1 }));
+	}, []);
 
 
 	// Handle external filter updates from analytics components
@@ -557,6 +570,7 @@ export function PortfolioGrid({
 		if (!disableInternalFiltering) {
 			setInternalFilters({});
 			setSearchQuery('');
+			setSearchInput('');
 			setSortCriteria({ field: 'risk_score', direction: 'desc' });
 			setPagination({ page: 1, limit: 20 });
 
@@ -718,13 +732,13 @@ export function PortfolioGrid({
 			/> */}
 
 			{/* Search Bar */}
-			{/* <SearchBar
-				value={searchQuery}
-				onChange={setSearchQuery}
+			<SearchBar
+				value={searchInput}
+				onChange={handleSearchInputChange}
 				onSearch={handleSearch}
 				suggestions={defaultSearchSuggestions}
 				isLoading={isFetching}
-			/> */}
+			/>
 
 			{/* Filter Controls */}
 			{showFilters && (
