@@ -26,7 +26,8 @@ import {
     Users,
     Shield,
     TrendingUp,
-    CheckCircle
+    CheckCircle,
+    Search
 } from 'lucide-react'
 
 // Import the section components
@@ -42,6 +43,8 @@ import { CreditManagementSection } from './components/CreditManagementSection'
 // Import AI Chat components
 import { EmbeddedChatInterface } from '@/components/chat'
 import { RiskTrendAnalysis } from './components/financial/RiskTrendAnalysis'
+import { DeepResearchInterface, ResearchReportViewer } from '@/components/deep-research'
+import { GstFilingDetailsSection } from './components/compliance/GstFilingDetailsSection'
 
 interface CompanyDetailPageProps { }
 
@@ -461,6 +464,14 @@ export default function CompanyDetailPage({ }: CompanyDetailPageProps) {
                                 <CheckCircle className="w-4 h-4" />
                                 Compliance
                             </TabsTrigger>
+                            {/* <TabsTrigger
+                                value="deep-research"
+                                className="flex items-center gap-2"
+                                disabled={company?.status !== 'completed'}
+                            >
+                                <Search className="w-4 h-4" />
+                                Deep Research
+                            </TabsTrigger> */}
                             <TabsTrigger
                                 value="ai-chat"
                                 className="flex items-center gap-2"
@@ -555,10 +566,45 @@ export default function CompanyDetailPage({ }: CompanyDetailPageProps) {
                         {/* Compliance Tab */}
                         <TabsContent value="compliance" className="space-y-6">
                             <div className="grid grid-cols-1 xl:grid-cols-1 gap-6">
+                                {/* GST Filing Details Section */}
+                                <GstFilingDetailsSection company={company} />
                                 <ComplianceSection company={company} />
                                 {/* <CreditEligibilitySection company={company} /> */}
                             </div>
                         </TabsContent>
+
+                        {/* Deep Research Tab */}
+                        {/* <TabsContent value="deep-research" className="space-y-6">
+                            {company?.status === 'completed' ? (
+                                <div className="space-y-8">
+                                    <DeepResearchInterface
+                                        requestId={requestId}
+                                        companyName={company.company_name || 'Unknown Company'}
+                                    />
+
+                                    <div className="border-t border-neutral-20 pt-8">
+                                        <ResearchReportViewer requestId={requestId} />
+                                    </div>
+                                </div>
+                            ) : (
+                                <Card>
+                                    <CardContent className="p-8 text-center">
+                                        <div className="w-16 h-16 bg-neutral-10 rounded-full flex items-center justify-center mx-auto mb-4">
+                                            <Search className="w-8 h-8 text-neutral-50" />
+                                        </div>
+                                        <h3 className="text-lg font-semibold text-neutral-90 mb-2">
+                                            Deep Research Unavailable
+                                        </h3>
+                                        <p className="text-neutral-60 mb-4">
+                                            Deep research is only available for completed company analyses.
+                                        </p>
+                                        <Badge variant="warning">
+                                            Status: {company?.status || 'Unknown'}
+                                        </Badge>
+                                    </CardContent>
+                                </Card>
+                            )}
+                        </TabsContent> */}
 
                         {/* AI Chat Tab */}
                         <TabsContent value="ai-chat" className="space-y-6">

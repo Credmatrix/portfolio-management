@@ -437,6 +437,209 @@ export type Database = {
           },
         ]
       }
+      deep_research_findings: {
+        Row: {
+          completed_at: string | null
+          content: string | null
+          created_at: string | null
+          error_message: string | null
+          id: string
+          job_id: string
+          query_text: string
+          research_type: string
+          started_at: string | null
+          success: boolean | null
+          tokens_used: number | null
+        }
+        Insert: {
+          completed_at?: string | null
+          content?: string | null
+          created_at?: string | null
+          error_message?: string | null
+          id?: string
+          job_id: string
+          query_text: string
+          research_type: string
+          started_at?: string | null
+          success?: boolean | null
+          tokens_used?: number | null
+        }
+        Update: {
+          completed_at?: string | null
+          content?: string | null
+          created_at?: string | null
+          error_message?: string | null
+          id?: string
+          job_id?: string
+          query_text?: string
+          research_type?: string
+          started_at?: string | null
+          success?: boolean | null
+          tokens_used?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "deep_research_findings_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "deep_research_jobs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      deep_research_jobs: {
+        Row: {
+          api_calls_made: number | null
+          budget_tokens: number | null
+          completed_at: string | null
+          created_at: string | null
+          error_message: string | null
+          findings: Json | null
+          id: string
+          job_type: string
+          max_attempts: number | null
+          progress: number | null
+          recommendations: string[] | null
+          request_id: string
+          research_scope: Json | null
+          risk_assessment: Json | null
+          started_at: string | null
+          status: string
+          tokens_used: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          api_calls_made?: number | null
+          budget_tokens?: number | null
+          completed_at?: string | null
+          created_at?: string | null
+          error_message?: string | null
+          findings?: Json | null
+          id?: string
+          job_type: string
+          max_attempts?: number | null
+          progress?: number | null
+          recommendations?: string[] | null
+          request_id: string
+          research_scope?: Json | null
+          risk_assessment?: Json | null
+          started_at?: string | null
+          status?: string
+          tokens_used?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          api_calls_made?: number | null
+          budget_tokens?: number | null
+          completed_at?: string | null
+          created_at?: string | null
+          error_message?: string | null
+          findings?: Json | null
+          id?: string
+          job_type?: string
+          max_attempts?: number | null
+          progress?: number | null
+          recommendations?: string[] | null
+          request_id?: string
+          research_scope?: Json | null
+          risk_assessment?: Json | null
+          started_at?: string | null
+          status?: string
+          tokens_used?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "deep_research_jobs_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "document_processing_requests"
+            referencedColumns: ["request_id"]
+          },
+          {
+            foreignKeyName: "deep_research_jobs_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "recent_document_requests"
+            referencedColumns: ["request_id"]
+          },
+        ]
+      }
+      deep_research_reports: {
+        Row: {
+          created_at: string | null
+          executive_summary: string | null
+          expires_at: string | null
+          export_formats: string[] | null
+          findings_summary: Json | null
+          generated_at: string | null
+          id: string
+          pdf_url: string | null
+          recommendations: string[] | null
+          report_type: string
+          request_id: string
+          risk_level: string | null
+          sections: Json | null
+          title: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          executive_summary?: string | null
+          expires_at?: string | null
+          export_formats?: string[] | null
+          findings_summary?: Json | null
+          generated_at?: string | null
+          id?: string
+          pdf_url?: string | null
+          recommendations?: string[] | null
+          report_type?: string
+          request_id: string
+          risk_level?: string | null
+          sections?: Json | null
+          title: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          executive_summary?: string | null
+          expires_at?: string | null
+          export_formats?: string[] | null
+          findings_summary?: Json | null
+          generated_at?: string | null
+          id?: string
+          pdf_url?: string | null
+          recommendations?: string[] | null
+          report_type?: string
+          request_id?: string
+          risk_level?: string | null
+          sections?: Json | null
+          title?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "deep_research_reports_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "document_processing_requests"
+            referencedColumns: ["request_id"]
+          },
+          {
+            foreignKeyName: "deep_research_reports_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "recent_document_requests"
+            referencedColumns: ["request_id"]
+          },
+        ]
+      }
       document_processing_requests: {
         Row: {
           available_parameters: number | null
@@ -1999,6 +2202,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: number
       }
+      cleanup_expired_research_reports: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
       cleanup_old_requests: {
         Args: { days_old?: number }
         Returns: number
@@ -2217,6 +2424,17 @@ export type Database = {
       generate_conversation_title: {
         Args: { conversation_uuid: string }
         Returns: string
+      }
+      get_active_research_jobs: {
+        Args: { user_id_param: string }
+        Returns: {
+          created_at: string
+          id: string
+          job_type: string
+          progress: number
+          request_id: string
+          status: string
+        }[]
       }
       get_analysis_stats: {
         Args: Record<PropertyKey, never>
@@ -2496,6 +2714,14 @@ export type Database = {
           field_value: string
           status: string
         }[]
+      }
+      update_research_job_progress: {
+        Args: {
+          job_id_param: string
+          progress_param: number
+          status_param?: string
+        }
+        Returns: undefined
       }
       user_belongs_to_organization: {
         Args: { p_organization_id: string; p_user_id: string }
