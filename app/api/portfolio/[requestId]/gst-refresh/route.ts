@@ -4,7 +4,7 @@ import { GstApiService } from '@/lib/services/gst-api.service'
 
 export async function GET(
     request: NextRequest,
-    { params }: { params: { requestId: string } }
+    { params }: { params: Promise<{ requestId: string }> }
 ) {
     try {
         const supabase = await createServerSupabaseClient()
@@ -33,7 +33,7 @@ export async function GET(
 
 export async function POST(
     request: NextRequest,
-    { params }: { params: { requestId: string } }
+    { params }: { params: Promise<{ requestId: string }> }
 ) {
     try {
         const supabase = await createServerSupabaseClient()

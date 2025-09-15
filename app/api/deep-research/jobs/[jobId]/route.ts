@@ -7,7 +7,7 @@ import { DeepResearchService } from '@/lib/services/deep-research.service'
 
 export async function GET(
     request: NextRequest,
-    { params }: { params: { jobId: string } }
+    { params }: { params: Promise<{ jobId: string }> }
 ) {
     try {
         const supabase = await createServerSupabaseClient()
@@ -61,7 +61,7 @@ export async function GET(
 
 export async function DELETE(
     request: NextRequest,
-    { params }: { params: { jobId: string } }
+    { params }: { params: Promise<{ jobId: string }> }
 ) {
     try {
         const supabase = await createServerSupabaseClient()

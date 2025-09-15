@@ -6,7 +6,7 @@ import { createServerSupabaseClient } from '@/lib/supabase/server'
 
 export async function GET(
     request: NextRequest,
-    { params }: { params: { reportId: string } }
+    { params }: { params: Promise<{ reportId: string }> }
 ) {
     try {
         const supabase = await createServerSupabaseClient()
@@ -20,7 +20,7 @@ export async function GET(
             )
         }
 
-        const reportId = params.reportId
+        const { reportId } = await params
 
         // Get report details
         const { data: report, error: reportError } = await supabase
@@ -56,7 +56,7 @@ export async function GET(
 
 export async function DELETE(
     request: NextRequest,
-    { params }: { params: { reportId: string } }
+    { params }: { params: Promise<{ reportId: string }> }
 ) {
     try {
         const supabase = await createServerSupabaseClient()
@@ -70,7 +70,7 @@ export async function DELETE(
             )
         }
 
-        const reportId = params.reportId
+        const { reportId } = await params
 
         // Delete report
         const { error } = await supabase
