@@ -1,20 +1,18 @@
 'use client'
 
-import { PortfolioCompany } from '@/types/portfolio.types'
-import { Card, CardContent, CardHeader } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
+import { Card, CardContent, CardHeader } from '@/components/ui/Card'
+import { PortfolioCompany } from '@/types/portfolio.types'
 import {
-    Shield,
-    CheckCircle,
-    XCircle,
     AlertTriangle,
-    FileText,
-    Users,
-    Calendar,
-    MapPin,
     Building,
+    CheckCircle,
+    Clock,
+    FileText,
+    Shield,
     TrendingUp,
-    Clock
+    Users,
+    XCircle
 } from 'lucide-react'
 
 interface ComplianceSectionProps {
