@@ -405,18 +405,9 @@ export class PortfolioRepository {
 
         // Apply enhanced text search across multiple indexed fields including new flattened fields
         if (searchQuery.trim()) {
+            const searchTerm = searchQuery.trim().replace(/'/g, "''") // Escape single quotes
             // Search in company name, industry, rating, sector, and location fields
-            query = query.or(`
-                company_name.ilike.%${searchQuery}%,
-                industry.ilike.%${searchQuery}%,
-                credit_rating.ilike.%${searchQuery}%,
-                sector.ilike.%${searchQuery}%,
-                location_city.ilike.%${searchQuery}%,
-                location_state.ilike.%${searchQuery}%,
-                location_combined.ilike.%${searchQuery}%,
-                gst_compliance_status.ilike.%${searchQuery}%,
-                epfo_compliance_status.ilike.%${searchQuery}%
-            `)
+            query = query.or(`company_name.ilike.*${searchTerm}*,credit_rating.ilike.*${searchTerm}*,sector.ilike.*${searchTerm}*,location_city.ilike.*${searchTerm}*,location_state.ilike.*${searchTerm}*,location_combined.ilike.*${searchTerm}*,gst_compliance_status.ilike.*${searchTerm}*,epfo_compliance_status.ilike.*${searchTerm}*`)
         }
 
         // Apply additional filters including new flattened fields
@@ -797,11 +788,11 @@ export class PortfolioRepository {
 
         // Region filters using extracted data
         if (filters.regions && filters.regions.length > 0) {
-            const regionFilters = filters.regions.map(region =>
-                `extracted_data->about_company->registered_address->>state.eq.${region},` +
+            const regionConditions = filters.regions.flatMap(region => [
+                `extracted_data->about_company->registered_address->>state.eq.${region}`,
                 `extracted_data->about_company->business_address->>state.eq.${region}`
-            ).join(',')
-            query = query.or(regionFilters)
+            ])
+            query = query.or(regionConditions.join(','))
         }
 
         // Enhanced compliance filters using flattened fields for better performance
