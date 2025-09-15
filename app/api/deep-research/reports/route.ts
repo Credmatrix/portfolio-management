@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
             .eq('request_id', body.request_id)
             .single()
 
-        if (portfolioError || !portfolioRequest) {
+        if (portfolioError || !portfolioRequest || !portfolioRequest.company_name) {
             return NextResponse.json(
                 { error: 'Portfolio request not found or access denied' },
                 { status: 404 }
