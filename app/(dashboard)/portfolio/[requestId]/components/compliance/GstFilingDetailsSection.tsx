@@ -1155,7 +1155,6 @@ export function GstFilingDetailsSection({ company }: GstFilingDetailsSectionProp
                         <div className="text-xs text-blue-700 space-y-1">
                             <p>• <strong>Live Data:</strong> Get the latest filing information directly from the GST portal</p>
                             <p>• <strong>Monthly Quota:</strong> 2 refreshes per company per month to control costs</p>
-                            <p>• <strong>Smart Caching:</strong> Fresh data (less than 7 days old) served from cache</p>
                             <p>• <strong>Current FY:</strong> Refresh includes all active GSTINs for {getCurrentFinancialYear()}</p>
                             <p>• <strong>Data Comparison:</strong> Toggle between original (extracted) and live (API) data</p>
                             {dataSource === 'api' && (

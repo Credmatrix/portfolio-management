@@ -45,6 +45,8 @@ import { EmbeddedChatInterface } from '@/components/chat'
 import { RiskTrendAnalysis } from './components/financial/RiskTrendAnalysis'
 import { DeepResearchInterface, ResearchReportViewer } from '@/components/deep-research'
 import { GstFilingDetailsSection } from './components/compliance/GstFilingDetailsSection'
+import { EpfoDetailsSection } from './components/compliance/EpfoDetailsSection'
+import { ComplianceSummarySection } from './components/compliance/ComplianceSummarySection'
 
 interface CompanyDetailPageProps { }
 
@@ -63,6 +65,7 @@ export default function CompanyDetailPage({ }: CompanyDetailPageProps) {
     const [activeTab, setActiveTab] = useState('overview')
     const [isChatOpen, setIsChatOpen] = useState(false)
     const [isHeaderCollapsed, setIsHeaderCollapsed] = useState(false)
+    const [complianceSubTab, setComplianceSubTab] = useState('summary')
 
     // Real-time status monitoring
     // const { status: realtimeStatus, isConnected } = useRealtimeStatus(requestId)
@@ -565,12 +568,39 @@ export default function CompanyDetailPage({ }: CompanyDetailPageProps) {
 
                         {/* Compliance Tab */}
                         <TabsContent value="compliance" className="space-y-6">
-                            <div className="grid grid-cols-1 xl:grid-cols-1 gap-6">
-                                {/* GST Filing Details Section */}
-                                <GstFilingDetailsSection company={company} />
-                                <ComplianceSection company={company} />
-                                {/* <CreditEligibilitySection company={company} /> */}
-                            </div>
+                            {/* Compliance Sub-tabs */}
+                            <Tabs value={complianceSubTab} onValueChange={setComplianceSubTab} className="w-full">
+                                <TabsList className="grid w-full grid-cols-3">
+                                    <TabsTrigger value="summary" className="flex items-center gap-2">
+                                        <Shield className="w-4 h-4" />
+                                        Summary
+                                    </TabsTrigger>
+                                    <TabsTrigger value="gst" className="flex items-center gap-2">
+                                        <FileText className="w-4 h-4" />
+                                        GST Details
+                                    </TabsTrigger>
+                                    <TabsTrigger value="epfo" className="flex items-center gap-2">
+                                        <Users className="w-4 h-4" />
+                                        EPFO Details
+                                    </TabsTrigger>
+                                </TabsList>
+
+                                {/* Summary Sub-tab */}
+                                <TabsContent value="summary" className="space-y-6">
+                                    <ComplianceSummarySection company={company} />
+                                    <ComplianceSection company={company} />
+                                </TabsContent>
+
+                                {/* GST Sub-tab */}
+                                <TabsContent value="gst" className="space-y-6">
+                                    <GstFilingDetailsSection company={company} />
+                                </TabsContent>
+
+                                {/* EPFO Sub-tab */}
+                                <TabsContent value="epfo" className="space-y-6">
+                                    <EpfoDetailsSection company={company} />
+                                </TabsContent>
+                            </Tabs>
                         </TabsContent>
 
                         {/* Deep Research Tab */}
