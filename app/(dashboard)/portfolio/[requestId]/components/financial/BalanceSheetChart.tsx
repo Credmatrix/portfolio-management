@@ -7,7 +7,7 @@ import {
     BarChart3,
     TrendingUp,
     TrendingDown,
-    DollarSign,
+    IndianRupee,
     Building,
     AlertTriangle
 } from 'lucide-react'
@@ -183,7 +183,7 @@ export function BalanceSheetChart({ company }: BalanceSheetChartProps) {
 
                             <div className="p-4 bg-gradient-to-r from-green-50 to-green-100 rounded-lg">
                                 <div className="flex items-center justify-between mb-2">
-                                    <DollarSign className="w-5 h-5 text-green-600" />
+                                    <IndianRupee className="w-5 h-5 text-green-600" />
                                     <div className="text-right">
                                         {formatGrowth(equityGrowth)}
                                     </div>

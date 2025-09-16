@@ -3,7 +3,7 @@
 import { Card } from '@/components/ui/Card';
 import { MetricsCardClickData } from '@/types/chart-interactions.types';
 import { FluentColors } from '@/lib/constants/colors';
-import { TrendingUp, TrendingDown, Minus, Users, Shield, DollarSign, AlertTriangle } from 'lucide-react';
+import { TrendingUp, TrendingDown, Minus, Users, Shield, IndianRupee, AlertTriangle } from 'lucide-react';
 
 interface MetricData {
     label: string;
@@ -93,7 +93,7 @@ export function InteractiveMetricsCard({
             case 'average_risk_score':
                 return <AlertTriangle className="w-5 h-5 text-orange-600" />;
             case 'total_exposure':
-                return <DollarSign className="w-5 h-5 text-green-600" />;
+                return <IndianRupee className="w-5 h-5 text-green-600" />;
             case 'compliance_rate':
                 return <Shield className="w-5 h-5 text-purple-600" />;
             default:
@@ -107,8 +107,8 @@ export function InteractiveMetricsCard({
                 <Card
                     key={index}
                     className={`relative transition-all duration-200 ${isInteractive && metric.clickable
-                            ? 'cursor-pointer hover:shadow-md hover:border-blue-300 hover:bg-blue-50'
-                            : ''
+                        ? 'cursor-pointer hover:shadow-md hover:border-blue-300 hover:bg-blue-50'
+                        : ''
                         } ${isLoading ? 'opacity-60' : ''}`}
                     onClick={() => handleMetricClick(metric)}
                 >

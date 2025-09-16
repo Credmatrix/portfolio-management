@@ -15,7 +15,7 @@ import {
     XCircle,
     Info,
     Calculator,
-    DollarSign,
+    IndianRupee,
     Building,
     Shield,
     CreditCard
@@ -76,7 +76,7 @@ export function ParameterBreakdownSection({ company }: ParameterBreakdownSection
         {
             id: 'financial',
             name: 'Financial',
-            icon: DollarSign,
+            icon: IndianRupee,
             color: 'bg-blue-500',
             scores: riskAnalysis.financialScores || [],
             result: riskAnalysis.financialResult,

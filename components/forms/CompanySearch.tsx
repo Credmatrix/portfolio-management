@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { Search, Building2, MapPin, Calendar, DollarSign, Loader2 } from "lucide-react";
+import { Search, Building2, MapPin, Calendar, IndianRupee, Loader2 } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { CompanyDetails, CompanySuggestion } from "@/types/company.types";
@@ -237,7 +237,7 @@ export function CompanySearch({ onCompanySelect, selectedCompany }: CompanySearc
                         </div>
 
                         <div className="flex items-center gap-2">
-                            <DollarSign className="w-4 h-4 text-neutral-60" />
+                            <IndianRupee className="w-4 h-4 text-neutral-60" />
                             <div>
                                 <p className="text-xs text-neutral-60">Paid-up Capital</p>
                                 <p className="text-sm font-medium text-neutral-90">

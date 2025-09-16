@@ -3,6 +3,7 @@
 import { PortfolioCompany } from '@/types/portfolio.types'
 import { Card, CardContent, CardHeader } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/Tabs'
 import {
     Users,
     User,
@@ -13,10 +14,20 @@ import {
     Building,
     PieChart,
     ChevronDown,
-    ChevronRight
+    ChevronRight,
+    Network,
+    ArrowRightLeft,
+    Shield,
+    FileText
 } from 'lucide-react'
 import { useState } from 'react'
 import { formatDate } from '@/lib/utils'
+
+// Import the new governance components
+import { CorporateHierarchyVisualization } from './governance/CorporateHierarchyVisualization'
+import { RelatedPartyTransactionsMatrix } from './governance/RelatedPartyTransactionsMatrix'
+import { SecuritiesAllotmentTimeline } from './governance/SecuritiesAllotmentTimeline'
+import { OpenChargesTracker } from './governance/OpenChargesTracker'
 
 interface DirectorsSectionProps {
     company: PortfolioCompany
@@ -33,29 +44,10 @@ export function DirectorsSection({ company }: DirectorsSectionProps) {
     const [directorSummaryOpen, setDirectorSummaryOpen] = useState(false)
     const [formerDirectorsOpen, setFormerDirectorsOpen] = useState(false)
 
-    if (!directors?.length && !shareholding) {
-        return (
-            <Card>
-                <CardHeader>
-                    <h2 className="text-xl font-semibold text-neutral-90 flex items-center gap-2">
-                        <Users className="w-5 h-5" />
-                        Directors & Shareholding
-                    </h2>
-                </CardHeader>
-                <CardContent>
-                    <div className="text-center py-8 text-neutral-60">
-                        <AlertTriangle className="w-12 h-12 mx-auto mb-4 text-neutral-40" />
-                        <p>Directors and shareholding data not available</p>
-                    </div>
-                </CardContent>
-            </Card>
-        )
-    }
-
     // Name matching utility functions (replicated from Python)
     const normalizeNameForMatching = (name: string): string[] => {
         if (!name) return []
-        
+
         const cleaned = name.toUpperCase().replace(/\./g, ' ').replace(/,/g, ' ').trim()
         return cleaned.split(/\s+/).filter(word => word && word.length > 0)
     }
@@ -101,8 +93,8 @@ export function DirectorsSection({ company }: DirectorsSectionProps) {
     }
 
     // Create directors list from director data
-    const directorsList: Array<{name: string, designation: string, isDirector: boolean}> = []
-    
+    const directorsList: Array<{ name: string, designation: string, isDirector: boolean }> = []
+
     if (directors?.data) {
         for (const director of directors.data) {
             const name = director.name?.trim() || ''
@@ -257,283 +249,354 @@ export function DirectorsSection({ company }: DirectorsSectionProps) {
     }
 
     const activeDirectors = directors?.data?.filter(isActiveDirector) || []
-    const inactiveDirectors = directors?.data?.filter(d => !isActiveDirector(d)) || []
+    const inactiveDirectors = directors?.data?.filter((d: any) => !isActiveDirector(d)) || []
 
     // Get latest reporting date
     const latestDate = '31-March-2024' // Based on Director Shareholding data
 
-    return (
-        <Card>
-            <CardHeader>
-                <h2 className="text-xl font-semibold text-neutral-90 flex items-center gap-2">
-                    <Users className="w-5 h-5" />
-                    Directors & Shareholding
-                </h2>
-            </CardHeader>
-
-            <CardContent className="space-y-6">
-                {/* Shareholding Pattern Table - Matching Python Output */}
-                {shareholdingPattern.length > 0 && (
-                    <div className="space-y-4">
-                        <div 
-                            className="flex items-center gap-2 cursor-pointer hover:bg-neutral-5 p-2 rounded-lg transition-colors"
-                            onClick={() => setShareholdingPatternOpen(!shareholdingPatternOpen)}
-                        >
-                            {shareholdingPatternOpen ? (
-                                <ChevronDown className="w-5 h-5 text-neutral-60" />
-                            ) : (
-                                <ChevronRight className="w-5 h-5 text-neutral-60" />
-                            )}
-                            <h3 className="text-lg font-semibold text-neutral-90 flex items-center gap-2">
-                                <PieChart className="w-5 h-5" />
-                                Share holding pattern above 5% as on {latestDate}
-                            </h3>
+    // Directors and Management Component
+    const DirectorsAndManagement = () => {
+        if (!directors?.length && !shareholding) {
+            return (
+                <Card>
+                    <CardHeader>
+                        <h2 className="text-xl font-semibold text-neutral-90 flex items-center gap-2">
+                            <Users className="w-5 h-5" />
+                            Directors & Shareholding
+                        </h2>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-center py-8 text-neutral-60">
+                            <AlertTriangle className="w-12 h-12 mx-auto mb-4 text-neutral-40" />
+                            <p>Directors and shareholding data not available</p>
                         </div>
+                    </CardContent>
+                </Card>
+            )
+        }
 
-                        {shareholdingPatternOpen && (
-                            <div className="overflow-x-auto">
-                                <table className="w-full border-collapse border border-neutral-300">
-                                    <thead>
-                                        <tr className="bg-neutral-20">
-                                            <th className="border border-neutral-300 px-4 py-2 text-left font-semibold">S No</th>
-                                            <th className="border border-neutral-300 px-4 py-2 text-left font-semibold">Name</th>
-                                            <th className="border border-neutral-300 px-4 py-2 text-left font-semibold">
-                                                Relationship if any<br />
-                                                <span className="text-sm font-normal">(Director/Holding etc.)</span>
-                                            </th>
-                                            <th className="border border-neutral-300 px-4 py-2 text-left font-semibold">Shareholding (%)</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {shareholdingPattern.map((shareholder, index) => (
-                                            <tr key={index} className="hover:bg-neutral-50">
-                                                <td className="border border-neutral-300 px-4 py-2">{index + 1}</td>
-                                                <td className="border border-neutral-300 px-4 py-2 font-medium">{shareholder.name}</td>
-                                                <td className="border border-neutral-300 px-4 py-2">{shareholder.relationship}</td>
-                                                <td className="border border-neutral-300 px-4 py-2">{formatShareholding(shareholder.shareholding)}</td>
+        return (
+            <Card>
+                <CardHeader>
+                    <h2 className="text-xl font-semibold text-neutral-90 flex items-center gap-2">
+                        <Users className="w-5 h-5" />
+                        Directors & Shareholding
+                    </h2>
+                </CardHeader>
+
+                <CardContent className="space-y-6">
+                    {/* Shareholding Pattern Table - Matching Python Output */}
+                    {shareholdingPattern.length > 0 && (
+                        <div className="space-y-4">
+                            <div
+                                className="flex items-center gap-2 cursor-pointer hover:bg-neutral-5 p-2 rounded-lg transition-colors"
+                                onClick={() => setShareholdingPatternOpen(!shareholdingPatternOpen)}
+                            >
+                                {shareholdingPatternOpen ? (
+                                    <ChevronDown className="w-5 h-5 text-neutral-60" />
+                                ) : (
+                                    <ChevronRight className="w-5 h-5 text-neutral-60" />
+                                )}
+                                <h3 className="text-lg font-semibold text-neutral-90 flex items-center gap-2">
+                                    <PieChart className="w-5 h-5" />
+                                    Share holding pattern above 5% as on {latestDate}
+                                </h3>
+                            </div>
+
+                            {shareholdingPatternOpen && (
+                                <div className="overflow-x-auto">
+                                    <table className="w-full border-collapse border border-neutral-300">
+                                        <thead>
+                                            <tr className="bg-neutral-20">
+                                                <th className="border border-neutral-300 px-4 py-2 text-left font-semibold">S No</th>
+                                                <th className="border border-neutral-300 px-4 py-2 text-left font-semibold">Name</th>
+                                                <th className="border border-neutral-300 px-4 py-2 text-left font-semibold">
+                                                    Relationship if any<br />
+                                                    <span className="text-sm font-normal">(Director/Holding etc.)</span>
+                                                </th>
+                                                <th className="border border-neutral-300 px-4 py-2 text-left font-semibold">Shareholding (%)</th>
                                             </tr>
-                                        ))}
-                                        <tr className="bg-neutral-20 font-bold">
-                                            <td className="border border-neutral-300 px-4 py-2"></td>
-                                            <td className="border border-neutral-300 px-4 py-2">Total</td>
-                                            <td className="border border-neutral-300 px-4 py-2"></td>
-                                            <td className="border border-neutral-300 px-4 py-2">{totalShareholding.toFixed(2)}%</td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                        )}
-                    </div>
-                )}
-
-                {/* Active Directors */}
-                {activeDirectors.length > 0 && (
-                    <div className="space-y-4">
-                        <div 
-                            className="flex items-center gap-2 cursor-pointer hover:bg-neutral-5 p-2 rounded-lg transition-colors"
-                            onClick={() => setActiveDirectorsOpen(!activeDirectorsOpen)}
-                        >
-                            {activeDirectorsOpen ? (
-                                <ChevronDown className="w-5 h-5 text-neutral-60" />
-                            ) : (
-                                <ChevronRight className="w-5 h-5 text-neutral-60" />
+                                        </thead>
+                                        <tbody>
+                                            {shareholdingPattern.map((shareholder, index) => (
+                                                <tr key={index} className="hover:bg-neutral-50">
+                                                    <td className="border border-neutral-300 px-4 py-2">{index + 1}</td>
+                                                    <td className="border border-neutral-300 px-4 py-2 font-medium">{shareholder.name}</td>
+                                                    <td className="border border-neutral-300 px-4 py-2">{shareholder.relationship}</td>
+                                                    <td className="border border-neutral-300 px-4 py-2">{formatShareholding(shareholder.shareholding)}</td>
+                                                </tr>
+                                            ))}
+                                            <tr className="bg-neutral-20 font-bold">
+                                                <td className="border border-neutral-300 px-4 py-2"></td>
+                                                <td className="border border-neutral-300 px-4 py-2">Total</td>
+                                                <td className="border border-neutral-300 px-4 py-2"></td>
+                                                <td className="border border-neutral-300 px-4 py-2">{totalShareholding.toFixed(2)}%</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
                             )}
-                            <h3 className="text-lg font-semibold text-neutral-90 flex items-center gap-2">
-                                <User className="w-5 h-5" />
-                                Active Directors ({activeDirectors.length})
-                            </h3>
                         </div>
+                    )}
 
-                        {activeDirectorsOpen && (
-                            <div className="space-y-3">
-                                {activeDirectors.map((director, index) => {
-                                    const badge = getDesignationBadge(director.present_designation)
-                                    const BadgeIcon = badge.icon
-                                    const directorShares = directorShareholding?.data?.find(ds => 
-                                        ds.name && director.name && namesMatch(ds.name, director.name)
-                                    )
+                    {/* Active Directors */}
+                    {activeDirectors.length > 0 && (
+                        <div className="space-y-4">
+                            <div
+                                className="flex items-center gap-2 cursor-pointer hover:bg-neutral-5 p-2 rounded-lg transition-colors"
+                                onClick={() => setActiveDirectorsOpen(!activeDirectorsOpen)}
+                            >
+                                {activeDirectorsOpen ? (
+                                    <ChevronDown className="w-5 h-5 text-neutral-60" />
+                                ) : (
+                                    <ChevronRight className="w-5 h-5 text-neutral-60" />
+                                )}
+                                <h3 className="text-lg font-semibold text-neutral-90 flex items-center gap-2">
+                                    <User className="w-5 h-5" />
+                                    Active Directors ({activeDirectors.length})
+                                </h3>
+                            </div>
 
-                                    return (
-                                        <div key={index} className="p-4 border border-neutral-20 rounded-lg hover:bg-neutral-5 transition-colors">
-                                            <div className="flex items-start justify-between mb-3">
-                                                <div className="flex items-center gap-3">
-                                                    <div className="p-2 bg-blue-50 rounded-lg">
-                                                        <BadgeIcon className="w-5 h-5 text-blue-600" />
+                            {activeDirectorsOpen && (
+                                <div className="space-y-3">
+                                    {activeDirectors.map((director: any, index: number) => {
+                                        const badge = getDesignationBadge(director.present_designation)
+                                        const BadgeIcon = badge.icon
+                                        const directorShares = directorShareholding?.data?.find((ds: any) =>
+                                            ds.name && director.name && namesMatch(ds.name, director.name)
+                                        )
+
+                                        return (
+                                            <div key={index} className="p-4 border border-neutral-20 rounded-lg hover:bg-neutral-5 transition-colors">
+                                                <div className="flex items-start justify-between mb-3">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="p-2 bg-blue-50 rounded-lg">
+                                                            <BadgeIcon className="w-5 h-5 text-blue-600" />
+                                                        </div>
+                                                        <div>
+                                                            <div className="font-semibold text-neutral-90">{director.name}</div>
+                                                            <div className="text-sm text-neutral-60">DIN: {director.din}</div>
+                                                        </div>
                                                     </div>
+                                                    <Badge variant={badge.variant} size="sm">
+                                                        {director.present_designation}
+                                                    </Badge>
+                                                </div>
+
+                                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
                                                     <div>
-                                                        <div className="font-semibold text-neutral-90">{director.name}</div>
-                                                        <div className="text-sm text-neutral-60">DIN: {director.din}</div>
-                                                    </div>
-                                                </div>
-                                                <Badge variant={badge.variant} size="sm">
-                                                    {director.present_designation}
-                                                </Badge>
-                                            </div>
-
-                                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                                                <div>
-                                                    <div className="text-neutral-60 mb-1">Appointment Date</div>
-                                                    <div className="flex items-center gap-1 text-neutral-90">
-                                                        <Calendar className="w-3 h-3" />
-                                                        {director.original_appointment_date === '-'? '-' :formatDate(director.original_appointment_date)}
-                                                    </div>
-                                                </div>
-
-                                                {directorShares && (
-                                                    <>
-                                                        <div>
-                                                            <div className="text-neutral-60 mb-1">Shareholding</div>
-                                                            <div className="flex items-center gap-1 text-neutral-90">
-                                                                <Percent className="w-3 h-3" />
-                                                                {directorShares.shareholding}%
-                                                            </div>
+                                                        <div className="text-neutral-60 mb-1">Appointment Date</div>
+                                                        <div className="flex items-center gap-1 text-neutral-90">
+                                                            <Calendar className="w-3 h-3" />
+                                                            {director.original_appointment_date === '-' ? '-' : formatDate(director.original_appointment_date)}
                                                         </div>
+                                                    </div>
 
-                                                        <div>
-                                                            <div className="text-neutral-60 mb-1">Shares Held</div>
-                                                            <div className="text-neutral-90">
-                                                                {parseInt(directorShares.number_of_shares || '0').toLocaleString()}
+                                                    {directorShares && (
+                                                        <>
+                                                            <div>
+                                                                <div className="text-neutral-60 mb-1">Shareholding</div>
+                                                                <div className="flex items-center gap-1 text-neutral-90">
+                                                                    <Percent className="w-3 h-3" />
+                                                                    {directorShares.shareholding}%
+                                                                </div>
                                                             </div>
-                                                        </div>
-                                                    </>
-                                                )}
-                                            </div>
-                                        </div>
-                                    )
-                                })}
-                            </div>
-                        )}
-                    </div>
-                )}
 
-                {/* Director Shareholding Summary */}
-                {directorShareholding?.data?.length > 0 && (
-                    <div className="space-y-3">
-                        <div 
-                            className="flex items-center gap-2 cursor-pointer hover:bg-neutral-5 p-2 rounded-lg transition-colors"
-                            onClick={() => setDirectorSummaryOpen(!directorSummaryOpen)}
-                        >
-                            {directorSummaryOpen ? (
-                                <ChevronDown className="w-5 h-5 text-neutral-60" />
-                            ) : (
-                                <ChevronRight className="w-5 h-5 text-neutral-60" />
+                                                            <div>
+                                                                <div className="text-neutral-60 mb-1">Shares Held</div>
+                                                                <div className="text-neutral-90">
+                                                                    {parseInt(directorShares.number_of_shares || '0').toLocaleString()}
+                                                                </div>
+                                                            </div>
+                                                        </>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        )
+                                    })}
+                                </div>
                             )}
-                            <h4 className="font-medium text-neutral-90">Director Shareholding Summary</h4>
                         </div>
-                        
-                        {directorSummaryOpen && (
-                            <div className="p-4 bg-neutral-5 rounded-lg">
-                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                                    <div className="text-center">
-                                        <div className="text-lg font-semibold text-neutral-90 mb-1">
-                                            {directorShareholding.data.filter(d => parseFloat(d.shareholding || '0') > 0).length}
-                                        </div>
-                                        <div className="text-neutral-60">Directors with Shares</div>
-                                    </div>
+                    )}
 
-                                    <div className="text-center">
-                                        <div className="text-lg font-semibold text-neutral-90 mb-1">
-                                            {directorShareholding.data.reduce((sum, ds) => sum + parseFloat(ds.shareholding || '0'), 0).toFixed(1)}%
-                                        </div>
-                                        <div className="text-neutral-60">Total Director Holding</div>
-                                    </div>
+                    {/* Director Shareholding Summary */}
+                    {directorShareholding?.data?.length > 0 && (
+                        <div className="space-y-3">
+                            <div
+                                className="flex items-center gap-2 cursor-pointer hover:bg-neutral-5 p-2 rounded-lg transition-colors"
+                                onClick={() => setDirectorSummaryOpen(!directorSummaryOpen)}
+                            >
+                                {directorSummaryOpen ? (
+                                    <ChevronDown className="w-5 h-5 text-neutral-60" />
+                                ) : (
+                                    <ChevronRight className="w-5 h-5 text-neutral-60" />
+                                )}
+                                <h4 className="font-medium text-neutral-90">Director Shareholding Summary</h4>
+                            </div>
 
-                                    <div className="text-center">
-                                        <div className="text-lg font-semibold text-neutral-90 mb-1">
-                                            {Math.max(...directorShareholding.data.map(ds => parseFloat(ds.shareholding || '0'))).toFixed(1)}%
+                            {directorSummaryOpen && (
+                                <div className="p-4 bg-neutral-5 rounded-lg">
+                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                                        <div className="text-center">
+                                            <div className="text-lg font-semibold text-neutral-90 mb-1">
+                                                {directorShareholding.data.filter((d: any) => parseFloat(d.shareholding || '0') > 0).length}
+                                            </div>
+                                            <div className="text-neutral-60">Directors with Shares</div>
                                         </div>
-                                        <div className="text-neutral-60">Highest Individual</div>
-                                    </div>
 
-                                    <div className="text-center">
-                                        <div className="text-lg font-semibold text-neutral-90 mb-1">
-                                            {directorShareholding.data.reduce((sum, ds) => sum + parseInt(ds.number_of_shares || '0'), 0).toLocaleString()}
+                                        <div className="text-center">
+                                            <div className="text-lg font-semibold text-neutral-90 mb-1">
+                                                {directorShareholding.data.reduce((sum: number, ds: any) => sum + parseFloat(ds.shareholding || '0'), 0).toFixed(1)}%
+                                            </div>
+                                            <div className="text-neutral-60">Total Director Holding</div>
                                         </div>
-                                        <div className="text-neutral-60">Total Shares</div>
+
+                                        <div className="text-center">
+                                            <div className="text-lg font-semibold text-neutral-90 mb-1">
+                                                {Math.max(...directorShareholding.data.map((ds: any) => parseFloat(ds.shareholding || '0'))).toFixed(1)}%
+                                            </div>
+                                            <div className="text-neutral-60">Highest Individual</div>
+                                        </div>
+
+                                        <div className="text-center">
+                                            <div className="text-lg font-semibold text-neutral-90 mb-1">
+                                                {directorShareholding.data.reduce((sum: number, ds: any) => sum + parseInt(ds.number_of_shares || '0'), 0).toLocaleString()}
+                                            </div>
+                                            <div className="text-neutral-60">Total Shares</div>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        )}
-                    </div>
-                )}
-
-                {/* Inactive Directors */}
-                {inactiveDirectors.length > 0 && (
-                    <div className="space-y-4">
-                        <div 
-                            className="flex items-center gap-2 cursor-pointer hover:bg-neutral-5 p-2 rounded-lg transition-colors"
-                            onClick={() => setFormerDirectorsOpen(!formerDirectorsOpen)}
-                        >
-                            {formerDirectorsOpen ? (
-                                <ChevronDown className="w-5 h-5 text-neutral-60" />
-                            ) : (
-                                <ChevronRight className="w-5 h-5 text-neutral-60" />
                             )}
-                            <h3 className="text-lg font-semibold text-neutral-90 flex items-center gap-2">
-                                <AlertTriangle className="w-5 h-5" />
-                                Former Directors ({inactiveDirectors.length})
-                            </h3>
                         </div>
+                    )}
 
-                        {formerDirectorsOpen && (
-                            <div className="space-y-2">
-                                {inactiveDirectors.map((director, index) => (
-                                    <div key={index} className="p-3 bg-gray-50 rounded-lg">
-                                        <div className="flex items-center justify-between">
-                                            <div>
-                                                <div className="font-medium text-neutral-90">{director.name}</div>
-                                                <div className="text-sm text-neutral-60">
-                                                    {director.present_designation} • DIN: {director.din}
+                    {/* Inactive Directors */}
+                    {inactiveDirectors.length > 0 && (
+                        <div className="space-y-4">
+                            <div
+                                className="flex items-center gap-2 cursor-pointer hover:bg-neutral-5 p-2 rounded-lg transition-colors"
+                                onClick={() => setFormerDirectorsOpen(!formerDirectorsOpen)}
+                            >
+                                {formerDirectorsOpen ? (
+                                    <ChevronDown className="w-5 h-5 text-neutral-60" />
+                                ) : (
+                                    <ChevronRight className="w-5 h-5 text-neutral-60" />
+                                )}
+                                <h3 className="text-lg font-semibold text-neutral-90 flex items-center gap-2">
+                                    <AlertTriangle className="w-5 h-5" />
+                                    Former Directors ({inactiveDirectors.length})
+                                </h3>
+                            </div>
+
+                            {formerDirectorsOpen && (
+                                <div className="space-y-2">
+                                    {inactiveDirectors.map((director: any, index: number) => (
+                                        <div key={index} className="p-3 bg-gray-50 rounded-lg">
+                                            <div className="flex items-center justify-between">
+                                                <div>
+                                                    <div className="font-medium text-neutral-90">{director.name}</div>
+                                                    <div className="text-sm text-neutral-60">
+                                                        {director.present_designation} • DIN: {director.din}
+                                                    </div>
                                                 </div>
-                                            </div>
-                                            <div className="text-right text-sm">
-                                                <div className="text-neutral-60">Ceased</div>
-                                                <div className="text-neutral-90">
-                                                    {formatDate(director.date_of_cessation)}
+                                                <div className="text-right text-sm">
+                                                    <div className="text-neutral-60">Ceased</div>
+                                                    <div className="text-neutral-90">
+                                                        {formatDate(director.date_of_cessation)}
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
-                                    </div>
-                                ))}
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    {/* Governance Summary */}
+                    <div className="p-4 bg-blue-50 rounded-lg">
+                        <div className="flex items-center gap-2 mb-2">
+                            <Building className="w-4 h-4 text-blue-600" />
+                            <span className="font-medium text-blue-900">Governance Summary</span>
+                        </div>
+                        <div className="text-sm text-blue-700">
+                            {activeDirectors.length >= 3
+                                ? "Adequate board composition with sufficient director oversight."
+                                : activeDirectors.length >= 2
+                                    ? "Minimal board composition - consider adding independent directors."
+                                    : "Limited board oversight - governance structure may need strengthening."
+                            }
+                        </div>
+
+                        <div className="mt-3 grid grid-cols-2 gap-4 text-xs">
+                            <div>
+                                <div className="text-blue-600">Board Size</div>
+                                <div className="font-medium text-blue-900">
+                                    {activeDirectors.length} Active Directors
+                                </div>
                             </div>
-                        )}
-                    </div>
-                )}
-
-                {/* Governance Summary */}
-                <div className="p-4 bg-blue-50 rounded-lg">
-                    <div className="flex items-center gap-2 mb-2">
-                        <Building className="w-4 h-4 text-blue-600" />
-                        <span className="font-medium text-blue-900">Governance Summary</span>
-                    </div>
-                    <div className="text-sm text-blue-700">
-                        {activeDirectors.length >= 3
-                            ? "Adequate board composition with sufficient director oversight."
-                            : activeDirectors.length >= 2
-                                ? "Minimal board composition - consider adding independent directors."
-                                : "Limited board oversight - governance structure may need strengthening."
-                        }
-                    </div>
-
-                    <div className="mt-3 grid grid-cols-2 gap-4 text-xs">
-                        <div>
-                            <div className="text-blue-600">Board Size</div>
-                            <div className="font-medium text-blue-900">
-                                {activeDirectors.length} Active Directors
+                            <div>
+                                <div className="text-blue-600">Total Director Holding</div>
+                                <div className="font-medium text-blue-900">
+                                    {directorShareholding?.data ?
+                                        directorShareholding.data.reduce((sum: number, ds: any) => sum + parseFloat(ds.shareholding || '0'), 0).toFixed(1) + '%'
+                                        : '0%'
+                                    }
+                                </div>
                             </div>
                         </div>
-                        <div>
-                            <div className="text-blue-600">Total Director Holding</div>
-                            <div className="font-medium text-blue-900">
-                                {directorShareholding?.data ? 
-                                    directorShareholding.data.reduce((sum, ds) => sum + parseFloat(ds.shareholding || '0'), 0).toFixed(1) + '%'
-                                    : '0%'
-                                }
-                            </div>
-                        </div>
                     </div>
-                </div>
-            </CardContent>
-        </Card>
+                </CardContent>
+            </Card>
+        )
+    }
+
+    return (
+        <div className="space-y-6">
+            <Tabs defaultValue="directors" className="w-full">
+                <TabsList className="grid w-full grid-cols-5">
+                    <TabsTrigger value="directors" className="flex items-center gap-2">
+                        <Users className="w-4 h-4" />
+                        Directors
+                    </TabsTrigger>
+                    <TabsTrigger value="hierarchy" className="flex items-center gap-2">
+                        <Network className="w-4 h-4" />
+                        Associates
+                    </TabsTrigger>
+                    <TabsTrigger value="transactions" className="flex items-center gap-2">
+                        <ArrowRightLeft className="w-4 h-4" />
+                        Transactions
+                    </TabsTrigger>
+                    <TabsTrigger value="securities" className="flex items-center gap-2">
+                        <FileText className="w-4 h-4" />
+                        Securities
+                    </TabsTrigger>
+                    <TabsTrigger value="charges" className="flex items-center gap-2">
+                        <Shield className="w-4 h-4" />
+                        Charges
+                    </TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="directors" className="space-y-6">
+                    <DirectorsAndManagement />
+                </TabsContent>
+
+                <TabsContent value="hierarchy" className="space-y-6">
+                    <CorporateHierarchyVisualization company={company} />
+                </TabsContent>
+
+                <TabsContent value="transactions" className="space-y-6">
+                    <RelatedPartyTransactionsMatrix company={company} />
+                </TabsContent>
+
+                <TabsContent value="securities" className="space-y-6">
+                    <SecuritiesAllotmentTimeline company={company} />
+                </TabsContent>
+
+                <TabsContent value="charges" className="space-y-6">
+                    <OpenChargesTracker company={company} />
+                </TabsContent>
+            </Tabs>
+        </div>
     )
 }

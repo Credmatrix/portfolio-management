@@ -11,7 +11,7 @@ import {
     PieChart,
     Calculator,
     AlertTriangle,
-    DollarSign,
+    IndianRupee,
     Percent,
     Calendar
 } from 'lucide-react'

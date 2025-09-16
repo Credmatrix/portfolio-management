@@ -6,7 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/Tabs'
 import {
     TrendingUp,
     TrendingDown,
-    DollarSign,
+    IndianRupee,
     ArrowUpDown,
     AlertTriangle,
     CheckCircle,
@@ -75,7 +75,7 @@ export function CashFlowAnalysis({ company }: CashFlowAnalysisProps) {
 
     // Cash Flow data - corrected paths
     const operatingCashFlow = getLatestValue(cashFlow.operating_activities?.['net_cash_flows_from_(_used_in_)_operating_activities'])
-    
+
     // Calculate investing cash flow from components
     const incomeFromAssets = getLatestValue(cashFlow.investing_activities?.income_from_assets)
     const cashInflowFromSaleAssets = getLatestValue(cashFlow.investing_activities?.cash_inflow_from_sale_of_assets)
@@ -97,15 +97,15 @@ export function CashFlowAnalysis({ company }: CashFlowAnalysisProps) {
 
     // Growth calculations
     const operatingCashFlowGrowth = calculateGrowth(cashFlow.operating_activities?.['net_cash_flows_from_(_used_in_)_operating_activities'])
-    const netCashFlowGrowth = netCashFlow !== 0 && previousYear ? 
-        calculateGrowthRate(netCashFlow, 
+    const netCashFlowGrowth = netCashFlow !== 0 && previousYear ?
+        calculateGrowthRate(netCashFlow,
             (cashFlow.operating_activities?.['net_cash_flows_from_(_used_in_)_operating_activities']?.[previousYear] || 0) +
-            ((cashFlow.investing_activities?.income_from_assets?.[previousYear] || 0) + 
-             (cashFlow.investing_activities?.cash_inflow_from_sale_of_assets?.[previousYear] || 0) - 
-             (cashFlow.investing_activities?.cash_outflow_from_purchase_of_assets?.[previousYear] || 0)) +
-            ((cashFlow.financing_activities?.cash_inflow_from_raising_capital_and_borrowings?.[previousYear] || 0) - 
-             (cashFlow.financing_activities?.cash_outflow_from_repayment_of_capital_and_borrowings?.[previousYear] || 0) - 
-             (cashFlow.financing_activities?.interest_and_dividends_paid?.[previousYear] || 0))
+            ((cashFlow.investing_activities?.income_from_assets?.[previousYear] || 0) +
+                (cashFlow.investing_activities?.cash_inflow_from_sale_of_assets?.[previousYear] || 0) -
+                (cashFlow.investing_activities?.cash_outflow_from_purchase_of_assets?.[previousYear] || 0)) +
+            ((cashFlow.financing_activities?.cash_inflow_from_raising_capital_and_borrowings?.[previousYear] || 0) -
+                (cashFlow.financing_activities?.cash_outflow_from_repayment_of_capital_and_borrowings?.[previousYear] || 0) -
+                (cashFlow.financing_activities?.interest_and_dividends_paid?.[previousYear] || 0))
         ) : null
 
     // Get revenue and net income for ratios
@@ -122,12 +122,12 @@ export function CashFlowAnalysis({ company }: CashFlowAnalysisProps) {
     const trendYears = years.slice(-5)
     const cashFlowTrend = trendYears.map(year => {
         const yearOperating = cashFlow.operating_activities?.['net_cash_flows_from_(_used_in_)_operating_activities']?.[year] || 0
-        const yearInvesting = (cashFlow.investing_activities?.income_from_assets?.[year] || 0) + 
-                             (cashFlow.investing_activities?.cash_inflow_from_sale_of_assets?.[year] || 0) - 
-                             (cashFlow.investing_activities?.cash_outflow_from_purchase_of_assets?.[year] || 0)
-        const yearFinancing = (cashFlow.financing_activities?.cash_inflow_from_raising_capital_and_borrowings?.[year] || 0) - 
-                             (cashFlow.financing_activities?.cash_outflow_from_repayment_of_capital_and_borrowings?.[year] || 0) - 
-                             (cashFlow.financing_activities?.interest_and_dividends_paid?.[year] || 0)
+        const yearInvesting = (cashFlow.investing_activities?.income_from_assets?.[year] || 0) +
+            (cashFlow.investing_activities?.cash_inflow_from_sale_of_assets?.[year] || 0) -
+            (cashFlow.investing_activities?.cash_outflow_from_purchase_of_assets?.[year] || 0)
+        const yearFinancing = (cashFlow.financing_activities?.cash_inflow_from_raising_capital_and_borrowings?.[year] || 0) -
+            (cashFlow.financing_activities?.cash_outflow_from_repayment_of_capital_and_borrowings?.[year] || 0) -
+            (cashFlow.financing_activities?.interest_and_dividends_paid?.[year] || 0)
         const yearNet = yearOperating + yearInvesting + yearFinancing
         const yearClosing = financialData.balance_sheet?.assets?.current_assets?.cash_and_bank_balances?.[year] || 0
 
@@ -208,7 +208,7 @@ export function CashFlowAnalysis({ company }: CashFlowAnalysisProps) {
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <div className="p-4 bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg">
                                 <div className="flex items-center justify-between mb-2">
-                                    <DollarSign className="w-5 h-5 text-blue-600" />
+                                    <IndianRupee className="w-5 h-5 text-blue-600" />
                                     <div className="text-right">
                                         {formatGrowth(operatingCashFlowGrowth)}
                                     </div>
