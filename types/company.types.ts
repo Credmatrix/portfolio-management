@@ -473,3 +473,57 @@ export interface CompanyDetails {
         name: string;
     };
 }
+
+// ============================================================================
+// COMPANIES PAGE TYPES
+// ============================================================================
+
+export interface CompanyListItem {
+    id: string;
+    name: string;
+    cin?: string;
+    pan?: string;
+    industry: string;
+    creditRating?: string;
+    riskScore?: number;
+    recommendedLimit?: number;
+    currency?: string;
+    status: string;
+    lastUpdated: string;
+    location?: string;
+    gstCompliance?: string;
+    epfoCompliance?: string;
+    actualCreditLimit?: number;
+    limitValidity?: string;
+    paymentTerms?: string;
+    securityRequirements?: string;
+    requestCount: number;
+    latestRequestId: string;
+}
+
+export interface CompanyMetrics {
+    totalCompanies: number;
+    totalCreditLimit: number;
+    averageRiskScore: number;
+    riskDistribution: {
+        low: number;
+        medium: number;
+        high: number;
+    };
+    industryBreakdown: Record<string, number>;
+    activeCompanies: number;
+}
+
+export interface CompanyFilters {
+    search: string;
+    industry: string;
+    status: string;
+    creditRating: string;
+}
+
+export interface CompanyPagination {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+}

@@ -30,24 +30,24 @@ const navigation = [
 	// 	icon: BarChart3,
 	// 	description: "Risk analysis and insights"
 	// },
-	{
-		name: "Create Request",
-		href: "/upload",
-		icon: Upload,
-		description: "Process new company data"
-	},
 	// {
 	// 	name: "Reports",
 	// 	href: "/reports",
 	// 	icon: FileText,
 	// 	description: "Generate and download reports"
 	// },
-	// {
-	// 	name: "Companies",
-	// 	href: "/companies",
-	// 	icon: Building2,
-	// 	description: "Manage company profiles"
-	// },
+	{
+		name: "Companies",
+		href: "/companies",
+		icon: Building2,
+		description: "Manage company profiles"
+	},
+	{
+		name: "Create Request",
+		href: "/upload",
+		icon: Upload,
+		description: "Process new company data"
+	},
 ];
 
 const secondaryNavigation = [

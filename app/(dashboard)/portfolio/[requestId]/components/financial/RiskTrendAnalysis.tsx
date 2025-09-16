@@ -19,7 +19,7 @@ import {
     Info,
     ArrowUpRight,
     ArrowDownRight,
-    DollarSign,
+    IndianRupee,
     Calendar,
     Shield,
     Zap,
@@ -385,7 +385,7 @@ export function RiskTrendAnalysis({ company, industryBenchmarks }: RiskTrendAnal
                                     {
                                         label: 'Banking Relations',
                                         value: riskAnalysis.bankingResult?.percentage || 0,
-                                        icon: DollarSign,
+                                        icon: IndianRupee,
                                         color: 'orange'
                                     }
                                 ].map((item, index) => {
@@ -926,7 +926,7 @@ export function RiskTrendAnalysis({ company, industryBenchmarks }: RiskTrendAnal
                             </div>
 
                             {/* Risk Heatmap Overview */}
-                            
+
                             {/* Critical Areas and Strengths */}
                             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                                 {/* Critical Areas */}

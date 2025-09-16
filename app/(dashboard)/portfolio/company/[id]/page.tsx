@@ -7,7 +7,7 @@ import {
     MapPin,
     Users,
     ArrowLeft,
-    DollarSign,
+    IndianRupee,
     Clock,
     Map,
     User,
@@ -256,7 +256,7 @@ function KeyNumbersCard({ sectionData }: { sectionData: any }) {
         <Card>
             <div className="p-6">
                 <h3 className="text-xl font-semibold text-neutral-90 flex items-center mb-6">
-                    <DollarSign className="mr-3 h-5 w-5 text-success" />
+                    <IndianRupee className="mr-3 h-5 w-5 text-success" />
                     Key Financial Numbers
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

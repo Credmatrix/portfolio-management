@@ -9,7 +9,7 @@
 // import {
 //     TrendingUp,
 //     TrendingDown,
-//     DollarSign,
+//     IndianRupee,
 //     BarChart3,
 //     AlertTriangle,
 //     Target,

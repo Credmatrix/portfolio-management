@@ -6,7 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/Tabs'
 import {
     TrendingUp,
     TrendingDown,
-    DollarSign,
+    IndianRupee,
     Calculator,
     AlertTriangle,
     BarChart3
@@ -181,7 +181,7 @@ export function ProfitLossChart({ company, industryBenchmarks }: ProfitLossChart
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <div className="p-4 bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg">
                                 <div className="flex items-center justify-between mb-2">
-                                    <DollarSign className="w-5 h-5 text-blue-600" />
+                                    <IndianRupee className="w-5 h-5 text-blue-600" />
                                     <div className="text-right">
                                         {formatGrowth(revenueGrowth)}
                                     </div>

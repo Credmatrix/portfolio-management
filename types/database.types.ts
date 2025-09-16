@@ -645,6 +645,7 @@ export type Database = {
           available_parameters: number | null
           banking_parameters: number | null
           business_parameters: number | null
+          cin: string | null
           company_name: string | null
           completed_at: string | null
           created_at: string | null
@@ -668,6 +669,7 @@ export type Database = {
           model_type: Database["public"]["Enums"]["model_type"] | null
           organization_id: string | null
           original_filename: string
+          pan: string | null
           pdf_file_size: number | null
           pdf_filename: string | null
           pdf_s3_key: string | null
@@ -692,6 +694,7 @@ export type Database = {
           available_parameters?: number | null
           banking_parameters?: number | null
           business_parameters?: number | null
+          cin?: string | null
           company_name?: string | null
           completed_at?: string | null
           created_at?: string | null
@@ -715,6 +718,7 @@ export type Database = {
           model_type?: Database["public"]["Enums"]["model_type"] | null
           organization_id?: string | null
           original_filename: string
+          pan?: string | null
           pdf_file_size?: number | null
           pdf_filename?: string | null
           pdf_s3_key?: string | null
@@ -739,6 +743,7 @@ export type Database = {
           available_parameters?: number | null
           banking_parameters?: number | null
           business_parameters?: number | null
+          cin?: string | null
           company_name?: string | null
           completed_at?: string | null
           created_at?: string | null
@@ -762,6 +767,7 @@ export type Database = {
           model_type?: Database["public"]["Enums"]["model_type"] | null
           organization_id?: string | null
           original_filename?: string
+          pan?: string | null
           pdf_file_size?: number | null
           pdf_filename?: string | null
           pdf_s3_key?: string | null
@@ -885,6 +891,261 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "requests"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      gst_api_requests: {
+        Row: {
+          api_endpoint: string | null
+          api_provider: string | null
+          completed_at: string | null
+          cost_inr: number | null
+          created_at: string | null
+          error_message: string | null
+          financial_year: string
+          gstin: string
+          id: string
+          request_id: string
+          request_payload: Json | null
+          requested_at: string | null
+          response_data: Json | null
+          response_status: number | null
+          status: string | null
+          user_id: string
+        }
+        Insert: {
+          api_endpoint?: string | null
+          api_provider?: string | null
+          completed_at?: string | null
+          cost_inr?: number | null
+          created_at?: string | null
+          error_message?: string | null
+          financial_year: string
+          gstin: string
+          id?: string
+          request_id: string
+          request_payload?: Json | null
+          requested_at?: string | null
+          response_data?: Json | null
+          response_status?: number | null
+          status?: string | null
+          user_id: string
+        }
+        Update: {
+          api_endpoint?: string | null
+          api_provider?: string | null
+          completed_at?: string | null
+          cost_inr?: number | null
+          created_at?: string | null
+          error_message?: string | null
+          financial_year?: string
+          gstin?: string
+          id?: string
+          request_id?: string
+          request_payload?: Json | null
+          requested_at?: string | null
+          response_data?: Json | null
+          response_status?: number | null
+          status?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_gst_api_requests_request_id"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "document_processing_requests"
+            referencedColumns: ["request_id"]
+          },
+          {
+            foreignKeyName: "fk_gst_api_requests_request_id"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "recent_document_requests"
+            referencedColumns: ["request_id"]
+          },
+        ]
+      }
+      gst_filing_data: {
+        Row: {
+          arn: string | null
+          created_at: string | null
+          data_source: string | null
+          date_of_filing: string | null
+          fetched_at: string | null
+          filing_mode: string | null
+          financial_year: string
+          gstin: string
+          id: string
+          is_valid: boolean | null
+          return_period: string
+          return_type: string
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          arn?: string | null
+          created_at?: string | null
+          data_source?: string | null
+          date_of_filing?: string | null
+          fetched_at?: string | null
+          filing_mode?: string | null
+          financial_year: string
+          gstin: string
+          id?: string
+          is_valid?: boolean | null
+          return_period: string
+          return_type: string
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          arn?: string | null
+          created_at?: string | null
+          data_source?: string | null
+          date_of_filing?: string | null
+          fetched_at?: string | null
+          filing_mode?: string | null
+          financial_year?: string
+          gstin?: string
+          id?: string
+          is_valid?: boolean | null
+          return_period?: string
+          return_type?: string
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      gst_refresh_jobs: {
+        Row: {
+          completed_at: string | null
+          created_at: string | null
+          error_details: Json | null
+          failed_gstins: number | null
+          financial_year: string
+          gstins: string[]
+          id: string
+          priority: number | null
+          processed_gstins: number | null
+          progress: number | null
+          queued_at: string | null
+          request_id: string
+          results: Json | null
+          started_at: string | null
+          status: string | null
+          total_gstins: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string | null
+          error_details?: Json | null
+          failed_gstins?: number | null
+          financial_year: string
+          gstins: string[]
+          id?: string
+          priority?: number | null
+          processed_gstins?: number | null
+          progress?: number | null
+          queued_at?: string | null
+          request_id: string
+          results?: Json | null
+          started_at?: string | null
+          status?: string | null
+          total_gstins?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string | null
+          error_details?: Json | null
+          failed_gstins?: number | null
+          financial_year?: string
+          gstins?: string[]
+          id?: string
+          priority?: number | null
+          processed_gstins?: number | null
+          progress?: number | null
+          queued_at?: string | null
+          request_id?: string
+          results?: Json | null
+          started_at?: string | null
+          status?: string | null
+          total_gstins?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_gst_refresh_jobs_request_id"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "document_processing_requests"
+            referencedColumns: ["request_id"]
+          },
+          {
+            foreignKeyName: "fk_gst_refresh_jobs_request_id"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "recent_document_requests"
+            referencedColumns: ["request_id"]
+          },
+        ]
+      }
+      gst_refresh_quotas: {
+        Row: {
+          created_at: string | null
+          id: string
+          last_refresh_at: string | null
+          last_refresh_gstins: string[] | null
+          max_refreshes_per_month: number | null
+          month_year: string
+          refresh_count: number | null
+          request_id: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          last_refresh_at?: string | null
+          last_refresh_gstins?: string[] | null
+          max_refreshes_per_month?: number | null
+          month_year: string
+          refresh_count?: number | null
+          request_id: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          last_refresh_at?: string | null
+          last_refresh_gstins?: string[] | null
+          max_refreshes_per_month?: number | null
+          month_year?: string
+          refresh_count?: number | null
+          request_id?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_gst_refresh_quotas_request_id"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "document_processing_requests"
+            referencedColumns: ["request_id"]
+          },
+          {
+            foreignKeyName: "fk_gst_refresh_quotas_request_id"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "recent_document_requests"
+            referencedColumns: ["request_id"]
           },
         ]
       }
@@ -2186,6 +2447,10 @@ export type Database = {
           total_records: number
         }[]
       }
+      can_user_refresh_gst: {
+        Args: { p_request_id: string; p_user_id: string }
+        Returns: boolean
+      }
       cancel_mca_sync: {
         Args: { sync_id?: number }
         Returns: boolean
@@ -2459,6 +2724,21 @@ export type Database = {
           suggestion: string
         }[]
       }
+      get_gst_filing_data: {
+        Args: { p_financial_year?: string; p_gstin: string }
+        Returns: {
+          arn: string
+          date_of_filing: string
+          fetched_at: string
+          filing_mode: string
+          financial_year: string
+          gstin: string
+          is_valid: boolean
+          return_period: string
+          return_type: string
+          status: string
+        }[]
+      }
       get_mca_stats: {
         Args: Record<PropertyKey, never>
         Returns: Json
@@ -2519,6 +2799,10 @@ export type Database = {
           total_records: number
         }[]
       }
+      get_user_gst_refresh_status: {
+        Args: { p_request_id: string; p_user_id: string }
+        Returns: Json
+      }
       get_user_primary_organization: {
         Args: { p_user_id: string }
         Returns: string
@@ -2543,6 +2827,10 @@ export type Database = {
         Args: { "": unknown }
         Returns: unknown
       }
+      increment_gst_refresh_count: {
+        Args: { p_gstins: string[]; p_request_id: string; p_user_id: string }
+        Returns: undefined
+      }
       increment_user_quota: {
         Args: {
           p_company_id: string
@@ -2551,6 +2839,14 @@ export type Database = {
           p_year: number
         }
         Returns: undefined
+      }
+      is_gst_data_fresh: {
+        Args: {
+          p_financial_year: string
+          p_gstin: string
+          p_max_age_days?: number
+        }
+        Returns: boolean
       }
       rebuild_analytics_table: {
         Args: Record<PropertyKey, never>

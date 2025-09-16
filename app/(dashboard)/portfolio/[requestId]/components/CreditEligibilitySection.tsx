@@ -10,7 +10,7 @@ import {
     Calculator,
     AlertTriangle,
     CheckCircle,
-    DollarSign,
+    IndianRupee,
     Percent
 } from 'lucide-react'
 import { formatCurrency } from '@/lib/utils'
@@ -129,7 +129,7 @@ export function CreditEligibilitySection({ company }: CreditEligibilitySectionPr
                 {/* Financial Basis */}
                 <div className="space-y-3">
                     <h4 className="font-medium text-neutral-90 flex items-center gap-2">
-                        <DollarSign className="w-4 h-4" />
+                        <IndianRupee className="w-4 h-4" />
                         Financial Basis
                     </h4>
 

@@ -11,7 +11,7 @@ import {
     AlertTriangle,
     CheckCircle,
     BarChart3,
-    DollarSign,
+    IndianRupee,
     Clock,
     Shield
 } from 'lucide-react'
@@ -318,7 +318,7 @@ export function RatiosAnalysis({ company, industryBenchmarks }: RatiosAnalysisPr
                         <div className="space-y-4">
                             <div className="p-4 bg-green-50 rounded-lg">
                                 <h4 className="font-medium text-green-900 mb-3 flex items-center gap-2">
-                                    <DollarSign className="w-4 h-4" />
+                                    <IndianRupee className="w-4 h-4" />
                                     Liquidity Assessment
                                 </h4>
                                 <div className="text-sm text-green-700">
@@ -338,8 +338,8 @@ export function RatiosAnalysis({ company, industryBenchmarks }: RatiosAnalysisPr
                                 <div className="p-3 bg-gray-50 rounded">
                                     <div className="text-gray-600 mb-1">Current Ratio Status</div>
                                     <div className={`font-semibold ${currentRatio >= 2 ? 'text-green-600' :
-                                            currentRatio >= 1.5 ? 'text-blue-600' :
-                                                currentRatio >= 1 ? 'text-yellow-600' : 'text-red-600'
+                                        currentRatio >= 1.5 ? 'text-blue-600' :
+                                            currentRatio >= 1 ? 'text-yellow-600' : 'text-red-600'
                                         }`}>
                                         {currentRatio >= 2 ? 'Excellent' :
                                             currentRatio >= 1.5 ? 'Good' :
@@ -350,8 +350,8 @@ export function RatiosAnalysis({ company, industryBenchmarks }: RatiosAnalysisPr
                                 <div className="p-3 bg-gray-50 rounded">
                                     <div className="text-gray-600 mb-1">Quick Ratio Status</div>
                                     <div className={`font-semibold ${quickRatio >= 1 ? 'text-green-600' :
-                                            quickRatio >= 0.8 ? 'text-blue-600' :
-                                                quickRatio >= 0.5 ? 'text-yellow-600' : 'text-red-600'
+                                        quickRatio >= 0.8 ? 'text-blue-600' :
+                                            quickRatio >= 0.5 ? 'text-yellow-600' : 'text-red-600'
                                         }`}>
                                         {quickRatio >= 1 ? 'Excellent' :
                                             quickRatio >= 0.8 ? 'Good' :
@@ -514,20 +514,20 @@ export function RatiosAnalysis({ company, industryBenchmarks }: RatiosAnalysisPr
                                         <span>{debtEquity.toFixed(2)}</span>
                                     </div>
                                     <div className="w-full bg-gray-200 rounded-full h-2">
-                                        <div 
+                                        <div
                                             className={`h-2 rounded-full ${debtEquity <= 0.5 ? 'bg-green-500' : debtEquity <= 1 ? 'bg-yellow-500' : 'bg-red-500'}`}
                                             style={{ width: `${Math.min(100, (debtEquity / 2) * 100)}%` }}
                                         />
                                     </div>
                                 </div>
-                                
+
                                 <div>
                                     <div className="flex justify-between text-xs mb-1">
                                         <span>Interest Coverage Strength</span>
                                         <span>{interestCoverage.toFixed(1)}x</span>
                                     </div>
                                     <div className="w-full bg-gray-200 rounded-full h-2">
-                                        <div 
+                                        <div
                                             className={`h-2 rounded-full ${interestCoverage >= 5 ? 'bg-green-500' : interestCoverage >= 3 ? 'bg-yellow-500' : 'bg-red-500'}`}
                                             style={{ width: `${Math.min(100, (interestCoverage / 10) * 100)}%` }}
                                         />

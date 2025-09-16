@@ -10,7 +10,7 @@ import {
     Calendar,
     FileText,
     Phone,
-    DollarSign,
+    IndianRupee,
     Edit,
     Save,
     X,
@@ -214,7 +214,7 @@ export function CreditManagementSection({ requestId }: CreditManagementSectionPr
                     <div className="backdrop-blur-sm bg-white/60 border border-gray-200/40 rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300">
                         <div className="flex items-center gap-3 mb-6">
                             <div className="p-2 bg-gradient-to-br from-green-500 to-emerald-600 rounded-lg">
-                                <DollarSign className="w-5 h-5 text-white" />
+                                <IndianRupee className="w-5 h-5 text-white" />
                             </div>
                             <h3 className="text-lg font-semibold text-gray-900">Credit Approval Details</h3>
                         </div>
