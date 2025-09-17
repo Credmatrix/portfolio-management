@@ -12,10 +12,30 @@ const config: Config = {
             colors: {
                 primary: FluentColors.primary,
                 neutral: FluentColors.neutral,
-                success: FluentColors.success,
-                warning: FluentColors.warning,
-                error: FluentColors.error,
-                info: FluentColors.info,
+                success: {
+                    100: '#F3F9F1',
+                    200: '#E1F5DC',
+                    700: '#107C10',
+                    DEFAULT: FluentColors.success,
+                },
+                warning: {
+                    100: '#FFF8E1',
+                    200: '#FFECB3',
+                    700: '#E65100',
+                    DEFAULT: FluentColors.warning,
+                },
+                error: {
+                    100: '#FFEBEE',
+                    200: '#FFCDD2',
+                    700: '#D32F2F',
+                    DEFAULT: FluentColors.error,
+                },
+                info: {
+                    100: '#E1F5FE',
+                    200: '#B3E5FC',
+                    700: '#0277BD',
+                    DEFAULT: FluentColors.info,
+                },
             },
             fontFamily: {
                 sans: ['Segoe UI', 'system-ui', 'sans-serif'],

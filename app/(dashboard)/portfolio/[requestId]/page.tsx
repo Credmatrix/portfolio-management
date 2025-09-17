@@ -27,7 +27,9 @@ import {
     Shield,
     TrendingUp,
     CheckCircle,
-    Search
+    Search,
+    Scale,
+    FileCheck
 } from 'lucide-react'
 
 // Import the section components
@@ -47,6 +49,8 @@ import { DeepResearchInterface, ResearchReportViewer } from '@/components/deep-r
 import { GstFilingDetailsSection } from './components/compliance/GstFilingDetailsSection'
 import { EpfoDetailsSection } from './components/compliance/EpfoDetailsSection'
 import { ComplianceSummarySection } from './components/compliance/ComplianceSummarySection'
+import { LegalHistorySection } from './components/compliance/LegalHistorySection'
+import { AuditorsCommentsSection } from './components/compliance/AuditorsCommentsSection'
 
 interface CompanyDetailPageProps { }
 
@@ -570,10 +574,10 @@ export default function CompanyDetailPage({ }: CompanyDetailPageProps) {
                         <TabsContent value="compliance" className="space-y-6">
                             {/* Compliance Sub-tabs */}
                             <Tabs value={complianceSubTab} onValueChange={setComplianceSubTab} className="w-full">
-                                <TabsList className="grid w-full grid-cols-3">
+                                <TabsList className="grid w-full grid-cols-5">
                                     <TabsTrigger value="summary" className="flex items-center gap-2">
                                         <Shield className="w-4 h-4" />
-                                        Summary
+                                        Compliance Overview
                                     </TabsTrigger>
                                     <TabsTrigger value="gst" className="flex items-center gap-2">
                                         <FileText className="w-4 h-4" />
@@ -582,6 +586,14 @@ export default function CompanyDetailPage({ }: CompanyDetailPageProps) {
                                     <TabsTrigger value="epfo" className="flex items-center gap-2">
                                         <Users className="w-4 h-4" />
                                         EPFO Details
+                                    </TabsTrigger>
+                                    <TabsTrigger value="legal" className="flex items-center gap-2">
+                                        <Scale className="w-4 h-4" />
+                                        Legal History
+                                    </TabsTrigger>
+                                    <TabsTrigger value="audit" className="flex items-center gap-2">
+                                        <FileCheck className="w-4 h-4" />
+                                        Auditors Comments
                                     </TabsTrigger>
                                 </TabsList>
 
@@ -599,6 +611,15 @@ export default function CompanyDetailPage({ }: CompanyDetailPageProps) {
                                 {/* EPFO Sub-tab */}
                                 <TabsContent value="epfo" className="space-y-6">
                                     <EpfoDetailsSection company={company} />
+                                </TabsContent>
+                                {/* Legal History Tab */}
+                                <TabsContent value="legal" className="space-y-6">
+                                    <LegalHistorySection company={company} />
+                                </TabsContent>
+
+                                {/* Auditors Comments Tab */}
+                                <TabsContent value="audit" className="space-y-6">
+                                    <AuditorsCommentsSection company={company} />
                                 </TabsContent>
                             </Tabs>
                         </TabsContent>

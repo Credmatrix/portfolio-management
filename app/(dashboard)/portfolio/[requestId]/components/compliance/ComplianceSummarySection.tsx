@@ -1,28 +1,27 @@
 'use client'
 
-import React from 'react'
-import { Card, CardContent, CardHeader } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
+import { Card, CardContent, CardHeader } from '@/components/ui/Card'
 import { PortfolioCompany } from '@/types/portfolio.types'
 import {
-    Shield,
-    CheckCircle,
-    AlertTriangle,
-    XCircle,
-    FileText,
-    Users,
-    Calendar,
-    TrendingUp,
     Activity,
+    AlertTriangle,
+    CheckCircle,
+    FileText,
     Info,
-    Building
+    Shield,
+    TrendingUp,
+    Users,
+    XCircle
 } from 'lucide-react'
+import { useState } from 'react'
 
 interface ComplianceSummarySectionProps {
     company: PortfolioCompany
 }
 
 export function ComplianceSummarySection({ company }: ComplianceSummarySectionProps) {
+    const [activeTab, setActiveTab] = useState('overview')
     // Extract GST and PF data from allScores (same as ComplianceSection)
     const allScores = company.risk_analysis?.allScores || []
     const gstData = allScores.find(score => score.parameter === "Statutory Payments (GST)")
