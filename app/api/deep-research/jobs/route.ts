@@ -62,9 +62,15 @@ export async function POST(request: NextRequest) {
             )
         }
 
+        // Extract user context for audit logging
+        const userContext = {
+            ip_address: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown',
+            user_agent: request.headers.get('user-agent') || 'unknown'
+        }
+
         // Start research job
         const researchService = new DeepResearchService()
-        const result = await researchService.startResearchJob(user.id, body)
+        const result = await researchService.startResearchJob(user.id, body, userContext)
 
         if (!result.success) {
             return NextResponse.json(

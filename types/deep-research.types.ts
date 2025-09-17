@@ -108,6 +108,12 @@ export interface ResearchFindings {
     negative_news_research?: JinaResearchResult
     legal_regulatory_research?: JinaResearchResult
     related_companies_research?: JinaResearchResult
+    risk_score: number
+    credit_recommendation: string
+    confidence_level: string
+    key_risk_factors: string[]
+    data_completeness: number
+    findings: any
 }
 
 export interface JinaResearchResult {
@@ -145,6 +151,7 @@ export interface FindingsSummary {
     high_risk_findings: number
     medium_risk_findings: number
     low_risk_findings: number
+    critical_findings: number,
     categories: {
         [category: string]: number
     }
@@ -247,6 +254,19 @@ export const RESEARCH_PRESETS: ResearchPreset[] = [
             include_related_companies: true,
             time_period_months: 36,
             focus_areas: ['subsidiary_risks', 'group_exposure', 'cross_guarantees']
+        },
+        estimated_duration_minutes: 5,
+        budget_tokens: 15000
+    },
+    {
+        id: 'regulatory_research',
+        name: 'Regulatory Research',
+        description: 'Regulatory compliance and enforcement action analysis',
+        job_type: 'regulatory_research',
+        research_scope: {
+            include_related_companies: true,
+            time_period_months: 36,
+            focus_areas: ['SEBI actions', 'Tax disputes', 'Environmental violations', 'Industry compliance']
         },
         estimated_duration_minutes: 5,
         budget_tokens: 15000
