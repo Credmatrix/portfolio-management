@@ -50,6 +50,17 @@ interface EnhancedJobStatus extends DeepResearchJob {
     estimated_completion?: string
 }
 
+/**
+ * Renders the DeepResearchInterface UI for managing and viewing an advanced due-diligence workflow.
+ *
+ * Displays research presets, active and completed job lists, progress indicators, and a Reports view.
+ * Manages fetching and polling of research jobs, detects auto-generated comprehensive reports, and
+ * exposes controls to start or cancel individual research jobs (which invoke the corresponding API endpoints).
+ *
+ * @param requestId - The external request identifier used to scope API queries and actions for this workflow.
+ * @param companyName - Display name of the company under analysis (used in headers and contextual text).
+ * @returns A React element containing the full deep-research interface.
+ */
 export function DeepResearchInterface({ requestId, companyName }: DeepResearchInterfaceProps) {
     const [activeJobs, setActiveJobs] = useState<EnhancedJobStatus[]>([])
     const [completedJobs, setCompletedJobs] = useState<EnhancedJobStatus[]>([])

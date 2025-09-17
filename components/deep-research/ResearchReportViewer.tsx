@@ -54,6 +54,24 @@ interface EnhancedReport extends DeepResearchReport {
     data_quality_score: number
 }
 
+/**
+ * Client-side React component that fetches and displays deep research (due diligence) reports for a given request.
+ *
+ * Renders either a reports list or a detailed report viewer:
+ * - Reports list: shows report cards with metadata, risk summary, and actions to view, export (PDF), or delete a report.
+ * - Detailed report view: shows an enhanced header, a business-intelligence risk dashboard, a left navigation of dynamic sections (executive summary, processed report sections, recommendations), and formatted section content.
+ *
+ * The component manages loading and error states, fetches data from the backend, and provides the following interactions:
+ * - fetches reports from GET /api/deep-research/reports?request_id={requestId}
+ * - loads a single report from GET /api/deep-research/reports/{reportId}
+ * - deletes a report via DELETE /api/deep-research/reports/{reportId} (user confirmation required)
+ * - exports a report PDF from GET /api/deep-research/reports/{reportId}/export?format=pdf and triggers a browser download
+ *
+ * The UI transforms raw report sections into navigable items, maps risk levels to visual variants/colors, and formats markdown-like content into headings, lists, and paragraphs.
+ *
+ * @param requestId - The identifier of the research request whose reports should be listed and viewed.
+ * @returns A React element rendering the reports list or the selected report viewer.
+ */
 export function ResearchReportViewer({ requestId }: ResearchReportViewerProps) {
     const [reports, setReports] = useState<EnhancedReport[]>([])
     const [selectedReport, setSelectedReport] = useState<EnhancedReport | null>(null)

@@ -50,6 +50,19 @@ import { ComplianceSummarySection } from './components/compliance/ComplianceSumm
 
 interface CompanyDetailPageProps { }
 
+/**
+ * Client component that renders a detailed, multi-tab view for a portfolio company identified by the route param `requestId`.
+ *
+ * Fetches company details from `/api/portfolio/{requestId}` on mount and manages local UI state (loading, error, active tab, retry/delete status, header collapse, compliance sub-tab, chat open). Exposes actions that interact with backend endpoints:
+ * - Download PDF report: GET `/api/upload/status/{requestId}` (expects `download_url` and `pdf_filename`)
+ * - Download original file: GET `/api/upload/download-original/{requestId}` (expects `download_url`)
+ * - Retry processing: POST `/api/upload/retry/{requestId}` (optimistically sets company status to `processing`)
+ * - Delete company: DELETE `/api/portfolio/{requestId}` (navigates back to `/portfolio` on success)
+ *
+ * The component conditionally enables the "Deep Research" and "AI Chat" tabs only when the company's status is `completed`. Renders skeletons while loading, an error alert on fetch failure, and a "not found" warning if the company payload is absent.
+ *
+ * @returns The company detail page JSX.
+ */
 export default function CompanyDetailPage({ }: CompanyDetailPageProps) {
     const params = useParams()
     const router = useRouter()

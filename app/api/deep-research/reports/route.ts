@@ -123,6 +123,25 @@ export async function POST(request: NextRequest) {
     }
 }
 
+/**
+ * Retrieves deep research reports for the authenticated user and returns them enriched with business intelligence metadata.
+ *
+ * Supports optional query parameters:
+ * - `request_id` — filters reports for a specific processing request.
+ * - `auto_generated` — filters by auto-generated flag (`'true'` or `'false'`).
+ * - `report_type` — filters by report type.
+ *
+ * The handler authenticates the user, queries `deep_research_reports` joined with `document_processing_requests`
+ * (selecting company_name, cin, pan, industry), orders results by `generated_at` descending, and augments each report with:
+ * - `company_info` (name, cin, pan, industry) from the joined document_processing_requests row,
+ * - BI fields extracted from `findings_summary`: `risk_score`, `credit_recommendation`, `data_quality_score`,
+ *   `key_risk_factors` (defaults to []), and `mitigating_factors` (defaults to []).
+ *
+ * Responds with JSON { success: true, reports: [...] } on success.
+ *
+ * @param request - The incoming Next.js request containing optional query parameters.
+ * @returns A JSON NextResponse with enriched reports on success, 401 if unauthenticated, or 500 on internal errors.
+ */
 export async function GET(request: NextRequest) {
     try {
         const supabase = await createServerSupabaseClient()
