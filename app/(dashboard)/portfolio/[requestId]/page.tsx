@@ -50,6 +50,19 @@ import { ComplianceSummarySection } from './components/compliance/ComplianceSumm
 
 interface CompanyDetailPageProps { }
 
+/**
+ * Client component that renders a detailed, multi-tab view for a portfolio company identified by the route param `requestId`.
+ *
+ * Fetches company details from `/api/portfolio/{requestId}` on mount and manages local UI state (loading, error, active tab, retry/delete status, header collapse, compliance sub-tab, chat open). Exposes actions that interact with backend endpoints:
+ * - Download PDF report: GET `/api/upload/status/{requestId}` (expects `download_url` and `pdf_filename`)
+ * - Download original file: GET `/api/upload/download-original/{requestId}` (expects `download_url`)
+ * - Retry processing: POST `/api/upload/retry/{requestId}` (optimistically sets company status to `processing`)
+ * - Delete company: DELETE `/api/portfolio/{requestId}` (navigates back to `/portfolio` on success)
+ *
+ * The component conditionally enables the "Deep Research" and "AI Chat" tabs only when the company's status is `completed`. Renders skeletons while loading, an error alert on fetch failure, and a "not found" warning if the company payload is absent.
+ *
+ * @returns The company detail page JSX.
+ */
 export default function CompanyDetailPage({ }: CompanyDetailPageProps) {
     const params = useParams()
     const router = useRouter()
@@ -446,7 +459,7 @@ export default function CompanyDetailPage({ }: CompanyDetailPageProps) {
 
                     {/* Tabbed Interface */}
                     <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                        <TabsList className="grid w-full grid-cols-6">
+                        <TabsList className="grid w-full grid-cols-7">
                             <TabsTrigger value="overview" className="flex items-center gap-2">
                                 <BarChart3 className="w-4 h-4" />
                                 Overview
@@ -467,14 +480,14 @@ export default function CompanyDetailPage({ }: CompanyDetailPageProps) {
                                 <CheckCircle className="w-4 h-4" />
                                 Compliance
                             </TabsTrigger>
-                            {/* <TabsTrigger
+                            <TabsTrigger
                                 value="deep-research"
                                 className="flex items-center gap-2"
                                 disabled={company?.status !== 'completed'}
                             >
                                 <Search className="w-4 h-4" />
                                 Deep Research
-                            </TabsTrigger> */}
+                            </TabsTrigger>
                             <TabsTrigger
                                 value="ai-chat"
                                 className="flex items-center gap-2"
@@ -604,17 +617,13 @@ export default function CompanyDetailPage({ }: CompanyDetailPageProps) {
                         </TabsContent>
 
                         {/* Deep Research Tab */}
-                        {/* <TabsContent value="deep-research" className="space-y-6">
+                        <TabsContent value="deep-research" className="space-y-6">
                             {company?.status === 'completed' ? (
                                 <div className="space-y-8">
                                     <DeepResearchInterface
                                         requestId={requestId}
                                         companyName={company.company_name || 'Unknown Company'}
                                     />
-
-                                    <div className="border-t border-neutral-20 pt-8">
-                                        <ResearchReportViewer requestId={requestId} />
-                                    </div>
                                 </div>
                             ) : (
                                 <Card>
@@ -634,7 +643,7 @@ export default function CompanyDetailPage({ }: CompanyDetailPageProps) {
                                     </CardContent>
                                 </Card>
                             )}
-                        </TabsContent> */}
+                        </TabsContent>
 
                         {/* AI Chat Tab */}
                         <TabsContent value="ai-chat" className="space-y-6">

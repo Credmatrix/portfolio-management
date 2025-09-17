@@ -6,6 +6,23 @@ import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { DeepResearchService } from '@/lib/services/deep-research.service'
 import { StartResearchJobRequest } from '@/types/deep-research.types'
 
+/**
+ * Starts a new deep research job for an authenticated user.
+ *
+ * Validates the request body (requires `request_id` and `job_type`), confirms the
+ * authenticated user's access to the referenced portfolio request, prevents creation
+ * of duplicate active jobs of the same type, and delegates job creation to
+ * DeepResearchService (now including an audit `userContext` extracted from request headers).
+ *
+ * Responses:
+ * - 401 Unauthorized if the caller is not authenticated.
+ * - 400 Bad Request if `request_id` or `job_type` is missing.
+ * - 404 Not Found if the referenced portfolio request is not found or inaccessible.
+ * - 409 Conflict if an active job of the same type already exists (returns `existing_job_id`).
+ * - 500 Internal Server Error if job creation fails or an unexpected error occurs.
+ *
+ * @returns A NextResponse containing success state and, on success, `job_id`, `message`, and `company_name`.
+ */
 export async function POST(request: NextRequest) {
     try {
         const supabase = await createServerSupabaseClient()
@@ -62,9 +79,15 @@ export async function POST(request: NextRequest) {
             )
         }
 
+        // Extract user context for audit logging
+        const userContext = {
+            ip_address: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown',
+            user_agent: request.headers.get('user-agent') || 'unknown'
+        }
+
         // Start research job
         const researchService = new DeepResearchService()
-        const result = await researchService.startResearchJob(user.id, body)
+        const result = await researchService.startResearchJob(user.id, body, userContext)
 
         if (!result.success) {
             return NextResponse.json(

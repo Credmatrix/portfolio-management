@@ -437,45 +437,195 @@ export type Database = {
           },
         ]
       }
+      deep_research_alerts: {
+        Row: {
+          business_impact: Json | null
+          category: string
+          confidence_score: number | null
+          created_at: string | null
+          description: string
+          financial_impact: string | null
+          id: string
+          job_id: string | null
+          resolution_notes: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          severity: string
+          source_evidence: string | null
+          status: string | null
+          title: string
+          updated_at: string | null
+          user_id: string | null
+          verification_status: string | null
+        }
+        Insert: {
+          business_impact?: Json | null
+          category: string
+          confidence_score?: number | null
+          created_at?: string | null
+          description: string
+          financial_impact?: string | null
+          id?: string
+          job_id?: string | null
+          resolution_notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          severity: string
+          source_evidence?: string | null
+          status?: string | null
+          title: string
+          updated_at?: string | null
+          user_id?: string | null
+          verification_status?: string | null
+        }
+        Update: {
+          business_impact?: Json | null
+          category?: string
+          confidence_score?: number | null
+          created_at?: string | null
+          description?: string
+          financial_impact?: string | null
+          id?: string
+          job_id?: string | null
+          resolution_notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          severity?: string
+          source_evidence?: string | null
+          status?: string | null
+          title?: string
+          updated_at?: string | null
+          user_id?: string | null
+          verification_status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "deep_research_alerts_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "deep_research_jobs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "deep_research_alerts_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "v_research_dashboard"
+            referencedColumns: ["job_id"]
+          },
+        ]
+      }
+      deep_research_audit_log: {
+        Row: {
+          action: string
+          created_at: string | null
+          details: Json | null
+          id: string
+          ip_address: unknown | null
+          job_id: string | null
+          timestamp: string | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string | null
+          details?: Json | null
+          id?: string
+          ip_address?: unknown | null
+          job_id?: string | null
+          timestamp?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string | null
+          details?: Json | null
+          id?: string
+          ip_address?: unknown | null
+          job_id?: string | null
+          timestamp?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "deep_research_audit_log_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "deep_research_jobs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "deep_research_audit_log_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "v_research_dashboard"
+            referencedColumns: ["job_id"]
+          },
+        ]
+      }
       deep_research_findings: {
         Row: {
           completed_at: string | null
+          confidence_score: number | null
           content: string | null
           created_at: string | null
+          critical_alerts: Json | null
+          data_sources_count: number | null
           error_message: string | null
           id: string
           job_id: string
           query_text: string
+          raw_jina_content: string | null
+          requires_attention: boolean | null
           research_type: string
+          risk_score: number | null
           started_at: string | null
           success: boolean | null
           tokens_used: number | null
+          verification_level: string | null
         }
         Insert: {
           completed_at?: string | null
+          confidence_score?: number | null
           content?: string | null
           created_at?: string | null
+          critical_alerts?: Json | null
+          data_sources_count?: number | null
           error_message?: string | null
           id?: string
           job_id: string
           query_text: string
+          raw_jina_content?: string | null
+          requires_attention?: boolean | null
           research_type: string
+          risk_score?: number | null
           started_at?: string | null
           success?: boolean | null
           tokens_used?: number | null
+          verification_level?: string | null
         }
         Update: {
           completed_at?: string | null
+          confidence_score?: number | null
           content?: string | null
           created_at?: string | null
+          critical_alerts?: Json | null
+          data_sources_count?: number | null
           error_message?: string | null
           id?: string
           job_id?: string
           query_text?: string
+          raw_jina_content?: string | null
+          requires_attention?: boolean | null
           research_type?: string
+          risk_score?: number | null
           started_at?: string | null
           success?: boolean | null
           tokens_used?: number | null
+          verification_level?: string | null
         }
         Relationships: [
           {
@@ -485,69 +635,187 @@ export type Database = {
             referencedRelation: "deep_research_jobs"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "deep_research_findings_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "v_research_dashboard"
+            referencedColumns: ["job_id"]
+          },
+        ]
+      }
+      deep_research_findings_summary: {
+        Row: {
+          analysis_method: string | null
+          confidence_level: string | null
+          created_at: string | null
+          critical_findings: number | null
+          currency: string | null
+          data_completeness_score: number | null
+          high_risk_findings: number | null
+          id: string
+          info_findings: number | null
+          job_id: string | null
+          low_risk_findings: number | null
+          medium_risk_findings: number | null
+          overall_risk_level: string | null
+          processing_time_seconds: number | null
+          request_id: string
+          tokens_consumed: number | null
+          total_financial_exposure_estimated: number | null
+          total_findings: number | null
+          updated_at: string | null
+          verification_score: number | null
+        }
+        Insert: {
+          analysis_method?: string | null
+          confidence_level?: string | null
+          created_at?: string | null
+          critical_findings?: number | null
+          currency?: string | null
+          data_completeness_score?: number | null
+          high_risk_findings?: number | null
+          id?: string
+          info_findings?: number | null
+          job_id?: string | null
+          low_risk_findings?: number | null
+          medium_risk_findings?: number | null
+          overall_risk_level?: string | null
+          processing_time_seconds?: number | null
+          request_id: string
+          tokens_consumed?: number | null
+          total_financial_exposure_estimated?: number | null
+          total_findings?: number | null
+          updated_at?: string | null
+          verification_score?: number | null
+        }
+        Update: {
+          analysis_method?: string | null
+          confidence_level?: string | null
+          created_at?: string | null
+          critical_findings?: number | null
+          currency?: string | null
+          data_completeness_score?: number | null
+          high_risk_findings?: number | null
+          id?: string
+          info_findings?: number | null
+          job_id?: string | null
+          low_risk_findings?: number | null
+          medium_risk_findings?: number | null
+          overall_risk_level?: string | null
+          processing_time_seconds?: number | null
+          request_id?: string
+          tokens_consumed?: number | null
+          total_financial_exposure_estimated?: number | null
+          total_findings?: number | null
+          updated_at?: string | null
+          verification_score?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "deep_research_findings_summary_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: true
+            referencedRelation: "deep_research_jobs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "deep_research_findings_summary_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: true
+            referencedRelation: "v_research_dashboard"
+            referencedColumns: ["job_id"]
+          },
         ]
       }
       deep_research_jobs: {
         Row: {
           api_calls_made: number | null
+          auto_report_eligible: boolean | null
           budget_tokens: number | null
           completed_at: string | null
           created_at: string | null
+          critical_alerts_count: number | null
           error_message: string | null
+          escalated_at: string | null
+          escalated_by: string | null
           findings: Json | null
           id: string
           job_type: string
           max_attempts: number | null
+          priority: string | null
+          processing_notes: string | null
           progress: number | null
+          quality_score: number | null
           recommendations: string[] | null
           request_id: string
+          requires_attention: boolean | null
           research_scope: Json | null
           risk_assessment: Json | null
           started_at: string | null
           status: string
           tokens_used: number | null
+          two_step_processing: boolean | null
           updated_at: string | null
           user_id: string
         }
         Insert: {
           api_calls_made?: number | null
+          auto_report_eligible?: boolean | null
           budget_tokens?: number | null
           completed_at?: string | null
           created_at?: string | null
+          critical_alerts_count?: number | null
           error_message?: string | null
+          escalated_at?: string | null
+          escalated_by?: string | null
           findings?: Json | null
           id?: string
           job_type: string
           max_attempts?: number | null
+          priority?: string | null
+          processing_notes?: string | null
           progress?: number | null
+          quality_score?: number | null
           recommendations?: string[] | null
           request_id: string
+          requires_attention?: boolean | null
           research_scope?: Json | null
           risk_assessment?: Json | null
           started_at?: string | null
           status?: string
           tokens_used?: number | null
+          two_step_processing?: boolean | null
           updated_at?: string | null
           user_id: string
         }
         Update: {
           api_calls_made?: number | null
+          auto_report_eligible?: boolean | null
           budget_tokens?: number | null
           completed_at?: string | null
           created_at?: string | null
+          critical_alerts_count?: number | null
           error_message?: string | null
+          escalated_at?: string | null
+          escalated_by?: string | null
           findings?: Json | null
           id?: string
           job_type?: string
           max_attempts?: number | null
+          priority?: string | null
+          processing_notes?: string | null
           progress?: number | null
+          quality_score?: number | null
           recommendations?: string[] | null
           request_id?: string
+          requires_attention?: boolean | null
           research_scope?: Json | null
           risk_assessment?: Json | null
           started_at?: string | null
           status?: string
           tokens_used?: number | null
+          two_step_processing?: boolean | null
           updated_at?: string | null
           user_id?: string
         }
@@ -568,18 +836,85 @@ export type Database = {
           },
         ]
       }
+      deep_research_performance_metrics: {
+        Row: {
+          average_confidence_level: number | null
+          average_cost_per_job: number | null
+          average_processing_time_seconds: number | null
+          average_quality_score: number | null
+          average_user_rating: number | null
+          date: string
+          id: string
+          jobs_requiring_attention: number | null
+          total_api_calls: number | null
+          total_critical_alerts: number | null
+          total_high_risk_findings: number | null
+          total_jobs_completed: number | null
+          total_jobs_failed: number | null
+          total_jobs_started: number | null
+          total_reports_generated: number | null
+          total_tokens_consumed: number | null
+          total_user_feedback: number | null
+        }
+        Insert: {
+          average_confidence_level?: number | null
+          average_cost_per_job?: number | null
+          average_processing_time_seconds?: number | null
+          average_quality_score?: number | null
+          average_user_rating?: number | null
+          date?: string
+          id?: string
+          jobs_requiring_attention?: number | null
+          total_api_calls?: number | null
+          total_critical_alerts?: number | null
+          total_high_risk_findings?: number | null
+          total_jobs_completed?: number | null
+          total_jobs_failed?: number | null
+          total_jobs_started?: number | null
+          total_reports_generated?: number | null
+          total_tokens_consumed?: number | null
+          total_user_feedback?: number | null
+        }
+        Update: {
+          average_confidence_level?: number | null
+          average_cost_per_job?: number | null
+          average_processing_time_seconds?: number | null
+          average_quality_score?: number | null
+          average_user_rating?: number | null
+          date?: string
+          id?: string
+          jobs_requiring_attention?: number | null
+          total_api_calls?: number | null
+          total_critical_alerts?: number | null
+          total_high_risk_findings?: number | null
+          total_jobs_completed?: number | null
+          total_jobs_failed?: number | null
+          total_jobs_started?: number | null
+          total_reports_generated?: number | null
+          total_tokens_consumed?: number | null
+          total_user_feedback?: number | null
+        }
+        Relationships: []
+      }
       deep_research_reports: {
         Row: {
+          analysis_depth: string | null
+          auto_generated: boolean | null
           created_at: string | null
+          critical_findings_count: number | null
+          data_quality_score: number | null
           executive_summary: string | null
           expires_at: string | null
           export_formats: string[] | null
           findings_summary: Json | null
           generated_at: string | null
           id: string
+          last_updated_at: string | null
           pdf_url: string | null
+          processing_method: string | null
           recommendations: string[] | null
           report_type: string
+          report_version: string | null
           request_id: string
           risk_level: string | null
           sections: Json | null
@@ -588,16 +923,23 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          analysis_depth?: string | null
+          auto_generated?: boolean | null
           created_at?: string | null
+          critical_findings_count?: number | null
+          data_quality_score?: number | null
           executive_summary?: string | null
           expires_at?: string | null
           export_formats?: string[] | null
           findings_summary?: Json | null
           generated_at?: string | null
           id?: string
+          last_updated_at?: string | null
           pdf_url?: string | null
+          processing_method?: string | null
           recommendations?: string[] | null
           report_type?: string
+          report_version?: string | null
           request_id: string
           risk_level?: string | null
           sections?: Json | null
@@ -606,16 +948,23 @@ export type Database = {
           user_id: string
         }
         Update: {
+          analysis_depth?: string | null
+          auto_generated?: boolean | null
           created_at?: string | null
+          critical_findings_count?: number | null
+          data_quality_score?: number | null
           executive_summary?: string | null
           expires_at?: string | null
           export_formats?: string[] | null
           findings_summary?: Json | null
           generated_at?: string | null
           id?: string
+          last_updated_at?: string | null
           pdf_url?: string | null
+          processing_method?: string | null
           recommendations?: string[] | null
           report_type?: string
+          report_version?: string | null
           request_id?: string
           risk_level?: string | null
           sections?: Json | null
@@ -2314,6 +2663,18 @@ export type Database = {
         }
         Relationships: []
       }
+      mv_research_dashboard_stats: {
+        Row: {
+          active_jobs: number | null
+          average_quality_score: number | null
+          completed_jobs: number | null
+          jobs_requiring_attention: number | null
+          last_updated: string | null
+          total_critical_alerts: number | null
+          total_jobs: number | null
+        }
+        Relationships: []
+      }
       recent_activity: {
         Row: {
           activity_description: string | null
@@ -2421,6 +2782,43 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "organizations"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      v_research_dashboard: {
+        Row: {
+          active_critical_alerts: number | null
+          company_name: string | null
+          completed_at: string | null
+          computed_risk_level: string | null
+          created_at: string | null
+          critical_alerts_count: number | null
+          job_id: string | null
+          job_type: string | null
+          priority: string | null
+          processing_time_seconds: number | null
+          progress: number | null
+          quality_score: number | null
+          request_id: string | null
+          requires_attention: boolean | null
+          status: string | null
+          total_alerts: number | null
+          user_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "deep_research_jobs_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "document_processing_requests"
+            referencedColumns: ["request_id"]
+          },
+          {
+            foreignKeyName: "deep_research_jobs_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "recent_document_requests"
+            referencedColumns: ["request_id"]
           },
         ]
       }
