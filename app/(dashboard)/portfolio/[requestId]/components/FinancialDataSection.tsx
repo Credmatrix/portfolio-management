@@ -2,28 +2,18 @@
 
 import { PortfolioCompany } from '@/types/portfolio.types'
 import { Card, CardContent, CardHeader } from '@/components/ui/Card'
-import { Badge } from '@/components/ui/Badge'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/Tabs'
-import {
-    TrendingUp,
-    TrendingDown,
-    BarChart3,
-    PieChart,
-    Calculator,
-    AlertTriangle,
-    IndianRupee,
-    Percent,
-    Calendar
-} from 'lucide-react'
-import { formatCurrency } from '@/lib/utils'
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/Tabs'
+import { BarChart3, AlertTriangle, TrendingUp, PieChart, Calculator, DollarSign, Activity, Clock } from 'lucide-react'
 
 // Import financial analysis components
+import { FinancialHighlights } from './financial/FinancialHighlights'
 import { BalanceSheetChart } from './financial/BalanceSheetChart'
 import { ProfitLossChart } from './financial/ProfitLossChart'
 import { RatiosAnalysis } from './financial/RatiosAnalysis'
 import { CashFlowAnalysis } from './financial/CashFlowAnalysis'
-import { BenchmarkComparison } from './financial/BenchmarkComparison'
-import { RiskTrendAnalysis } from './financial/RiskTrendAnalysis'
+import { MSMESupplierPaymentDelays } from './financial/MSMESupplierPaymentDelays'
+
+
 
 interface FinancialDataSectionProps {
     company: PortfolioCompany
@@ -53,88 +43,82 @@ export function FinancialDataSection({ company, industryBenchmarks }: FinancialD
     }
 
     const years = financialData.years || []
-    const latestYear = years[years.length - 1]
-    const previousYear = years[years.length - 2]
 
-    // Helper function to get latest value
-    const getLatestValue = (data: any) => {
-        if (!data || !latestYear) return 0
-        return data[latestYear] || 0
-    }
 
-    // Helper function to calculate growth
-    const calculateGrowth = (data: any) => {
-        if (!data || !latestYear || !previousYear) return null
-        const current = data[latestYear] || 0
-        const previous = data[previousYear] || 0
-        if (previous === 0) return null
-        return ((current - previous) / previous) * 100
-    }
-
-    // Helper function to format growth
-    const formatGrowth = (growth: number | null) => {
-        if (growth === null) return 'N/A'
-        const isPositive = growth >= 0
-        return (
-            <span className={`flex items-center gap-1 ${isPositive ? 'text-green-600' : 'text-red-600'}`}>
-                {isPositive ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
-                {Math.abs(growth).toFixed(1)}%
-            </span>
-        )
-    }
-
-    // Key financial metrics
-    const revenue = getLatestValue(financialData.profit_loss?.revenue)
-    const ebitda = getLatestValue(financialData.profit_loss?.ebitda)
-    const pat = getLatestValue(financialData.profit_loss?.pat)
-    const totalAssets = getLatestValue(financialData.balance_sheet?.assets?.total_assets)
-    const totalEquity = getLatestValue(financialData.balance_sheet?.equity?.total_equity)
-    const totalLiabilities = getLatestValue(financialData.balance_sheet?.liabilities?.total_liabilities)
-
-    // Growth calculations
-    const revenueGrowth = calculateGrowth(financialData.profit_loss?.revenue)
-    const ebitdaGrowth = calculateGrowth(financialData.profit_loss?.ebitda)
-    const patGrowth = calculateGrowth(financialData.profit_loss?.pat)
-
-    // Ratios
-    const ebitdaMargin = revenue > 0 ? (ebitda / revenue) * 100 : 0
-    const netMargin = revenue > 0 ? (pat / revenue) * 100 : 0
-    const roe = totalEquity > 0 ? (pat / totalEquity) * 100 : 0
-    const debtEquity = getLatestValue(financialData.ratios?.leverage?.debt_equity) || 0
-    const currentRatio = getLatestValue(financialData.ratios?.liquidity?.current_ratio) || 0
 
     return (
-        <div className="space-y-8">
-            {/* Balance Sheet Analysis */}
-            <BalanceSheetChart
-                company={company}
-                industryBenchmarks={industryBenchmarks}
-            />
+        <Card>
+            <CardHeader>
+                <h2 className="text-xl font-semibold text-neutral-90 flex items-center gap-2">
+                    <BarChart3 className="w-5 h-5" />
+                    Financial Analysis
+                </h2>
+            </CardHeader>
+            <CardContent>
+                <Tabs defaultValue="highlights" className="w-full">
+                    <TabsList className="grid w-full grid-cols-6">
+                        <TabsTrigger value="highlights" className="flex items-center gap-2">
+                            <TrendingUp className="w-4 h-4" />
+                            Highlights
+                        </TabsTrigger>
+                        <TabsTrigger value="balance-sheet" className="flex items-center gap-2">
+                            <PieChart className="w-4 h-4" />
+                            Balance Sheet
+                        </TabsTrigger>
+                        <TabsTrigger value="profit-loss" className="flex items-center gap-2">
+                            <DollarSign className="w-4 h-4" />
+                            Profit & Loss
+                        </TabsTrigger>
+                        <TabsTrigger value="cash-flow" className="flex items-center gap-2">
+                            <Activity className="w-4 h-4" />
+                            Cash Flow
+                        </TabsTrigger>
+                        <TabsTrigger value="ratios" className="flex items-center gap-2">
+                            <Calculator className="w-4 h-4" />
+                            Financial Ratios
+                        </TabsTrigger>
+                        <TabsTrigger value="msme" className="flex items-center gap-2">
+                            <Clock className='w-4 h-4' />
+                            MSME Delays
+                        </TabsTrigger>
+                    </TabsList>
 
-            {/* Profit & Loss Analysis */}
-            <ProfitLossChart
-                company={company}
-                industryBenchmarks={industryBenchmarks}
-            />
+                    <TabsContent value="highlights" className="mt-6">
+                        <FinancialHighlights company={company} />
+                    </TabsContent>
 
-            {/* Financial Ratios Analysis */}
-            <RatiosAnalysis
-                company={company}
-                industryBenchmarks={industryBenchmarks}
-            />
+                    <TabsContent value="balance-sheet" className="mt-6">
+                        <BalanceSheetChart
+                            company={company}
+                            industryBenchmarks={industryBenchmarks}
+                        />
+                    </TabsContent>
 
-            {/* Cash Flow Analysis */}
-            <CashFlowAnalysis
-                company={company}
-                industryBenchmarks={industryBenchmarks}
-            />
+                    <TabsContent value="profit-loss" className="mt-6">
+                        <ProfitLossChart
+                            company={company}
+                            industryBenchmarks={industryBenchmarks}
+                        />
+                    </TabsContent>
 
-            {/* Benchmark Comparison */}
-            {/*             <BenchmarkComparison
-                company={company}
-                industryBenchmarks={industryBenchmarks}
-            /> */}
+                    <TabsContent value="ratios" className="mt-6">
+                        <RatiosAnalysis
+                            company={company}
+                            industryBenchmarks={industryBenchmarks}
+                        />
+                    </TabsContent>
 
-        </div>
+                    <TabsContent value="cash-flow" className="mt-6">
+                        <CashFlowAnalysis
+                            company={company}
+                            industryBenchmarks={industryBenchmarks}
+                        />
+                    </TabsContent>
+                    <TabsContent value="msme" className="mt-6">
+                        <MSMESupplierPaymentDelays company={company} />
+                    </TabsContent>
+                </Tabs>
+            </CardContent>
+        </Card>
     )
 }
