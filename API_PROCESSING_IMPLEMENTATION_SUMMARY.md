@@ -1,4 +1,4 @@
-# API Processing Implementation Summary
+# API Processing Implementation
 
 ## Overview
 Implemented a new API-based processing option for the upload page that allows users to process company data without uploading files, using existing comprehensive data or fetching fresh data from external APIs.
