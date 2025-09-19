@@ -60,7 +60,6 @@ interface UploadFile extends File {
 }
 
 const industryOptions = [
-    { value: 'manufacturing', label: 'Manufacturing' },
     { value: 'manufacturing-oem', label: 'Manufacturing - OEM' },
     { value: 'epc', label: 'EPC (Engineering, Procurement & Construction)' },
 ];
@@ -80,7 +79,7 @@ export function UnifiedProcessing({
     onStatusUpdate
 }: UnifiedProcessingProps) {
     // Shared configuration state
-    const [industry, setIndustry] = useState<Industry>('manufacturing');
+    const [industry, setIndustry] = useState<Industry>('manufacturing-oem');
     const [modelType, setModelType] = useState<ModelType>('without_banking');
     const [companyName, setCompanyName] = useState(selectedCompany?.company_name || "");
 
@@ -612,7 +611,7 @@ export function UnifiedProcessing({
                         <Select
                             value={modelType}
                             onChange={(e) => setModelType(e.target.value as ModelType)}
-                            disabled={isApiProcessing || isUploading}
+                            disabled={true}
                         >
                             {modelTypeOptions.map((option) => (
                                 <option key={option.value} value={option.value}>
