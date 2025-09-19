@@ -1004,7 +1004,7 @@ export type Database = {
           epfo_compliance_status: string | null
           error_message: string | null
           extracted_data: Json | null
-          file_extension: string
+          file_extension: string | null
           file_size: number | null
           financial_parameters: number | null
           gst_compliance_rate: number | null
@@ -1017,7 +1017,7 @@ export type Database = {
           location_state: string | null
           model_type: Database["public"]["Enums"]["model_type"] | null
           organization_id: string | null
-          original_filename: string
+          original_filename: string | null
           pan: string | null
           pdf_file_size: number | null
           pdf_filename: string | null
@@ -1025,13 +1025,13 @@ export type Database = {
           processing_started_at: string | null
           processing_summary: Json | null
           recommended_limit: number | null
-          request_id: string
+          request_id: string | null
           retry_count: number | null
           risk_analysis: Json | null
           risk_grade: string | null
           risk_score: number | null
-          s3_folder_path: string
-          s3_upload_key: string
+          s3_folder_path: string | null
+          s3_upload_key: string | null
           sector: string | null
           status: Database["public"]["Enums"]["processing_status"] | null
           submitted_at: string | null
@@ -1053,7 +1053,7 @@ export type Database = {
           epfo_compliance_status?: string | null
           error_message?: string | null
           extracted_data?: Json | null
-          file_extension: string
+          file_extension?: string | null
           file_size?: number | null
           financial_parameters?: number | null
           gst_compliance_rate?: number | null
@@ -1066,7 +1066,7 @@ export type Database = {
           location_state?: string | null
           model_type?: Database["public"]["Enums"]["model_type"] | null
           organization_id?: string | null
-          original_filename: string
+          original_filename?: string | null
           pan?: string | null
           pdf_file_size?: number | null
           pdf_filename?: string | null
@@ -1074,13 +1074,13 @@ export type Database = {
           processing_started_at?: string | null
           processing_summary?: Json | null
           recommended_limit?: number | null
-          request_id: string
+          request_id?: string | null
           retry_count?: number | null
           risk_analysis?: Json | null
           risk_grade?: string | null
           risk_score?: number | null
-          s3_folder_path: string
-          s3_upload_key: string
+          s3_folder_path?: string | null
+          s3_upload_key?: string | null
           sector?: string | null
           status?: Database["public"]["Enums"]["processing_status"] | null
           submitted_at?: string | null
@@ -1102,7 +1102,7 @@ export type Database = {
           epfo_compliance_status?: string | null
           error_message?: string | null
           extracted_data?: Json | null
-          file_extension?: string
+          file_extension?: string | null
           file_size?: number | null
           financial_parameters?: number | null
           gst_compliance_rate?: number | null
@@ -1115,7 +1115,7 @@ export type Database = {
           location_state?: string | null
           model_type?: Database["public"]["Enums"]["model_type"] | null
           organization_id?: string | null
-          original_filename?: string
+          original_filename?: string | null
           pan?: string | null
           pdf_file_size?: number | null
           pdf_filename?: string | null
@@ -1123,13 +1123,13 @@ export type Database = {
           processing_started_at?: string | null
           processing_summary?: Json | null
           recommended_limit?: number | null
-          request_id?: string
+          request_id?: string | null
           retry_count?: number | null
           risk_analysis?: Json | null
           risk_grade?: string | null
           risk_score?: number | null
-          s3_folder_path?: string
-          s3_upload_key?: string
+          s3_folder_path?: string | null
+          s3_upload_key?: string | null
           sector?: string | null
           status?: Database["public"]["Enums"]["processing_status"] | null
           submitted_at?: string | null
@@ -1671,489 +1671,6 @@ export type Database = {
           website?: string | null
         }
         Relationships: []
-      }
-      portfolio_analytics: {
-        Row: {
-          about_the_company: string | null
-          active_compliance: string | null
-          audit_qualification_status: string | null
-          authorised_capital_cr: number | null
-          banking_count: number | null
-          banking_max_score: number | null
-          banking_percentage: number | null
-          banking_score: number | null
-          banking_total: number | null
-          base_eligibility: number | null
-          broad_industry_category: string | null
-          business_address_line_1: string | null
-          business_address_line_2: string | null
-          business_city: string | null
-          business_count: number | null
-          business_max_score: number | null
-          business_percentage: number | null
-          business_pin_code: string | null
-          business_score: number | null
-          business_state: string | null
-          business_total: number | null
-          cin: string | null
-          company_name: string | null
-          company_status: string | null
-          completed_at: string | null
-          constitution_entity_benchmark: string | null
-          constitution_entity_score: number | null
-          constitution_entity_value: string | null
-          created_at: string | null
-          creditors_days_benchmark: string | null
-          creditors_days_score: number | null
-          creditors_days_value: number | null
-          current_assets: number | null
-          current_liabilities: number | null
-          current_ratio_benchmark: string | null
-          current_ratio_score: number | null
-          current_ratio_value: number | null
-          date_of_incorporation: string | null
-          date_of_last_agm: string | null
-          debt_equity_benchmark: string | null
-          debt_equity_score: number | null
-          debt_equity_value: number | null
-          debtors_days_benchmark: string | null
-          debtors_days_score: number | null
-          debtors_days_value: number | null
-          diversion_funds_benchmark: string | null
-          diversion_funds_score: number | null
-          diversion_funds_value: number | null
-          ebitda: number | null
-          ebitda_margin_benchmark: string | null
-          ebitda_margin_score: number | null
-          ebitda_margin_value: number | null
-          email: string | null
-          epfo_compliance_status: string | null
-          epfo_establishment_count: number | null
-          final_eligibility: number | null
-          finance_cost_benchmark: string | null
-          finance_cost_score: number | null
-          finance_cost_value: number | null
-          financial_count: number | null
-          financial_max_score: number | null
-          financial_percentage: number | null
-          financial_score: number | null
-          financial_total: number | null
-          gst_active_count: number | null
-          gst_compliance_benchmark: string | null
-          gst_compliance_score: number | null
-          gst_compliance_status: string | null
-          gst_compliance_value: string | null
-          hygiene_count: number | null
-          hygiene_max_score: number | null
-          hygiene_percentage: number | null
-          hygiene_score: number | null
-          hygiene_total: number | null
-          id: string
-          industry: Database["public"]["Enums"]["industry_type"] | null
-          interest_coverage_benchmark: string | null
-          interest_coverage_score: number | null
-          interest_coverage_value: number | null
-          inventory_days_benchmark: string | null
-          inventory_days_score: number | null
-          inventory_days_value: number | null
-          legal_name: string | null
-          lei: string | null
-          listing_status: string | null
-          long_term_borrowings: number | null
-          model_id: string | null
-          model_type: Database["public"]["Enums"]["model_type"] | null
-          ncatd_benchmark: string | null
-          ncatd_score: number | null
-          ncatd_value: number | null
-          net_profit: number | null
-          net_worth_cr: number | null
-          overall_percentage: number | null
-          paid_up_capital_cr: number | null
-          pan: string | null
-          pat_benchmark: string | null
-          pat_score: number | null
-          pat_value: number | null
-          pf_compliance_benchmark: string | null
-          pf_compliance_score: number | null
-          pf_compliance_value: string | null
-          phone: string | null
-          primary_banker_benchmark: string | null
-          primary_banker_score: number | null
-          primary_banker_value: string | null
-          processing_status:
-            | Database["public"]["Enums"]["processing_status"]
-            | null
-          quick_ratio_benchmark: string | null
-          quick_ratio_score: number | null
-          quick_ratio_value: number | null
-          rating_type_benchmark: string | null
-          rating_type_score: number | null
-          rating_type_value: string | null
-          recent_charges_benchmark: string | null
-          recent_charges_score: number | null
-          recent_charges_value: string | null
-          recommended_limit: number | null
-          region: string | null
-          registered_address_line_1: string | null
-          registered_address_line_2: string | null
-          registered_city: string | null
-          registered_pin_code: string | null
-          registered_state: string | null
-          request_id: string
-          revenue: number | null
-          risk_category: number | null
-          risk_grade: string | null
-          risk_multiplier: number | null
-          risk_score: number | null
-          roce_benchmark: string | null
-          roce_score: number | null
-          roce_value: number | null
-          sales_trend_benchmark: string | null
-          sales_trend_score: number | null
-          sales_trend_value: string | null
-          segment: string | null
-          short_term_borrowings: number | null
-          state: string | null
-          sum_of_charges_cr: number | null
-          tol_tnw_benchmark: string | null
-          tol_tnw_score: number | null
-          tol_tnw_value: number | null
-          total_assets: number | null
-          total_equity: number | null
-          turnover_cr: number | null
-          type_of_entity: string | null
-          updated_at: string | null
-          vintage_benchmark: string | null
-          vintage_score: number | null
-          vintage_value: string | null
-          website: string | null
-        }
-        Insert: {
-          about_the_company?: string | null
-          active_compliance?: string | null
-          audit_qualification_status?: string | null
-          authorised_capital_cr?: number | null
-          banking_count?: number | null
-          banking_max_score?: number | null
-          banking_percentage?: number | null
-          banking_score?: number | null
-          banking_total?: number | null
-          base_eligibility?: number | null
-          broad_industry_category?: string | null
-          business_address_line_1?: string | null
-          business_address_line_2?: string | null
-          business_city?: string | null
-          business_count?: number | null
-          business_max_score?: number | null
-          business_percentage?: number | null
-          business_pin_code?: string | null
-          business_score?: number | null
-          business_state?: string | null
-          business_total?: number | null
-          cin?: string | null
-          company_name?: string | null
-          company_status?: string | null
-          completed_at?: string | null
-          constitution_entity_benchmark?: string | null
-          constitution_entity_score?: number | null
-          constitution_entity_value?: string | null
-          created_at?: string | null
-          creditors_days_benchmark?: string | null
-          creditors_days_score?: number | null
-          creditors_days_value?: number | null
-          current_assets?: number | null
-          current_liabilities?: number | null
-          current_ratio_benchmark?: string | null
-          current_ratio_score?: number | null
-          current_ratio_value?: number | null
-          date_of_incorporation?: string | null
-          date_of_last_agm?: string | null
-          debt_equity_benchmark?: string | null
-          debt_equity_score?: number | null
-          debt_equity_value?: number | null
-          debtors_days_benchmark?: string | null
-          debtors_days_score?: number | null
-          debtors_days_value?: number | null
-          diversion_funds_benchmark?: string | null
-          diversion_funds_score?: number | null
-          diversion_funds_value?: number | null
-          ebitda?: number | null
-          ebitda_margin_benchmark?: string | null
-          ebitda_margin_score?: number | null
-          ebitda_margin_value?: number | null
-          email?: string | null
-          epfo_compliance_status?: string | null
-          epfo_establishment_count?: number | null
-          final_eligibility?: number | null
-          finance_cost_benchmark?: string | null
-          finance_cost_score?: number | null
-          finance_cost_value?: number | null
-          financial_count?: number | null
-          financial_max_score?: number | null
-          financial_percentage?: number | null
-          financial_score?: number | null
-          financial_total?: number | null
-          gst_active_count?: number | null
-          gst_compliance_benchmark?: string | null
-          gst_compliance_score?: number | null
-          gst_compliance_status?: string | null
-          gst_compliance_value?: string | null
-          hygiene_count?: number | null
-          hygiene_max_score?: number | null
-          hygiene_percentage?: number | null
-          hygiene_score?: number | null
-          hygiene_total?: number | null
-          id?: string
-          industry?: Database["public"]["Enums"]["industry_type"] | null
-          interest_coverage_benchmark?: string | null
-          interest_coverage_score?: number | null
-          interest_coverage_value?: number | null
-          inventory_days_benchmark?: string | null
-          inventory_days_score?: number | null
-          inventory_days_value?: number | null
-          legal_name?: string | null
-          lei?: string | null
-          listing_status?: string | null
-          long_term_borrowings?: number | null
-          model_id?: string | null
-          model_type?: Database["public"]["Enums"]["model_type"] | null
-          ncatd_benchmark?: string | null
-          ncatd_score?: number | null
-          ncatd_value?: number | null
-          net_profit?: number | null
-          net_worth_cr?: number | null
-          overall_percentage?: number | null
-          paid_up_capital_cr?: number | null
-          pan?: string | null
-          pat_benchmark?: string | null
-          pat_score?: number | null
-          pat_value?: number | null
-          pf_compliance_benchmark?: string | null
-          pf_compliance_score?: number | null
-          pf_compliance_value?: string | null
-          phone?: string | null
-          primary_banker_benchmark?: string | null
-          primary_banker_score?: number | null
-          primary_banker_value?: string | null
-          processing_status?:
-            | Database["public"]["Enums"]["processing_status"]
-            | null
-          quick_ratio_benchmark?: string | null
-          quick_ratio_score?: number | null
-          quick_ratio_value?: number | null
-          rating_type_benchmark?: string | null
-          rating_type_score?: number | null
-          rating_type_value?: string | null
-          recent_charges_benchmark?: string | null
-          recent_charges_score?: number | null
-          recent_charges_value?: string | null
-          recommended_limit?: number | null
-          region?: string | null
-          registered_address_line_1?: string | null
-          registered_address_line_2?: string | null
-          registered_city?: string | null
-          registered_pin_code?: string | null
-          registered_state?: string | null
-          request_id: string
-          revenue?: number | null
-          risk_category?: number | null
-          risk_grade?: string | null
-          risk_multiplier?: number | null
-          risk_score?: number | null
-          roce_benchmark?: string | null
-          roce_score?: number | null
-          roce_value?: number | null
-          sales_trend_benchmark?: string | null
-          sales_trend_score?: number | null
-          sales_trend_value?: string | null
-          segment?: string | null
-          short_term_borrowings?: number | null
-          state?: string | null
-          sum_of_charges_cr?: number | null
-          tol_tnw_benchmark?: string | null
-          tol_tnw_score?: number | null
-          tol_tnw_value?: number | null
-          total_assets?: number | null
-          total_equity?: number | null
-          turnover_cr?: number | null
-          type_of_entity?: string | null
-          updated_at?: string | null
-          vintage_benchmark?: string | null
-          vintage_score?: number | null
-          vintage_value?: string | null
-          website?: string | null
-        }
-        Update: {
-          about_the_company?: string | null
-          active_compliance?: string | null
-          audit_qualification_status?: string | null
-          authorised_capital_cr?: number | null
-          banking_count?: number | null
-          banking_max_score?: number | null
-          banking_percentage?: number | null
-          banking_score?: number | null
-          banking_total?: number | null
-          base_eligibility?: number | null
-          broad_industry_category?: string | null
-          business_address_line_1?: string | null
-          business_address_line_2?: string | null
-          business_city?: string | null
-          business_count?: number | null
-          business_max_score?: number | null
-          business_percentage?: number | null
-          business_pin_code?: string | null
-          business_score?: number | null
-          business_state?: string | null
-          business_total?: number | null
-          cin?: string | null
-          company_name?: string | null
-          company_status?: string | null
-          completed_at?: string | null
-          constitution_entity_benchmark?: string | null
-          constitution_entity_score?: number | null
-          constitution_entity_value?: string | null
-          created_at?: string | null
-          creditors_days_benchmark?: string | null
-          creditors_days_score?: number | null
-          creditors_days_value?: number | null
-          current_assets?: number | null
-          current_liabilities?: number | null
-          current_ratio_benchmark?: string | null
-          current_ratio_score?: number | null
-          current_ratio_value?: number | null
-          date_of_incorporation?: string | null
-          date_of_last_agm?: string | null
-          debt_equity_benchmark?: string | null
-          debt_equity_score?: number | null
-          debt_equity_value?: number | null
-          debtors_days_benchmark?: string | null
-          debtors_days_score?: number | null
-          debtors_days_value?: number | null
-          diversion_funds_benchmark?: string | null
-          diversion_funds_score?: number | null
-          diversion_funds_value?: number | null
-          ebitda?: number | null
-          ebitda_margin_benchmark?: string | null
-          ebitda_margin_score?: number | null
-          ebitda_margin_value?: number | null
-          email?: string | null
-          epfo_compliance_status?: string | null
-          epfo_establishment_count?: number | null
-          final_eligibility?: number | null
-          finance_cost_benchmark?: string | null
-          finance_cost_score?: number | null
-          finance_cost_value?: number | null
-          financial_count?: number | null
-          financial_max_score?: number | null
-          financial_percentage?: number | null
-          financial_score?: number | null
-          financial_total?: number | null
-          gst_active_count?: number | null
-          gst_compliance_benchmark?: string | null
-          gst_compliance_score?: number | null
-          gst_compliance_status?: string | null
-          gst_compliance_value?: string | null
-          hygiene_count?: number | null
-          hygiene_max_score?: number | null
-          hygiene_percentage?: number | null
-          hygiene_score?: number | null
-          hygiene_total?: number | null
-          id?: string
-          industry?: Database["public"]["Enums"]["industry_type"] | null
-          interest_coverage_benchmark?: string | null
-          interest_coverage_score?: number | null
-          interest_coverage_value?: number | null
-          inventory_days_benchmark?: string | null
-          inventory_days_score?: number | null
-          inventory_days_value?: number | null
-          legal_name?: string | null
-          lei?: string | null
-          listing_status?: string | null
-          long_term_borrowings?: number | null
-          model_id?: string | null
-          model_type?: Database["public"]["Enums"]["model_type"] | null
-          ncatd_benchmark?: string | null
-          ncatd_score?: number | null
-          ncatd_value?: number | null
-          net_profit?: number | null
-          net_worth_cr?: number | null
-          overall_percentage?: number | null
-          paid_up_capital_cr?: number | null
-          pan?: string | null
-          pat_benchmark?: string | null
-          pat_score?: number | null
-          pat_value?: number | null
-          pf_compliance_benchmark?: string | null
-          pf_compliance_score?: number | null
-          pf_compliance_value?: string | null
-          phone?: string | null
-          primary_banker_benchmark?: string | null
-          primary_banker_score?: number | null
-          primary_banker_value?: string | null
-          processing_status?:
-            | Database["public"]["Enums"]["processing_status"]
-            | null
-          quick_ratio_benchmark?: string | null
-          quick_ratio_score?: number | null
-          quick_ratio_value?: number | null
-          rating_type_benchmark?: string | null
-          rating_type_score?: number | null
-          rating_type_value?: string | null
-          recent_charges_benchmark?: string | null
-          recent_charges_score?: number | null
-          recent_charges_value?: string | null
-          recommended_limit?: number | null
-          region?: string | null
-          registered_address_line_1?: string | null
-          registered_address_line_2?: string | null
-          registered_city?: string | null
-          registered_pin_code?: string | null
-          registered_state?: string | null
-          request_id?: string
-          revenue?: number | null
-          risk_category?: number | null
-          risk_grade?: string | null
-          risk_multiplier?: number | null
-          risk_score?: number | null
-          roce_benchmark?: string | null
-          roce_score?: number | null
-          roce_value?: number | null
-          sales_trend_benchmark?: string | null
-          sales_trend_score?: number | null
-          sales_trend_value?: string | null
-          segment?: string | null
-          short_term_borrowings?: number | null
-          state?: string | null
-          sum_of_charges_cr?: number | null
-          tol_tnw_benchmark?: string | null
-          tol_tnw_score?: number | null
-          tol_tnw_value?: number | null
-          total_assets?: number | null
-          total_equity?: number | null
-          turnover_cr?: number | null
-          type_of_entity?: string | null
-          updated_at?: string | null
-          vintage_benchmark?: string | null
-          vintage_score?: number | null
-          vintage_value?: string | null
-          website?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "portfolio_analytics_request_id_fkey"
-            columns: ["request_id"]
-            isOneToOne: true
-            referencedRelation: "document_processing_requests"
-            referencedColumns: ["request_id"]
-          },
-          {
-            foreignKeyName: "portfolio_analytics_request_id_fkey"
-            columns: ["request_id"]
-            isOneToOne: true
-            referencedRelation: "recent_document_requests"
-            referencedColumns: ["request_id"]
-          },
-        ]
       }
       portfolio_analytics_sync_errors: {
         Row: {
@@ -3459,6 +2976,7 @@ export type Database = {
         | "completed"
         | "failed"
         | "upload_pending"
+        | "created"
       repayment_type: "Before time" | "Timely" | "Slight Delay" | "Huge Delay"
       security_requirement_type: "CC" | "BG" | "Advance" | "Others"
     }
@@ -3608,6 +3126,7 @@ export const Constants = {
         "completed",
         "failed",
         "upload_pending",
+        "created",
       ],
       repayment_type: ["Before time", "Timely", "Slight Delay", "Huge Delay"],
       security_requirement_type: ["CC", "BG", "Advance", "Others"],

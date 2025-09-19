@@ -13,7 +13,6 @@ import {
 } from '@/types/portfolio.types'
 import { Database, Json } from '@/types/database.types'
 import {
-    PortfolioAnalytics,
     AnalyticsTableStatus,
     SyncResult,
     ValidationResult,
@@ -74,7 +73,7 @@ export class PortfolioRepository {
         // Use analytics table for complex queries, main table for simple ones
         let result: PortfolioResponse
         if (optimizationStrategy.useAnalyticsTable && this.useAnalyticsTable) {
-            result = await this.getPortfolioOverviewFromAnalytics(filters, sort, pagination, userId)
+            result = await this.getPortfolioOverviewFromMainTable(filters, sort, pagination, userId)
         } else {
             result = await this.getPortfolioOverviewFromMainTable(filters, sort, pagination, userId)
         }
@@ -98,72 +97,72 @@ export class PortfolioRepository {
     /**
      * Get portfolio overview from analytics table for optimal performance
      */
-    private async getPortfolioOverviewFromAnalytics(
-        filters?: FilterCriteria,
-        sort?: SortCriteria,
-        pagination?: PaginationParams,
-        userId?: string
-    ): Promise<PortfolioResponse> {
-        const supabase = await this.getSupabaseClient()
+    // private async getPortfolioOverviewFromAnalytics(
+    //     filters?: FilterCriteria,
+    //     sort?: SortCriteria,
+    //     pagination?: PaginationParams,
+    //     userId?: string
+    // ): Promise<PortfolioResponse> {
+    //     const supabase = await this.getSupabaseClient()
 
-        // Start building the query on analytics table with user filtering
-        let query = supabase
-            .from('portfolio_analytics')
-            .select(`
-                *,
-                document_processing_requests!inner(user_id)
-            `, { count: 'exact' })
-            .eq('processing_status', 'completed')
+    //     // Start building the query on analytics table with user filtering
+    //     let query = supabase
+    //         .from('portfolio_analytics')
+    //         .select(`
+    //             *,
+    //             document_processing_requests!inner(user_id)
+    //         `, { count: 'exact' })
+    //         .eq('processing_status', 'completed')
 
-        // Filter by user_id for security through the join
-        if (userId) {
-            query = query.eq('document_processing_requests.user_id', userId)
-        }
+    //     // Filter by user_id for security through the join
+    //     if (userId) {
+    //         query = query.eq('document_processing_requests.user_id', userId)
+    //     }
 
-        // Apply analytics-optimized filters
-        if (filters) {
-            query = this.applyAnalyticsFilters(query, filters)
-        }
+    //     // Apply analytics-optimized filters
+    //     if (filters) {
+    //         query = this.applyAnalyticsFilters(query, filters)
+    //     }
 
-        // Apply sorting
-        if (sort) {
-            // Map portfolio field names to analytics table field names
-            const analyticsField = this.mapPortfolioFieldToAnalytics(sort.field)
-            query = query.order(analyticsField, { ascending: sort.direction === 'asc' })
-        } else {
-            // Default sort by completion date (most recent first)
-            query = query.order('completed_at', { ascending: false })
-        }
+    //     // Apply sorting
+    //     if (sort) {
+    //         // Map portfolio field names to analytics table field names
+    //         const analyticsField = this.mapPortfolioFieldToAnalytics(sort.field)
+    //         query = query.order(analyticsField, { ascending: sort.direction === 'asc' })
+    //     } else {
+    //         // Default sort by completion date (most recent first)
+    //         query = query.order('completed_at', { ascending: false })
+    //     }
 
-        // Apply pagination
-        const page = pagination?.page || 1
-        const limit = pagination?.limit || 20
-        const offset = ((page - 1) * limit)
+    //     // Apply pagination
+    //     const page = pagination?.page || 1
+    //     const limit = pagination?.limit || 20
+    //     const offset = ((page - 1) * limit)
 
-        query = query.range(offset, offset + limit - 1)
+    //     query = query.range(offset, offset + limit - 1)
 
-        const { data, error, count } = await query
+    //     const { data, error, count } = await query
 
-        if (error) {
-            throw new Error(`Failed to fetch portfolio overview from analytics: ${error.message}`)
-        }
+    //     if (error) {
+    //         throw new Error(`Failed to fetch portfolio overview from analytics: ${error.message}`)
+    //     }
 
-        // Transform analytics records to PortfolioCompany interface
-        const companies = (data || []).map((row) => this.transformAnalyticsToPortfolioCompany(row))
+    //     // Transform analytics records to PortfolioCompany interface
+    //     const companies = (data || []).map((row) => this.transformAnalyticsToPortfolioCompany(row))
 
-        // Calculate metrics using analytics table
-        const metrics = await this.calculatePortfolioMetricsFromAnalytics(filters, userId)
+    //     // Calculate metrics using analytics table
+    //     const metrics = await this.calculatePortfolioMetricsFromAnalytics(filters, userId)
 
-        return {
-            companies,
-            total_count: count || 0,
-            page,
-            limit,
-            has_next: (count || 0) > offset + limit,
-            has_previous: page > 1,
-            metrics
-        }
-    }
+    //     return {
+    //         companies,
+    //         total_count: count || 0,
+    //         page,
+    //         limit,
+    //         has_next: (count || 0) > offset + limit,
+    //         has_previous: page > 1,
+    //         metrics
+    //     }
+    // }
 
     /**
      * Get portfolio overview from main table (fallback method)
@@ -273,11 +272,11 @@ export class PortfolioRepository {
         const supabase = await this.getSupabaseClient()
 
         // First try to get from analytics table
-        const { data: analyticsData, error: analyticsError } = await supabase
-            .from('portfolio_analytics')
-            .select('*')
-            .eq('request_id', requestId)
-            .single()
+        // const { data: analyticsData, error: analyticsError } = await supabase
+        //     .from('portfolio_analytics')
+        //     .select('*')
+        //     .eq('request_id', requestId)
+        //     .single()
 
         // Always get from main table for complete data
         let mainQuery = supabase
@@ -318,58 +317,58 @@ export class PortfolioRepository {
     /**
      * Combine analytics table data with main table data to create a complete PortfolioCompany object
      */
-    private combineAnalyticsAndMainTableData(analyticsData: PortfolioAnalytics, mainData: DocumentProcessingRequest): PortfolioCompany {
-        // Start with main table data as base (has all the required fields)
-        const baseCompany = this.transformToPortfolioCompany(mainData)
+    // private combineAnalyticsAndMainTableData(analyticsData: PortfolioAnalytics, mainData: DocumentProcessingRequest): PortfolioCompany {
+    //     // Start with main table data as base (has all the required fields)
+    //     const baseCompany = this.transformToPortfolioCompany(mainData)
 
-        // Override with analytics data where available and more accurate
-        const analyticsCompany = this.transformAnalyticsToPortfolioCompany(analyticsData)
+    //     // Override with analytics data where available and more accurate
+    //     const analyticsCompany = this.transformAnalyticsToPortfolioCompany(analyticsData)
 
-        // Combine the data, prioritizing main table for metadata and analytics for computed values
-        return {
-            // Use main table for core metadata
-            id: baseCompany.id,
-            request_id: baseCompany.request_id,
-            user_id: baseCompany.user_id,
-            organization_id: baseCompany.organization_id,
-            original_filename: baseCompany.original_filename,
-            submitted_at: baseCompany.submitted_at,
-            processing_started_at: baseCompany.processing_started_at,
-            file_size: baseCompany.file_size,
-            file_extension: baseCompany.file_extension,
-            s3_upload_key: baseCompany.s3_upload_key,
-            s3_folder_path: baseCompany.s3_folder_path,
-            pdf_filename: baseCompany.pdf_filename,
-            pdf_s3_key: baseCompany.pdf_s3_key,
-            pdf_file_size: baseCompany.pdf_file_size,
-            error_message: baseCompany.error_message,
-            retry_count: baseCompany.retry_count,
-            created_at: baseCompany.created_at,
-            updated_at: baseCompany.updated_at,
+    //     // Combine the data, prioritizing main table for metadata and analytics for computed values
+    //     return {
+    //         // Use main table for core metadata
+    //         id: baseCompany.id,
+    //         request_id: baseCompany.request_id,
+    //         user_id: baseCompany.user_id,
+    //         organization_id: baseCompany.organization_id,
+    //         original_filename: baseCompany.original_filename,
+    //         submitted_at: baseCompany.submitted_at,
+    //         processing_started_at: baseCompany.processing_started_at,
+    //         file_size: baseCompany.file_size,
+    //         file_extension: baseCompany.file_extension,
+    //         s3_upload_key: baseCompany.s3_upload_key,
+    //         s3_folder_path: baseCompany.s3_folder_path,
+    //         pdf_filename: baseCompany.pdf_filename,
+    //         pdf_s3_key: baseCompany.pdf_s3_key,
+    //         pdf_file_size: baseCompany.pdf_file_size,
+    //         error_message: baseCompany.error_message,
+    //         retry_count: baseCompany.retry_count,
+    //         created_at: baseCompany.created_at,
+    //         updated_at: baseCompany.updated_at,
 
-            // Use analytics data for computed/processed values (more accurate)
-            company_name: analyticsCompany.company_name || baseCompany.company_name,
-            industry: analyticsCompany.industry || baseCompany.industry,
-            risk_score: analyticsCompany.risk_score || baseCompany.risk_score,
-            risk_grade: analyticsCompany.risk_grade || baseCompany.risk_grade,
-            recommended_limit: analyticsCompany.recommended_limit || baseCompany.recommended_limit,
-            currency: analyticsCompany.currency || baseCompany.currency,
-            status: analyticsCompany.status || baseCompany.status,
-            completed_at: analyticsCompany.completed_at || baseCompany.completed_at,
-            model_type: analyticsCompany.model_type || baseCompany.model_type,
-            total_parameters: analyticsCompany.total_parameters || baseCompany.total_parameters,
-            available_parameters: analyticsCompany.available_parameters || baseCompany.available_parameters,
-            financial_parameters: analyticsCompany.financial_parameters || baseCompany.financial_parameters,
-            business_parameters: analyticsCompany.business_parameters || baseCompany.business_parameters,
-            hygiene_parameters: analyticsCompany.hygiene_parameters || baseCompany.hygiene_parameters,
-            banking_parameters: analyticsCompany.banking_parameters || baseCompany.banking_parameters,
+    //         // Use analytics data for computed/processed values (more accurate)
+    //         company_name: analyticsCompany.company_name || baseCompany.company_name,
+    //         industry: analyticsCompany.industry || baseCompany.industry,
+    //         risk_score: analyticsCompany.risk_score || baseCompany.risk_score,
+    //         risk_grade: analyticsCompany.risk_grade || baseCompany.risk_grade,
+    //         recommended_limit: analyticsCompany.recommended_limit || baseCompany.recommended_limit,
+    //         currency: analyticsCompany.currency || baseCompany.currency,
+    //         status: analyticsCompany.status || baseCompany.status,
+    //         completed_at: analyticsCompany.completed_at || baseCompany.completed_at,
+    //         model_type: analyticsCompany.model_type || baseCompany.model_type,
+    //         total_parameters: analyticsCompany.total_parameters || baseCompany.total_parameters,
+    //         available_parameters: analyticsCompany.available_parameters || baseCompany.available_parameters,
+    //         financial_parameters: analyticsCompany.financial_parameters || baseCompany.financial_parameters,
+    //         business_parameters: analyticsCompany.business_parameters || baseCompany.business_parameters,
+    //         hygiene_parameters: analyticsCompany.hygiene_parameters || baseCompany.hygiene_parameters,
+    //         banking_parameters: analyticsCompany.banking_parameters || baseCompany.banking_parameters,
 
-            // Use main table for detailed extracted data (more complete), but enhance with analytics if needed
-            extracted_data: analyticsCompany.extracted_data,
-            risk_analysis: analyticsCompany.risk_analysis,
-            processing_summary: baseCompany.processing_summary || analyticsCompany.processing_summary
-        }
-    }
+    //         // Use main table for detailed extracted data (more complete), but enhance with analytics if needed
+    //         extracted_data: analyticsCompany.extracted_data,
+    //         risk_analysis: analyticsCompany.risk_analysis,
+    //         processing_summary: baseCompany.processing_summary || analyticsCompany.processing_summary
+    //     }
+    // }
 
     /**
      * Search companies with full-text search using enhanced flattened fields
@@ -979,532 +978,532 @@ export class PortfolioRepository {
     /**
  * Build parameter scores array from flattened analytics data
  */
-    private buildParameterScoresArray(analyticsRow: PortfolioAnalytics): ParameterScore[] {
-        const parameters: ParameterScore[] = []
+    // private buildParameterScoresArray(analyticsRow: PortfolioAnalytics): ParameterScore[] {
+    //     const parameters: ParameterScore[] = []
 
-        // Financial parameters
-        if (analyticsRow.sales_trend_score !== null) {
-            parameters.push({
-                parameter: 'Sales Trend',
-                category: 'financial',
-                score: analyticsRow.sales_trend_score,
-                value: analyticsRow.sales_trend_value || 'N/A',
-                benchmark: analyticsRow.sales_trend_benchmark || 'N/A',
-                weight: 1.0,
-                description: 'Year-over-year revenue growth trend analysis'
-            })
-        }
+    //     // Financial parameters
+    //     if (analyticsRow.sales_trend_score !== null) {
+    //         parameters.push({
+    //             parameter: 'Sales Trend',
+    //             category: 'financial',
+    //             score: analyticsRow.sales_trend_score,
+    //             value: analyticsRow.sales_trend_value || 'N/A',
+    //             benchmark: analyticsRow.sales_trend_benchmark || 'N/A',
+    //             weight: 1.0,
+    //             description: 'Year-over-year revenue growth trend analysis'
+    //         })
+    //     }
 
-        if (analyticsRow.ebitda_margin_score !== null) {
-            parameters.push({
-                parameter: 'EBITDA Margin',
-                category: 'financial',
-                score: analyticsRow.ebitda_margin_score,
-                value: analyticsRow.ebitda_margin_value ? `${analyticsRow.ebitda_margin_value}%` : 'N/A',
-                benchmark: analyticsRow.ebitda_margin_benchmark || 'N/A',
-                weight: 1.5,
-                description: 'Earnings before interest, taxes, depreciation, and amortization as percentage of revenue'
-            })
-        }
+    //     if (analyticsRow.ebitda_margin_score !== null) {
+    //         parameters.push({
+    //             parameter: 'EBITDA Margin',
+    //             category: 'financial',
+    //             score: analyticsRow.ebitda_margin_score,
+    //             value: analyticsRow.ebitda_margin_value ? `${analyticsRow.ebitda_margin_value}%` : 'N/A',
+    //             benchmark: analyticsRow.ebitda_margin_benchmark || 'N/A',
+    //             weight: 1.5,
+    //             description: 'Earnings before interest, taxes, depreciation, and amortization as percentage of revenue'
+    //         })
+    //     }
 
-        if (analyticsRow.finance_cost_score !== null) {
-            parameters.push({
-                parameter: 'Finance Cost as % of Revenue',
-                category: 'financial',
-                score: analyticsRow.finance_cost_score,
-                value: `${analyticsRow.finance_cost_value}%`,
-                benchmark: analyticsRow.finance_cost_benchmark || ''
-            })
-        }
+    //     if (analyticsRow.finance_cost_score !== null) {
+    //         parameters.push({
+    //             parameter: 'Finance Cost as % of Revenue',
+    //             category: 'financial',
+    //             score: analyticsRow.finance_cost_score,
+    //             value: `${analyticsRow.finance_cost_value}%`,
+    //             benchmark: analyticsRow.finance_cost_benchmark || ''
+    //         })
+    //     }
 
-        if (analyticsRow.tol_tnw_score !== null) {
-            parameters.push({
-                parameter: 'TOL/TNW (Total Outside Liabilities / Tangible Net Worth)',
-                category: 'financial',
-                score: analyticsRow.tol_tnw_score,
-                value: analyticsRow.tol_tnw_value || 0,
-                benchmark: analyticsRow.tol_tnw_benchmark || ''
-            })
-        }
+    //     if (analyticsRow.tol_tnw_score !== null) {
+    //         parameters.push({
+    //             parameter: 'TOL/TNW (Total Outside Liabilities / Tangible Net Worth)',
+    //             category: 'financial',
+    //             score: analyticsRow.tol_tnw_score,
+    //             value: analyticsRow.tol_tnw_value || 0,
+    //             benchmark: analyticsRow.tol_tnw_benchmark || ''
+    //         })
+    //     }
 
-        if (analyticsRow.debt_equity_score !== null) {
-            parameters.push({
-                parameter: 'D/E Ratio',
-                category: 'financial',
-                score: analyticsRow.debt_equity_score,
-                value: analyticsRow.debt_equity_value ? analyticsRow.debt_equity_value.toString() : 'N/A',
-                benchmark: analyticsRow.debt_equity_benchmark || 'N/A',
-                weight: 1.3,
-                description: 'Total debt divided by total equity - measures financial leverage'
-            })
-        }
+    //     if (analyticsRow.debt_equity_score !== null) {
+    //         parameters.push({
+    //             parameter: 'D/E Ratio',
+    //             category: 'financial',
+    //             score: analyticsRow.debt_equity_score,
+    //             value: analyticsRow.debt_equity_value ? analyticsRow.debt_equity_value.toString() : 'N/A',
+    //             benchmark: analyticsRow.debt_equity_benchmark || 'N/A',
+    //             weight: 1.3,
+    //             description: 'Total debt divided by total equity - measures financial leverage'
+    //         })
+    //     }
 
-        if (analyticsRow.interest_coverage_score !== null) {
-            parameters.push({
-                parameter: 'Interest Coverage Ratio',
-                category: 'financial',
-                score: analyticsRow.interest_coverage_score,
-                value: `${analyticsRow.interest_coverage_value}x`,
-                benchmark: analyticsRow.interest_coverage_benchmark || ''
-            })
-        }
+    //     if (analyticsRow.interest_coverage_score !== null) {
+    //         parameters.push({
+    //             parameter: 'Interest Coverage Ratio',
+    //             category: 'financial',
+    //             score: analyticsRow.interest_coverage_score,
+    //             value: `${analyticsRow.interest_coverage_value}x`,
+    //             benchmark: analyticsRow.interest_coverage_benchmark || ''
+    //         })
+    //     }
 
-        if (analyticsRow.roce_score !== null) {
-            parameters.push({
-                parameter: 'ROCE (Return on Capital Employed)',
-                category: 'financial',
-                score: analyticsRow.roce_score,
-                value: `${analyticsRow.roce_value}%`,
-                benchmark: analyticsRow.roce_benchmark || ''
-            })
-        }
+    //     if (analyticsRow.roce_score !== null) {
+    //         parameters.push({
+    //             parameter: 'ROCE (Return on Capital Employed)',
+    //             category: 'financial',
+    //             score: analyticsRow.roce_score,
+    //             value: `${analyticsRow.roce_value}%`,
+    //             benchmark: analyticsRow.roce_benchmark || ''
+    //         })
+    //     }
 
-        if (analyticsRow.inventory_days_score !== null) {
-            parameters.push({
-                parameter: 'Inventory Holding Days',
-                category: 'financial',
-                score: analyticsRow.inventory_days_score,
-                value: `${analyticsRow.inventory_days_value} days`,
-                benchmark: analyticsRow.inventory_days_benchmark || ''
-            })
-        }
+    //     if (analyticsRow.inventory_days_score !== null) {
+    //         parameters.push({
+    //             parameter: 'Inventory Holding Days',
+    //             category: 'financial',
+    //             score: analyticsRow.inventory_days_score,
+    //             value: `${analyticsRow.inventory_days_value} days`,
+    //             benchmark: analyticsRow.inventory_days_benchmark || ''
+    //         })
+    //     }
 
-        if (analyticsRow.debtors_days_score !== null) {
-            parameters.push({
-                parameter: 'Debtors Holding Days',
-                category: 'financial',
-                score: analyticsRow.debtors_days_score,
-                value: `${analyticsRow.debtors_days_value} days`,
-                benchmark: analyticsRow.debtors_days_benchmark || ''
-            })
-        }
+    //     if (analyticsRow.debtors_days_score !== null) {
+    //         parameters.push({
+    //             parameter: 'Debtors Holding Days',
+    //             category: 'financial',
+    //             score: analyticsRow.debtors_days_score,
+    //             value: `${analyticsRow.debtors_days_value} days`,
+    //             benchmark: analyticsRow.debtors_days_benchmark || ''
+    //         })
+    //     }
 
-        if (analyticsRow.creditors_days_score !== null) {
-            parameters.push({
-                parameter: 'Creditors Holding Days',
-                category: 'financial',
-                score: analyticsRow.creditors_days_score,
-                value: `${analyticsRow.creditors_days_value} days`,
-                benchmark: analyticsRow.creditors_days_benchmark || ''
-            })
-        }
+    //     if (analyticsRow.creditors_days_score !== null) {
+    //         parameters.push({
+    //             parameter: 'Creditors Holding Days',
+    //             category: 'financial',
+    //             score: analyticsRow.creditors_days_score,
+    //             value: `${analyticsRow.creditors_days_value} days`,
+    //             benchmark: analyticsRow.creditors_days_benchmark || ''
+    //         })
+    //     }
 
-        if (analyticsRow.current_ratio_score !== null) {
-            parameters.push({
-                parameter: 'Current Ratio',
-                category: 'financial',
-                score: analyticsRow.current_ratio_score,
-                value: analyticsRow.current_ratio_value ? analyticsRow.current_ratio_value.toString() : 'N/A',
-                benchmark: analyticsRow.current_ratio_benchmark || 'N/A',
-                weight: 1.2,
-                description: 'Current assets divided by current liabilities - measures short-term liquidity'
-            })
-        }
+    //     if (analyticsRow.current_ratio_score !== null) {
+    //         parameters.push({
+    //             parameter: 'Current Ratio',
+    //             category: 'financial',
+    //             score: analyticsRow.current_ratio_score,
+    //             value: analyticsRow.current_ratio_value ? analyticsRow.current_ratio_value.toString() : 'N/A',
+    //             benchmark: analyticsRow.current_ratio_benchmark || 'N/A',
+    //             weight: 1.2,
+    //             description: 'Current assets divided by current liabilities - measures short-term liquidity'
+    //         })
+    //     }
 
-        if (analyticsRow.quick_ratio_score !== null) {
-            parameters.push({
-                parameter: 'Quick Ratio',
-                category: 'financial',
-                score: analyticsRow.quick_ratio_score,
-                value: analyticsRow.quick_ratio_value || 0,
-                benchmark: analyticsRow.quick_ratio_benchmark || ''
-            })
-        }
+    //     if (analyticsRow.quick_ratio_score !== null) {
+    //         parameters.push({
+    //             parameter: 'Quick Ratio',
+    //             category: 'financial',
+    //             score: analyticsRow.quick_ratio_score,
+    //             value: analyticsRow.quick_ratio_value || 0,
+    //             benchmark: analyticsRow.quick_ratio_benchmark || ''
+    //         })
+    //     }
 
-        if (analyticsRow.pat_score !== null) {
-            parameters.push({
-                parameter: 'PAT',
-                category: 'financial',
-                score: analyticsRow.pat_score,
-                value: `${analyticsRow.pat_value}%`,
-                benchmark: analyticsRow.pat_benchmark || ''
-            })
-        }
+    //     if (analyticsRow.pat_score !== null) {
+    //         parameters.push({
+    //             parameter: 'PAT',
+    //             category: 'financial',
+    //             score: analyticsRow.pat_score,
+    //             value: `${analyticsRow.pat_value}%`,
+    //             benchmark: analyticsRow.pat_benchmark || ''
+    //         })
+    //     }
 
-        if (analyticsRow.ncatd_score !== null) {
-            parameters.push({
-                parameter: 'NCATD',
-                category: 'financial',
-                score: analyticsRow.ncatd_score,
-                value: analyticsRow.ncatd_value || 0,
-                benchmark: analyticsRow.ncatd_benchmark || ''
-            })
-        }
+    //     if (analyticsRow.ncatd_score !== null) {
+    //         parameters.push({
+    //             parameter: 'NCATD',
+    //             category: 'financial',
+    //             score: analyticsRow.ncatd_score,
+    //             value: analyticsRow.ncatd_value || 0,
+    //             benchmark: analyticsRow.ncatd_benchmark || ''
+    //         })
+    //     }
 
-        if (analyticsRow.diversion_funds_score !== null) {
-            parameters.push({
-                parameter: 'Diversion of Funds',
-                category: 'financial',
-                score: analyticsRow.diversion_funds_score,
-                value: `${analyticsRow.diversion_funds_value}%`,
-                benchmark: analyticsRow.diversion_funds_benchmark || ''
-            })
-        }
+    //     if (analyticsRow.diversion_funds_score !== null) {
+    //         parameters.push({
+    //             parameter: 'Diversion of Funds',
+    //             category: 'financial',
+    //             score: analyticsRow.diversion_funds_score,
+    //             value: `${analyticsRow.diversion_funds_value}%`,
+    //             benchmark: analyticsRow.diversion_funds_benchmark || ''
+    //         })
+    //     }
 
-        // Business parameters
-        if (analyticsRow.constitution_entity_score !== null) {
-            parameters.push({
-                parameter: 'Constitution of Entity',
-                category: 'business',
-                score: analyticsRow.constitution_entity_score,
-                value: analyticsRow.constitution_entity_value || '',
-                benchmark: analyticsRow.constitution_entity_benchmark || ''
-            })
-        }
+    //     // Business parameters
+    //     if (analyticsRow.constitution_entity_score !== null) {
+    //         parameters.push({
+    //             parameter: 'Constitution of Entity',
+    //             category: 'business',
+    //             score: analyticsRow.constitution_entity_score,
+    //             value: analyticsRow.constitution_entity_value || '',
+    //             benchmark: analyticsRow.constitution_entity_benchmark || ''
+    //         })
+    //     }
 
-        if (analyticsRow.rating_type_score !== null) {
-            parameters.push({
-                parameter: 'Rating Type',
-                category: 'business',
-                score: analyticsRow.rating_type_score,
-                value: analyticsRow.rating_type_value || '',
-                benchmark: analyticsRow.rating_type_benchmark || ''
-            })
-        }
+    //     if (analyticsRow.rating_type_score !== null) {
+    //         parameters.push({
+    //             parameter: 'Rating Type',
+    //             category: 'business',
+    //             score: analyticsRow.rating_type_score,
+    //             value: analyticsRow.rating_type_value || '',
+    //             benchmark: analyticsRow.rating_type_benchmark || ''
+    //         })
+    //     }
 
-        if (analyticsRow.vintage_score !== null) {
-            parameters.push({
-                parameter: 'Managerial / Promoter Vintage',
-                category: 'business',
-                score: analyticsRow.vintage_score,
-                value: analyticsRow.vintage_value || '',
-                benchmark: analyticsRow.vintage_benchmark || ''
-            })
-        }
+    //     if (analyticsRow.vintage_score !== null) {
+    //         parameters.push({
+    //             parameter: 'Managerial / Promoter Vintage',
+    //             category: 'business',
+    //             score: analyticsRow.vintage_score,
+    //             value: analyticsRow.vintage_value || '',
+    //             benchmark: analyticsRow.vintage_benchmark || ''
+    //         })
+    //     }
 
-        // Hygiene parameters
-        if (analyticsRow.gst_compliance_score !== null) {
-            parameters.push({
-                parameter: 'Statutory Payments (GST)',
-                category: 'hygiene',
-                score: analyticsRow.gst_compliance_score,
-                value: analyticsRow.gst_compliance_value || '',
-                benchmark: analyticsRow.gst_compliance_benchmark || ''
-            })
-        }
+    //     // Hygiene parameters
+    //     if (analyticsRow.gst_compliance_score !== null) {
+    //         parameters.push({
+    //             parameter: 'Statutory Payments (GST)',
+    //             category: 'hygiene',
+    //             score: analyticsRow.gst_compliance_score,
+    //             value: analyticsRow.gst_compliance_value || '',
+    //             benchmark: analyticsRow.gst_compliance_benchmark || ''
+    //         })
+    //     }
 
-        if (analyticsRow.pf_compliance_score !== null) {
-            parameters.push({
-                parameter: 'Statutory Payments (PF)',
-                category: 'hygiene',
-                score: analyticsRow.pf_compliance_score,
-                value: analyticsRow.pf_compliance_value || '',
-                benchmark: analyticsRow.pf_compliance_benchmark || ''
-            })
-        }
+    //     if (analyticsRow.pf_compliance_score !== null) {
+    //         parameters.push({
+    //             parameter: 'Statutory Payments (PF)',
+    //             category: 'hygiene',
+    //             score: analyticsRow.pf_compliance_score,
+    //             value: analyticsRow.pf_compliance_value || '',
+    //             benchmark: analyticsRow.pf_compliance_benchmark || ''
+    //         })
+    //     }
 
-        if (analyticsRow.recent_charges_score !== null) {
-            parameters.push({
-                parameter: 'Recent Charges by Bankers',
-                category: 'hygiene',
-                score: analyticsRow.recent_charges_score,
-                value: analyticsRow.recent_charges_value || '',
-                benchmark: analyticsRow.recent_charges_benchmark || ''
-            })
-        }
+    //     if (analyticsRow.recent_charges_score !== null) {
+    //         parameters.push({
+    //             parameter: 'Recent Charges by Bankers',
+    //             category: 'hygiene',
+    //             score: analyticsRow.recent_charges_score,
+    //             value: analyticsRow.recent_charges_value || '',
+    //             benchmark: analyticsRow.recent_charges_benchmark || ''
+    //         })
+    //     }
 
-        // Banking parameters
-        if (analyticsRow.primary_banker_score !== null) {
-            parameters.push({
-                parameter: 'Primary Banker - Limit Funded',
-                category: 'banking',
-                score: analyticsRow.primary_banker_score,
-                value: analyticsRow.primary_banker_value || '',
-                benchmark: analyticsRow.primary_banker_benchmark || ''
-            })
-        }
+    //     // Banking parameters
+    //     if (analyticsRow.primary_banker_score !== null) {
+    //         parameters.push({
+    //             parameter: 'Primary Banker - Limit Funded',
+    //             category: 'banking',
+    //             score: analyticsRow.primary_banker_score,
+    //             value: analyticsRow.primary_banker_value || '',
+    //             benchmark: analyticsRow.primary_banker_benchmark || ''
+    //         })
+    //     }
 
-        return parameters
-    }
+    //     return parameters
+    // }
 
     /**
      * Transform analytics record to PortfolioCompany interface
      */
-    private transformAnalyticsToPortfolioCompany(analyticsRow: any): PortfolioCompany {
-        // Determine the financial year - use 2023 as default but could be enhanced
-        const currentYear = '2023'
-        const years = [currentYear]
+    // private transformAnalyticsToPortfolioCompany(analyticsRow: any): PortfolioCompany {
+    //     // Determine the financial year - use 2023 as default but could be enhanced
+    //     const currentYear = '2023'
+    //     const years = [currentYear]
 
-        // Create a comprehensive extracted_data structure from flattened analytics data
-        const extractedData = {
-            about_company: {
-                legal_name: analyticsRow.legal_name || analyticsRow.company_name,
-                cin: analyticsRow.cin,
-                pan: analyticsRow.pan,
-                company_status: analyticsRow.company_status,
-                active_compliance: analyticsRow.active_compliance,
-                paid_up_capital_cr: analyticsRow.paid_up_capital_cr,
-                authorised_capital_cr: analyticsRow.authorised_capital_cr,
-                sum_of_charges_cr: analyticsRow.sum_of_charges_cr,
-                date_of_incorporation: analyticsRow.date_of_incorporation,
-                date_of_last_agm: analyticsRow.date_of_last_agm,
-                type_of_entity: analyticsRow.type_of_entity,
-                listing_status: analyticsRow.listing_status,
-                lei: analyticsRow.lei,
-                website: analyticsRow.website,
-                email: analyticsRow.email,
-                phone: analyticsRow.phone,
-                registered_address: {
-                    city: analyticsRow.registered_city,
-                    state: analyticsRow.registered_state,
-                    pin_code: analyticsRow.registered_pin_code,
-                    address_line_1: analyticsRow.registered_address_line_1,
-                    address_line_2: analyticsRow.registered_address_line_2
-                },
-                business_address: {
-                    city: analyticsRow.business_city,
-                    state: analyticsRow.business_state,
-                    pin_code: analyticsRow.business_pin_code,
-                    address_line_1: analyticsRow.business_address_line_1,
-                    address_line_2: analyticsRow.business_address_line_2
-                },
-                segment: analyticsRow.segment,
-                broad_industry_category: analyticsRow.broad_industry_category,
-                about_the_company: analyticsRow.about_the_company
-            },
-            financial_data: {
-                years: years,
-                profit_loss: {
-                    revenue: analyticsRow.revenue ? [analyticsRow.revenue] : [0],
-                    ebitda: analyticsRow.ebitda ? [analyticsRow.ebitda] : [0],
-                    net_profit: analyticsRow.net_profit ? [analyticsRow.net_profit] : [0],
-                    gross_profit: analyticsRow.ebitda ? [analyticsRow.ebitda] : [0], // Use EBITDA as proxy
-                    operating_profit: analyticsRow.ebitda ? [analyticsRow.ebitda] : [0],
-                    pbt: analyticsRow.net_profit ? [analyticsRow.net_profit] : [0], // Use net profit as proxy
-                    finance_cost: analyticsRow.revenue && analyticsRow.finance_cost_value ?
-                        [(analyticsRow.revenue * analyticsRow.finance_cost_value) / 100] : [0]
-                },
-                balance_sheet: {
-                    assets: {
-                        total_assets: analyticsRow.total_assets ? [analyticsRow.total_assets] : [0],
-                        current_assets: analyticsRow.current_assets ? [analyticsRow.current_assets] : [0],
-                        non_current_assets: analyticsRow.total_assets && analyticsRow.current_assets ?
-                            [analyticsRow.total_assets - analyticsRow.current_assets] : [0],
-                        fixed_assets: analyticsRow.total_assets && analyticsRow.current_assets ?
-                            [analyticsRow.total_assets - analyticsRow.current_assets] : [0],
-                        investments: [0], // Not available in analytics table
-                        inventory: analyticsRow.current_assets ? [analyticsRow.current_assets * 0.3] : [0], // Estimate
-                        trade_receivables: analyticsRow.revenue && analyticsRow.debtors_days_value ?
-                            [(analyticsRow.revenue * analyticsRow.debtors_days_value) / 365] : [0],
-                        cash_and_equivalents: analyticsRow.current_assets ? [analyticsRow.current_assets * 0.2] : [0] // Estimate
-                    },
-                    liabilities: {
-                        total_liabilities: analyticsRow.total_assets && analyticsRow.total_equity ?
-                            [analyticsRow.total_assets - analyticsRow.total_equity] : [0],
-                        current_liabilities: analyticsRow.current_liabilities ? [analyticsRow.current_liabilities] : [0],
-                        non_current_liabilities: analyticsRow.long_term_borrowings ? [analyticsRow.long_term_borrowings] : [0],
-                        long_term_borrowings: analyticsRow.long_term_borrowings ? [analyticsRow.long_term_borrowings] : [0],
-                        short_term_borrowings: analyticsRow.short_term_borrowings ? [analyticsRow.short_term_borrowings] : [0],
-                        trade_payables: analyticsRow.revenue && analyticsRow.creditors_days_value ?
-                            [(analyticsRow.revenue * analyticsRow.creditors_days_value) / 365] : [0],
-                        total_debt: (analyticsRow.long_term_borrowings || 0) + (analyticsRow.short_term_borrowings || 0) ?
-                            [(analyticsRow.long_term_borrowings || 0) + (analyticsRow.short_term_borrowings || 0)] : [0]
-                    },
-                    equity: {
-                        total_equity: analyticsRow.total_equity ? [analyticsRow.total_equity] : [0],
-                        paid_up_capital: analyticsRow.paid_up_capital_cr ? [analyticsRow.paid_up_capital_cr] : [0],
-                        reserves_surplus: analyticsRow.total_equity && analyticsRow.paid_up_capital_cr ?
-                            [analyticsRow.total_equity - analyticsRow.paid_up_capital_cr] : [0]
-                    }
-                },
-                ratios: {
-                    liquidity: {
-                        current_ratio: analyticsRow.current_ratio_value ? { [currentYear]: analyticsRow.current_ratio_value } : {},
-                        quick_ratio: analyticsRow.quick_ratio_value ? { [currentYear]: analyticsRow.quick_ratio_value } : {},
-                        cash_ratio: {} // Not available
-                    },
-                    leverage: {
-                        debt_equity: analyticsRow.debt_equity_value ? { [currentYear]: analyticsRow.debt_equity_value } : {},
-                        debt_to_assets: {}, // Could be calculated
-                        tol_tnw: analyticsRow.tol_tnw_value ? { [currentYear]: analyticsRow.tol_tnw_value } : {},
-                        equity_multiplier: {} // Not available
-                    },
-                    profitability: {
-                        gross_margin: {}, // Not directly available
-                        operating_margin: {}, // Not directly available
-                        ebitda_margin: analyticsRow.ebitda_margin_value ? { [currentYear]: analyticsRow.ebitda_margin_value } : {},
-                        net_margin: analyticsRow.pat_value ? { [currentYear]: analyticsRow.pat_value } : {},
-                        roa: {}, // Not directly available
-                        roe: {}, // Not directly available
-                        roce: analyticsRow.roce_value ? { [currentYear]: analyticsRow.roce_value } : {},
-                        pat: analyticsRow.pat_value ? { [currentYear]: analyticsRow.pat_value } : {}
-                    },
-                    efficiency: {
-                        asset_turnover: {}, // Not directly available
-                        inventory_turnover: {}, // Could be calculated
-                        receivables_turnover: {}, // Could be calculated
-                        payables_turnover: {}, // Could be calculated
-                        inventory_days: analyticsRow.inventory_days_value ? { [currentYear]: analyticsRow.inventory_days_value } : {},
-                        debtors_days: analyticsRow.debtors_days_value ? { [currentYear]: analyticsRow.debtors_days_value } : {},
-                        creditors_days: analyticsRow.creditors_days_value ? { [currentYear]: analyticsRow.creditors_days_value } : {},
-                        working_capital_days: {} // Could be calculated
-                    },
-                    coverage: {
-                        interest_coverage: analyticsRow.interest_coverage_value ? { [currentYear]: analyticsRow.interest_coverage_value } : {},
-                        debt_service_coverage: {}, // Not available
-                        fixed_charge_coverage: {} // Not available
-                    }
-                },
-                cash_flow: {
-                    operating_cash_flow: [0], // Not available in analytics table
-                    investing_cash_flow: [0],
-                    financing_cash_flow: [0],
-                    net_cash_flow: [0],
-                    free_cash_flow: [0]
-                }
-            },
-            gst_records: {
-                active_gstins: analyticsRow.gst_active_count ?
-                    Array(analyticsRow.gst_active_count).fill({
-                        gstin: 'N/A',
-                        compliance_status: this.mapGSTComplianceStatus(analyticsRow.gst_compliance_status),
-                        registration_date: null,
-                        last_return_filed: null,
-                        status: 'Active'
-                    }) : [],
-                compliance_summary: {
-                    total_gstins: analyticsRow.gst_active_count || 0,
-                    active_gstins: analyticsRow.gst_active_count || 0,
-                    compliance_rate: analyticsRow.gst_compliance_status?.toLowerCase().includes('regular') ? 100 :
-                        analyticsRow.gst_compliance_status?.toLowerCase().includes('irregular') ? 50 : 0
-                }
-            },
-            epfo_records: {
-                establishments: analyticsRow.epfo_establishment_count ?
-                    Array(analyticsRow.epfo_establishment_count).fill({
-                        establishment_id: 'N/A',
-                        compliance_status: this.mapEPFOComplianceStatus(analyticsRow.epfo_compliance_status),
-                        registration_date: null,
-                        last_challan_paid: null,
-                        employee_count: null
-                    }) : [],
-                compliance_summary: {
-                    total_establishments: analyticsRow.epfo_establishment_count || 0,
-                    active_establishments: analyticsRow.epfo_establishment_count || 0,
-                    compliance_rate: analyticsRow.epfo_compliance_status?.toLowerCase().includes('regular') ? 100 :
-                        analyticsRow.epfo_compliance_status?.toLowerCase().includes('irregular') ? 50 : 0
-                }
-            },
-            audit_qualifications: analyticsRow.audit_qualification_status ?
-                [{
-                    year: currentYear,
-                    qualification_type: analyticsRow.audit_qualification_status,
-                    auditor_name: 'N/A',
-                    qualification_details: null
-                }] : [],
-            directors: [], // Not available in analytics table
-            charges: analyticsRow.sum_of_charges_cr ? [{
-                charge_amount: analyticsRow.sum_of_charges_cr,
-                charge_holder: 'N/A',
-                creation_date: null,
-                satisfaction_date: null,
-                status: 'Active'
-            }] : []
-        }
+    //     // Create a comprehensive extracted_data structure from flattened analytics data
+    //     const extractedData = {
+    //         about_company: {
+    //             legal_name: analyticsRow.legal_name || analyticsRow.company_name,
+    //             cin: analyticsRow.cin,
+    //             pan: analyticsRow.pan,
+    //             company_status: analyticsRow.company_status,
+    //             active_compliance: analyticsRow.active_compliance,
+    //             paid_up_capital_cr: analyticsRow.paid_up_capital_cr,
+    //             authorised_capital_cr: analyticsRow.authorised_capital_cr,
+    //             sum_of_charges_cr: analyticsRow.sum_of_charges_cr,
+    //             date_of_incorporation: analyticsRow.date_of_incorporation,
+    //             date_of_last_agm: analyticsRow.date_of_last_agm,
+    //             type_of_entity: analyticsRow.type_of_entity,
+    //             listing_status: analyticsRow.listing_status,
+    //             lei: analyticsRow.lei,
+    //             website: analyticsRow.website,
+    //             email: analyticsRow.email,
+    //             phone: analyticsRow.phone,
+    //             registered_address: {
+    //                 city: analyticsRow.registered_city,
+    //                 state: analyticsRow.registered_state,
+    //                 pin_code: analyticsRow.registered_pin_code,
+    //                 address_line_1: analyticsRow.registered_address_line_1,
+    //                 address_line_2: analyticsRow.registered_address_line_2
+    //             },
+    //             business_address: {
+    //                 city: analyticsRow.business_city,
+    //                 state: analyticsRow.business_state,
+    //                 pin_code: analyticsRow.business_pin_code,
+    //                 address_line_1: analyticsRow.business_address_line_1,
+    //                 address_line_2: analyticsRow.business_address_line_2
+    //             },
+    //             segment: analyticsRow.segment,
+    //             broad_industry_category: analyticsRow.broad_industry_category,
+    //             about_the_company: analyticsRow.about_the_company
+    //         },
+    //         financial_data: {
+    //             years: years,
+    //             profit_loss: {
+    //                 revenue: analyticsRow.revenue ? [analyticsRow.revenue] : [0],
+    //                 ebitda: analyticsRow.ebitda ? [analyticsRow.ebitda] : [0],
+    //                 net_profit: analyticsRow.net_profit ? [analyticsRow.net_profit] : [0],
+    //                 gross_profit: analyticsRow.ebitda ? [analyticsRow.ebitda] : [0], // Use EBITDA as proxy
+    //                 operating_profit: analyticsRow.ebitda ? [analyticsRow.ebitda] : [0],
+    //                 pbt: analyticsRow.net_profit ? [analyticsRow.net_profit] : [0], // Use net profit as proxy
+    //                 finance_cost: analyticsRow.revenue && analyticsRow.finance_cost_value ?
+    //                     [(analyticsRow.revenue * analyticsRow.finance_cost_value) / 100] : [0]
+    //             },
+    //             balance_sheet: {
+    //                 assets: {
+    //                     total_assets: analyticsRow.total_assets ? [analyticsRow.total_assets] : [0],
+    //                     current_assets: analyticsRow.current_assets ? [analyticsRow.current_assets] : [0],
+    //                     non_current_assets: analyticsRow.total_assets && analyticsRow.current_assets ?
+    //                         [analyticsRow.total_assets - analyticsRow.current_assets] : [0],
+    //                     fixed_assets: analyticsRow.total_assets && analyticsRow.current_assets ?
+    //                         [analyticsRow.total_assets - analyticsRow.current_assets] : [0],
+    //                     investments: [0], // Not available in analytics table
+    //                     inventory: analyticsRow.current_assets ? [analyticsRow.current_assets * 0.3] : [0], // Estimate
+    //                     trade_receivables: analyticsRow.revenue && analyticsRow.debtors_days_value ?
+    //                         [(analyticsRow.revenue * analyticsRow.debtors_days_value) / 365] : [0],
+    //                     cash_and_equivalents: analyticsRow.current_assets ? [analyticsRow.current_assets * 0.2] : [0] // Estimate
+    //                 },
+    //                 liabilities: {
+    //                     total_liabilities: analyticsRow.total_assets && analyticsRow.total_equity ?
+    //                         [analyticsRow.total_assets - analyticsRow.total_equity] : [0],
+    //                     current_liabilities: analyticsRow.current_liabilities ? [analyticsRow.current_liabilities] : [0],
+    //                     non_current_liabilities: analyticsRow.long_term_borrowings ? [analyticsRow.long_term_borrowings] : [0],
+    //                     long_term_borrowings: analyticsRow.long_term_borrowings ? [analyticsRow.long_term_borrowings] : [0],
+    //                     short_term_borrowings: analyticsRow.short_term_borrowings ? [analyticsRow.short_term_borrowings] : [0],
+    //                     trade_payables: analyticsRow.revenue && analyticsRow.creditors_days_value ?
+    //                         [(analyticsRow.revenue * analyticsRow.creditors_days_value) / 365] : [0],
+    //                     total_debt: (analyticsRow.long_term_borrowings || 0) + (analyticsRow.short_term_borrowings || 0) ?
+    //                         [(analyticsRow.long_term_borrowings || 0) + (analyticsRow.short_term_borrowings || 0)] : [0]
+    //                 },
+    //                 equity: {
+    //                     total_equity: analyticsRow.total_equity ? [analyticsRow.total_equity] : [0],
+    //                     paid_up_capital: analyticsRow.paid_up_capital_cr ? [analyticsRow.paid_up_capital_cr] : [0],
+    //                     reserves_surplus: analyticsRow.total_equity && analyticsRow.paid_up_capital_cr ?
+    //                         [analyticsRow.total_equity - analyticsRow.paid_up_capital_cr] : [0]
+    //                 }
+    //             },
+    //             ratios: {
+    //                 liquidity: {
+    //                     current_ratio: analyticsRow.current_ratio_value ? { [currentYear]: analyticsRow.current_ratio_value } : {},
+    //                     quick_ratio: analyticsRow.quick_ratio_value ? { [currentYear]: analyticsRow.quick_ratio_value } : {},
+    //                     cash_ratio: {} // Not available
+    //                 },
+    //                 leverage: {
+    //                     debt_equity: analyticsRow.debt_equity_value ? { [currentYear]: analyticsRow.debt_equity_value } : {},
+    //                     debt_to_assets: {}, // Could be calculated
+    //                     tol_tnw: analyticsRow.tol_tnw_value ? { [currentYear]: analyticsRow.tol_tnw_value } : {},
+    //                     equity_multiplier: {} // Not available
+    //                 },
+    //                 profitability: {
+    //                     gross_margin: {}, // Not directly available
+    //                     operating_margin: {}, // Not directly available
+    //                     ebitda_margin: analyticsRow.ebitda_margin_value ? { [currentYear]: analyticsRow.ebitda_margin_value } : {},
+    //                     net_margin: analyticsRow.pat_value ? { [currentYear]: analyticsRow.pat_value } : {},
+    //                     roa: {}, // Not directly available
+    //                     roe: {}, // Not directly available
+    //                     roce: analyticsRow.roce_value ? { [currentYear]: analyticsRow.roce_value } : {},
+    //                     pat: analyticsRow.pat_value ? { [currentYear]: analyticsRow.pat_value } : {}
+    //                 },
+    //                 efficiency: {
+    //                     asset_turnover: {}, // Not directly available
+    //                     inventory_turnover: {}, // Could be calculated
+    //                     receivables_turnover: {}, // Could be calculated
+    //                     payables_turnover: {}, // Could be calculated
+    //                     inventory_days: analyticsRow.inventory_days_value ? { [currentYear]: analyticsRow.inventory_days_value } : {},
+    //                     debtors_days: analyticsRow.debtors_days_value ? { [currentYear]: analyticsRow.debtors_days_value } : {},
+    //                     creditors_days: analyticsRow.creditors_days_value ? { [currentYear]: analyticsRow.creditors_days_value } : {},
+    //                     working_capital_days: {} // Could be calculated
+    //                 },
+    //                 coverage: {
+    //                     interest_coverage: analyticsRow.interest_coverage_value ? { [currentYear]: analyticsRow.interest_coverage_value } : {},
+    //                     debt_service_coverage: {}, // Not available
+    //                     fixed_charge_coverage: {} // Not available
+    //                 }
+    //             },
+    //             cash_flow: {
+    //                 operating_cash_flow: [0], // Not available in analytics table
+    //                 investing_cash_flow: [0],
+    //                 financing_cash_flow: [0],
+    //                 net_cash_flow: [0],
+    //                 free_cash_flow: [0]
+    //             }
+    //         },
+    //         gst_records: {
+    //             active_gstins: analyticsRow.gst_active_count ?
+    //                 Array(analyticsRow.gst_active_count).fill({
+    //                     gstin: 'N/A',
+    //                     compliance_status: this.mapGSTComplianceStatus(analyticsRow.gst_compliance_status),
+    //                     registration_date: null,
+    //                     last_return_filed: null,
+    //                     status: 'Active'
+    //                 }) : [],
+    //             compliance_summary: {
+    //                 total_gstins: analyticsRow.gst_active_count || 0,
+    //                 active_gstins: analyticsRow.gst_active_count || 0,
+    //                 compliance_rate: analyticsRow.gst_compliance_status?.toLowerCase().includes('regular') ? 100 :
+    //                     analyticsRow.gst_compliance_status?.toLowerCase().includes('irregular') ? 50 : 0
+    //             }
+    //         },
+    //         epfo_records: {
+    //             establishments: analyticsRow.epfo_establishment_count ?
+    //                 Array(analyticsRow.epfo_establishment_count).fill({
+    //                     establishment_id: 'N/A',
+    //                     compliance_status: this.mapEPFOComplianceStatus(analyticsRow.epfo_compliance_status),
+    //                     registration_date: null,
+    //                     last_challan_paid: null,
+    //                     employee_count: null
+    //                 }) : [],
+    //             compliance_summary: {
+    //                 total_establishments: analyticsRow.epfo_establishment_count || 0,
+    //                 active_establishments: analyticsRow.epfo_establishment_count || 0,
+    //                 compliance_rate: analyticsRow.epfo_compliance_status?.toLowerCase().includes('regular') ? 100 :
+    //                     analyticsRow.epfo_compliance_status?.toLowerCase().includes('irregular') ? 50 : 0
+    //             }
+    //         },
+    //         audit_qualifications: analyticsRow.audit_qualification_status ?
+    //             [{
+    //                 year: currentYear,
+    //                 qualification_type: analyticsRow.audit_qualification_status,
+    //                 auditor_name: 'N/A',
+    //                 qualification_details: null
+    //             }] : [],
+    //         directors: [], // Not available in analytics table
+    //         charges: analyticsRow.sum_of_charges_cr ? [{
+    //             charge_amount: analyticsRow.sum_of_charges_cr,
+    //             charge_holder: 'N/A',
+    //             creation_date: null,
+    //             satisfaction_date: null,
+    //             status: 'Active'
+    //         }] : []
+    //     }
 
-        // Build parameter scores from flattened data
-        const allScores = this.buildParameterScoresArray(analyticsRow)
+    //     // Build parameter scores from flattened data
+    //     const allScores = this.buildParameterScoresArray(analyticsRow)
 
-        const riskAnalysis: any = {
-            overall_score: analyticsRow.risk_score,
-            overall_grade: analyticsRow.risk_grade,
-            overall_percentage: analyticsRow.overall_percentage,
-            risk_category: analyticsRow.risk_category,
-            risk_multiplier: analyticsRow.risk_multiplier,
-            category_scores: {
-                financial: {
-                    score: analyticsRow.financial_score,
-                    max_score: analyticsRow.financial_max_score,
-                    percentage: analyticsRow.financial_percentage,
-                    count: analyticsRow.financial_count,
-                    total: analyticsRow.financial_total
-                },
-                business: {
-                    score: analyticsRow.business_score,
-                    max_score: analyticsRow.business_max_score,
-                    percentage: analyticsRow.business_percentage,
-                    count: analyticsRow.business_count,
-                    total: analyticsRow.business_total
-                },
-                hygiene: {
-                    score: analyticsRow.hygiene_score,
-                    max_score: analyticsRow.hygiene_max_score,
-                    percentage: analyticsRow.hygiene_percentage,
-                    count: analyticsRow.hygiene_count,
-                    total: analyticsRow.hygiene_total
-                },
-                banking: {
-                    score: analyticsRow.banking_score,
-                    max_score: analyticsRow.banking_max_score,
-                    percentage: analyticsRow.banking_percentage,
-                    count: analyticsRow.banking_count,
-                    total: analyticsRow.banking_total
-                }
-            },
-            allScores,
-            model_id: analyticsRow.model_id,
-            risk_factors: {
-                positive_factors: allScores.filter(score => score.score > 3).map(score => score.parameter),
-                negative_factors: allScores.filter(score => score.score < 0).map(score => score.parameter),
-                neutral_factors: allScores.filter(score => score.score >= 0 && score.score <= 3).map(score => score.parameter)
-            },
-            recommendations: this.generateRiskRecommendations(analyticsRow.risk_grade, allScores)
-        }
+    //     const riskAnalysis: any = {
+    //         overall_score: analyticsRow.risk_score,
+    //         overall_grade: analyticsRow.risk_grade,
+    //         overall_percentage: analyticsRow.overall_percentage,
+    //         risk_category: analyticsRow.risk_category,
+    //         risk_multiplier: analyticsRow.risk_multiplier,
+    //         category_scores: {
+    //             financial: {
+    //                 score: analyticsRow.financial_score,
+    //                 max_score: analyticsRow.financial_max_score,
+    //                 percentage: analyticsRow.financial_percentage,
+    //                 count: analyticsRow.financial_count,
+    //                 total: analyticsRow.financial_total
+    //             },
+    //             business: {
+    //                 score: analyticsRow.business_score,
+    //                 max_score: analyticsRow.business_max_score,
+    //                 percentage: analyticsRow.business_percentage,
+    //                 count: analyticsRow.business_count,
+    //                 total: analyticsRow.business_total
+    //             },
+    //             hygiene: {
+    //                 score: analyticsRow.hygiene_score,
+    //                 max_score: analyticsRow.hygiene_max_score,
+    //                 percentage: analyticsRow.hygiene_percentage,
+    //                 count: analyticsRow.hygiene_count,
+    //                 total: analyticsRow.hygiene_total
+    //             },
+    //             banking: {
+    //                 score: analyticsRow.banking_score,
+    //                 max_score: analyticsRow.banking_max_score,
+    //                 percentage: analyticsRow.banking_percentage,
+    //                 count: analyticsRow.banking_count,
+    //                 total: analyticsRow.banking_total
+    //             }
+    //         },
+    //         allScores,
+    //         model_id: analyticsRow.model_id,
+    //         risk_factors: {
+    //             positive_factors: allScores.filter(score => score.score > 3).map(score => score.parameter),
+    //             negative_factors: allScores.filter(score => score.score < 0).map(score => score.parameter),
+    //             neutral_factors: allScores.filter(score => score.score >= 0 && score.score <= 3).map(score => score.parameter)
+    //         },
+    //         recommendations: this.generateRiskRecommendations(analyticsRow.risk_grade, allScores)
+    //     }
 
-        return {
-            id: analyticsRow.id,
-            request_id: analyticsRow.request_id,
-            user_id: '', // Not available in analytics table
-            organization_id: '', // Not available in analytics table
-            original_filename: '', // Not available in analytics table
-            company_name: analyticsRow.company_name,
-            industry: analyticsRow.industry,
-            risk_score: analyticsRow.risk_score,
-            risk_grade: analyticsRow.risk_grade,
-            recommended_limit: analyticsRow.recommended_limit,
-            currency: 'INR', // Default currency
-            status: analyticsRow.processing_status as any,
-            submitted_at: '', // Not available in analytics table
-            processing_started_at: '', // Not available in analytics table
-            completed_at: analyticsRow.completed_at,
-            file_size: null,
-            file_extension: '',
-            s3_upload_key: '',
-            s3_folder_path: '',
-            pdf_filename: null,
-            pdf_s3_key: null,
-            pdf_file_size: null,
-            model_type: analyticsRow.model_type as any,
-            total_parameters: (analyticsRow.financial_total || 0) + (analyticsRow.business_total || 0) +
-                (analyticsRow.hygiene_total || 0) + (analyticsRow.banking_total || 0),
-            available_parameters: (analyticsRow.financial_count || 0) + (analyticsRow.business_count || 0) +
-                (analyticsRow.hygiene_count || 0) + (analyticsRow.banking_count || 0),
-            financial_parameters: analyticsRow.financial_count,
-            business_parameters: analyticsRow.business_count,
-            hygiene_parameters: analyticsRow.hygiene_count,
-            banking_parameters: analyticsRow.banking_count,
-            error_message: null,
-            retry_count: null,
-            extracted_data: extractedData,
-            risk_analysis: riskAnalysis,
-            processing_summary: {
-                base_eligibility: analyticsRow.base_eligibility,
-                final_eligibility: analyticsRow.final_eligibility,
-                turnover_cr: analyticsRow.turnover_cr || analyticsRow.revenue,
-                net_worth_cr: analyticsRow.net_worth_cr || analyticsRow.total_equity,
-                processing_time_ms: null, // Not available
-                model_version: analyticsRow.model_id,
-                data_completeness: {
-                    financial: (analyticsRow.financial_count || 0) / (analyticsRow.financial_total || 1) * 100,
-                    business: (analyticsRow.business_count || 0) / (analyticsRow.business_total || 1) * 100,
-                    hygiene: (analyticsRow.hygiene_count || 0) / (analyticsRow.hygiene_total || 1) * 100,
-                    banking: (analyticsRow.banking_count || 0) / (analyticsRow.banking_total || 1) * 100
-                }
-            },
-            created_at: analyticsRow.created_at,
-            updated_at: analyticsRow.updated_at
-        }
-    }
+    //     return {
+    //         id: analyticsRow.id,
+    //         request_id: analyticsRow.request_id,
+    //         user_id: '', // Not available in analytics table
+    //         organization_id: '', // Not available in analytics table
+    //         original_filename: '', // Not available in analytics table
+    //         company_name: analyticsRow.company_name,
+    //         industry: analyticsRow.industry,
+    //         risk_score: analyticsRow.risk_score,
+    //         risk_grade: analyticsRow.risk_grade,
+    //         recommended_limit: analyticsRow.recommended_limit,
+    //         currency: 'INR', // Default currency
+    //         status: analyticsRow.processing_status as any,
+    //         submitted_at: '', // Not available in analytics table
+    //         processing_started_at: '', // Not available in analytics table
+    //         completed_at: analyticsRow.completed_at,
+    //         file_size: null,
+    //         file_extension: '',
+    //         s3_upload_key: '',
+    //         s3_folder_path: '',
+    //         pdf_filename: null,
+    //         pdf_s3_key: null,
+    //         pdf_file_size: null,
+    //         model_type: analyticsRow.model_type as any,
+    //         total_parameters: (analyticsRow.financial_total || 0) + (analyticsRow.business_total || 0) +
+    //             (analyticsRow.hygiene_total || 0) + (analyticsRow.banking_total || 0),
+    //         available_parameters: (analyticsRow.financial_count || 0) + (analyticsRow.business_count || 0) +
+    //             (analyticsRow.hygiene_count || 0) + (analyticsRow.banking_count || 0),
+    //         financial_parameters: analyticsRow.financial_count,
+    //         business_parameters: analyticsRow.business_count,
+    //         hygiene_parameters: analyticsRow.hygiene_count,
+    //         banking_parameters: analyticsRow.banking_count,
+    //         error_message: null,
+    //         retry_count: null,
+    //         extracted_data: extractedData,
+    //         risk_analysis: riskAnalysis,
+    //         processing_summary: {
+    //             base_eligibility: analyticsRow.base_eligibility,
+    //             final_eligibility: analyticsRow.final_eligibility,
+    //             turnover_cr: analyticsRow.turnover_cr || analyticsRow.revenue,
+    //             net_worth_cr: analyticsRow.net_worth_cr || analyticsRow.total_equity,
+    //             processing_time_ms: null, // Not available
+    //             model_version: analyticsRow.model_id,
+    //             data_completeness: {
+    //                 financial: (analyticsRow.financial_count || 0) / (analyticsRow.financial_total || 1) * 100,
+    //                 business: (analyticsRow.business_count || 0) / (analyticsRow.business_total || 1) * 100,
+    //                 hygiene: (analyticsRow.hygiene_count || 0) / (analyticsRow.hygiene_total || 1) * 100,
+    //                 banking: (analyticsRow.banking_count || 0) / (analyticsRow.banking_total || 1) * 100
+    //             }
+    //         },
+    //         created_at: analyticsRow.created_at,
+    //         updated_at: analyticsRow.updated_at
+    //     }
+    // }
 
     /**
      * Map GST compliance status from analytics table to standard format
@@ -1634,10 +1633,16 @@ export class PortfolioRepository {
         const supabase = await this.getSupabaseClient()
 
         let query = supabase
-            .from('portfolio_analytics')
+            .from('document_processing_requests')
             .select(`
-                *,
-                document_processing_requests!inner(user_id)
+                id, request_id, user_id, organization_id, original_filename,
+            company_name, industry, risk_score, risk_grade, recommended_limit,
+            currency, status, submitted_at, processing_started_at, completed_at,
+            file_size, file_extension, s3_upload_key, s3_folder_path,
+            pdf_filename, pdf_s3_key, pdf_file_size, model_type,
+            total_parameters, available_parameters, financial_parameters,
+            business_parameters, hygiene_parameters, banking_parameters,
+            error_message, retry_count, created_at, updated_at, risk_analysis, sector, epfo_compliance_status, gst_compliance_status
             `)
             .eq('industry', industry)
             .neq('request_id', excludeRequestId)
@@ -1646,7 +1651,7 @@ export class PortfolioRepository {
 
         // Filter by user_id for security through the join
         if (userId) {
-            query = query.eq('document_processing_requests.user_id', userId)
+            query = query.eq('user_id', userId)
         }
 
         const { data, error } = await query
@@ -1656,7 +1661,7 @@ export class PortfolioRepository {
             return []
         }
 
-        return (data || []).map((row) => this.transformAnalyticsToPortfolioCompany(row))
+        return (data || []).map((row) => this.transformToPortfolioCompany(row))
     }
 
     /**
@@ -1666,17 +1671,16 @@ export class PortfolioRepository {
         const supabase = await this.getSupabaseClient()
 
         let query = supabase
-            .from('portfolio_analytics')
+            .from('document_processing_requests')
             .select(`
                 risk_score, 
-                recommended_limit,
-                document_processing_requests!inner(user_id)
+                recommended_limit
             `)
             .eq('industry', industry)
 
         // Filter by user_id for security through the join
         if (userId) {
-            query = query.eq('document_processing_requests.user_id', userId)
+            query = query.eq('user_id', userId)
         }
 
         const { data, error } = await query
@@ -1926,38 +1930,38 @@ export class PortfolioRepository {
     /**
      * Add parameter correlation analysis using individual parameter score columns
      */
-    async getParameterCorrelationAnalysis(filters?: FilterCriteria): Promise<any> {
-        const supabase = await this.getSupabaseClient()
+    // async getParameterCorrelationAnalysis(filters?: FilterCriteria): Promise<any> {
+    //     const supabase = await this.getSupabaseClient()
 
-        let query = supabase
-            .from('portfolio_analytics')
-            .select(`
-                risk_score,
-                financial_score, business_score, hygiene_score, banking_score,
-                current_ratio_score, debt_equity_score, ebitda_margin_score,
-                sales_trend_score, finance_cost_score, tol_tnw_score,
-                interest_coverage_score, roce_score, inventory_days_score,
-                debtors_days_score, creditors_days_score, quick_ratio_score,
-                pat_score, ncatd_score, diversion_funds_score,
-                constitution_entity_score, rating_type_score, vintage_score,
-                gst_compliance_score, pf_compliance_score, recent_charges_score,
-                primary_banker_score
-            `)
-            .eq('processing_status', 'completed')
+    //     let query = supabase
+    //         .from('portfolio_analytics')
+    //         .select(`
+    //             risk_score,
+    //             financial_score, business_score, hygiene_score, banking_score,
+    //             current_ratio_score, debt_equity_score, ebitda_margin_score,
+    //             sales_trend_score, finance_cost_score, tol_tnw_score,
+    //             interest_coverage_score, roce_score, inventory_days_score,
+    //             debtors_days_score, creditors_days_score, quick_ratio_score,
+    //             pat_score, ncatd_score, diversion_funds_score,
+    //             constitution_entity_score, rating_type_score, vintage_score,
+    //             gst_compliance_score, pf_compliance_score, recent_charges_score,
+    //             primary_banker_score
+    //         `)
+    //         .eq('processing_status', 'completed')
 
-        if (filters) {
-            query = this.applyAnalyticsFilters(query, filters)
-        }
+    //     if (filters) {
+    //         query = this.applyAnalyticsFilters(query, filters)
+    //     }
 
-        const { data, error } = await query
+    //     const { data, error } = await query
 
-        if (error) {
-            throw new Error(`Failed to fetch parameter correlation data: ${error.message}`)
-        }
+    //     if (error) {
+    //         throw new Error(`Failed to fetch parameter correlation data: ${error.message}`)
+    //     }
 
-        // Calculate correlations between parameters and overall risk score
-        return this.calculateParameterCorrelations(data || [])
-    }
+    //     // Calculate correlations between parameters and overall risk score
+    //     return this.calculateParameterCorrelations(data || [])
+    // }
 
     /**
      * Calculate correlations between individual parameters and overall risk
@@ -2233,217 +2237,217 @@ export class PortfolioRepository {
             regions: []
         }
     }
-    private async calculatePortfolioMetricsFromAnalytics(filters?: FilterCriteria, userId?: string): Promise<PortfolioMetrics> {
-        const supabase = await this.getSupabaseClient()
+    // private async calculatePortfolioMetricsFromAnalytics(filters?: FilterCriteria, userId?: string): Promise<PortfolioMetrics> {
+    //     const supabase = await this.getSupabaseClient()
 
-        try {
-            // Build base query with filters and user filtering
-            let query = supabase
-                .from('portfolio_analytics')
-                .select(`
-                    *,
-                    document_processing_requests!inner(user_id)
-                `)
-                .eq('processing_status', 'completed')
+    //     try {
+    //         // Build base query with filters and user filtering
+    //         let query = supabase
+    //             .from('portfolio_analytics')
+    //             .select(`
+    //                 *,
+    //                 document_processing_requests!inner(user_id)
+    //             `)
+    //             .eq('processing_status', 'completed')
 
-            // Filter by user_id for security through the join
-            if (userId) {
-                query = query.eq('document_processing_requests.user_id', userId)
-            }
+    //         // Filter by user_id for security through the join
+    //         if (userId) {
+    //             query = query.eq('document_processing_requests.user_id', userId)
+    //         }
 
-            if (filters) {
-                query = this.applyAnalyticsFilters(query, filters)
-            }
+    //         if (filters) {
+    //             query = this.applyAnalyticsFilters(query, filters)
+    //         }
 
-            const { data, error } = await query
+    //         const { data, error } = await query
 
-            if (error) {
-                throw new Error(`Failed to fetch analytics data: ${error.message}`)
-            }
+    //         if (error) {
+    //             throw new Error(`Failed to fetch analytics data: ${error.message}`)
+    //         }
 
-            const companies: any = data || []
-            const totalCompanies = companies.length
-            const totalExposure = companies.reduce((sum, company) => sum + (company.final_eligibility || company.recommended_limit || 0), 0)
-            const averageRiskScore = totalCompanies > 0
-                ? companies.reduce((sum, company) => sum + (company.risk_score || 0), 0) / totalCompanies
-                : 0
+    //         const companies: any = data || []
+    //         const totalCompanies = companies.length
+    //         const totalExposure = companies.reduce((sum, company) => sum + (company.final_eligibility || company.recommended_limit || 0), 0)
+    //         const averageRiskScore = totalCompanies > 0
+    //             ? companies.reduce((sum, company) => sum + (company.risk_score || 0), 0) / totalCompanies
+    //             : 0
 
-            // Risk distribution using direct column access
-            const riskDistribution = {
-                cm1_count: 0,
-                cm2_count: 0,
-                cm3_count: 0,
-                cm4_count: 0,
-                cm5_count: 0,
-                ungraded_count: 0,
-                total_count: totalCompanies,
-                distribution_percentages: {} as Record<string, number>
-            }
+    //         // Risk distribution using direct column access
+    //         const riskDistribution = {
+    //             cm1_count: 0,
+    //             cm2_count: 0,
+    //             cm3_count: 0,
+    //             cm4_count: 0,
+    //             cm5_count: 0,
+    //             ungraded_count: 0,
+    //             total_count: totalCompanies,
+    //             distribution_percentages: {} as Record<string, number>
+    //         }
 
-            companies.forEach(company => {
-                const grade = company.risk_grade?.toLowerCase()
-                switch (grade) {
-                    case 'cm1': riskDistribution.cm1_count++; break
-                    case 'cm2': riskDistribution.cm2_count++; break
-                    case 'cm3': riskDistribution.cm3_count++; break
-                    case 'cm4': riskDistribution.cm4_count++; break
-                    case 'cm5': riskDistribution.cm5_count++; break
-                    default: riskDistribution.ungraded_count++; break
-                }
-            })
+    //         companies.forEach(company => {
+    //             const grade = company.risk_grade?.toLowerCase()
+    //             switch (grade) {
+    //                 case 'cm1': riskDistribution.cm1_count++; break
+    //                 case 'cm2': riskDistribution.cm2_count++; break
+    //                 case 'cm3': riskDistribution.cm3_count++; break
+    //                 case 'cm4': riskDistribution.cm4_count++; break
+    //                 case 'cm5': riskDistribution.cm5_count++; break
+    //                 default: riskDistribution.ungraded_count++; break
+    //             }
+    //         })
 
-            // Calculate percentages
-            if (totalCompanies > 0) {
-                riskDistribution.distribution_percentages = {
-                    cm1: (riskDistribution.cm1_count / totalCompanies) * 100,
-                    cm2: (riskDistribution.cm2_count / totalCompanies) * 100,
-                    cm3: (riskDistribution.cm3_count / totalCompanies) * 100,
-                    cm4: (riskDistribution.cm4_count / totalCompanies) * 100,
-                    cm5: (riskDistribution.cm5_count / totalCompanies) * 100,
-                    ungraded: (riskDistribution.ungraded_count / totalCompanies) * 100
-                }
-            }
+    //         // Calculate percentages
+    //         if (totalCompanies > 0) {
+    //             riskDistribution.distribution_percentages = {
+    //                 cm1: (riskDistribution.cm1_count / totalCompanies) * 100,
+    //                 cm2: (riskDistribution.cm2_count / totalCompanies) * 100,
+    //                 cm3: (riskDistribution.cm3_count / totalCompanies) * 100,
+    //                 cm4: (riskDistribution.cm4_count / totalCompanies) * 100,
+    //                 cm5: (riskDistribution.cm5_count / totalCompanies) * 100,
+    //                 ungraded: (riskDistribution.ungraded_count / totalCompanies) * 100
+    //             }
+    //         }
 
-            // Industry breakdown using indexed industry column
-            const industryMap = new Map<string, any>()
-            companies.forEach(company => {
-                const industry = company.industry || 'Unknown'
-                if (!industryMap.has(industry)) {
-                    industryMap.set(industry, {
-                        name: industry,
-                        count: 0,
-                        total_exposure: 0,
-                        risk_scores: []
-                    })
-                }
-                const industryData = industryMap.get(industry)!
-                industryData.count++
-                industryData.total_exposure += company.final_eligibility || company.recommended_limit || 0
-                if (company.risk_score) {
-                    industryData.risk_scores.push(company.risk_score)
-                }
-            })
+    //         // Industry breakdown using indexed industry column
+    //         const industryMap = new Map<string, any>()
+    //         companies.forEach(company => {
+    //             const industry = company.industry || 'Unknown'
+    //             if (!industryMap.has(industry)) {
+    //                 industryMap.set(industry, {
+    //                     name: industry,
+    //                     count: 0,
+    //                     total_exposure: 0,
+    //                     risk_scores: []
+    //                 })
+    //             }
+    //             const industryData = industryMap.get(industry)!
+    //             industryData.count++
+    //             industryData.total_exposure += company.final_eligibility || company.recommended_limit || 0
+    //             if (company.risk_score) {
+    //                 industryData.risk_scores.push(company.risk_score)
+    //             }
+    //         })
 
-            const industryBreakdown = {
-                industries: Array.from(industryMap.values()).map(industry => ({
-                    name: industry.name,
-                    count: industry.count,
-                    total_exposure: industry.total_exposure,
-                    average_risk_score: industry.risk_scores.length > 0
-                        ? industry.risk_scores.reduce((sum: number, score: number) => sum + score, 0) / industry.risk_scores.length
-                        : 0,
-                    risk_distribution: {} // Could be calculated if needed
-                }))
-            }
+    //         const industryBreakdown = {
+    //             industries: Array.from(industryMap.values()).map(industry => ({
+    //                 name: industry.name,
+    //                 count: industry.count,
+    //                 total_exposure: industry.total_exposure,
+    //                 average_risk_score: industry.risk_scores.length > 0
+    //                     ? industry.risk_scores.reduce((sum: number, score: number) => sum + score, 0) / industry.risk_scores.length
+    //                     : 0,
+    //                 risk_distribution: {} // Could be calculated if needed
+    //             }))
+    //         }
 
-            // Regional distribution using indexed state columns
-            const regionMap = new Map<string, any>()
-            companies.forEach(company => {
-                const region = company.business_state || company.registered_state || company.state || company.region || 'Unknown'
-                if (!regionMap.has(region)) {
-                    regionMap.set(region, {
-                        state: region,
-                        count: 0,
-                        total_exposure: 0,
-                        risk_scores: [],
-                        cities: new Set()
-                    })
-                }
-                const regionData = regionMap.get(region)!
-                regionData.count++
-                regionData.total_exposure += company.final_eligibility || company.recommended_limit || 0
-                if (company.risk_score) {
-                    regionData.risk_scores.push(company.risk_score)
-                }
-                // Add cities
-                if (company.business_city) {
-                    regionData.cities.add(company.business_city)
-                }
-                if (company.registered_city) {
-                    regionData.cities.add(company.registered_city)
-                }
-            })
+    //         // Regional distribution using indexed state columns
+    //         const regionMap = new Map<string, any>()
+    //         companies.forEach(company => {
+    //             const region = company.business_state || company.registered_state || company.state || company.region || 'Unknown'
+    //             if (!regionMap.has(region)) {
+    //                 regionMap.set(region, {
+    //                     state: region,
+    //                     count: 0,
+    //                     total_exposure: 0,
+    //                     risk_scores: [],
+    //                     cities: new Set()
+    //                 })
+    //             }
+    //             const regionData = regionMap.get(region)!
+    //             regionData.count++
+    //             regionData.total_exposure += company.final_eligibility || company.recommended_limit || 0
+    //             if (company.risk_score) {
+    //                 regionData.risk_scores.push(company.risk_score)
+    //             }
+    //             // Add cities
+    //             if (company.business_city) {
+    //                 regionData.cities.add(company.business_city)
+    //             }
+    //             if (company.registered_city) {
+    //                 regionData.cities.add(company.registered_city)
+    //             }
+    //         })
 
-            const regionalDistribution: any = {
-                regions: Array.from(regionMap.values()).map(region => ({
-                    state: region.state,
-                    count: region.count,
-                    total_exposure: region.total_exposure,
-                    average_risk_score: region.risk_scores.length > 0
-                        ? region.risk_scores.reduce((sum: number, score: number) => sum + score, 0) / region.risk_scores.length
-                        : 0,
-                    cities: Array.from(region.cities)
-                }))
-            }
+    //         const regionalDistribution: any = {
+    //             regions: Array.from(regionMap.values()).map(region => ({
+    //                 state: region.state,
+    //                 count: region.count,
+    //                 total_exposure: region.total_exposure,
+    //                 average_risk_score: region.risk_scores.length > 0
+    //                     ? region.risk_scores.reduce((sum: number, score: number) => sum + score, 0) / region.risk_scores.length
+    //                     : 0,
+    //                 cities: Array.from(region.cities)
+    //             }))
+    //         }
 
-            // Compliance summary using flattened compliance columns
-            const complianceSummary = companies.reduce((acc, company) => {
-                // GST compliance
-                const gstStatus = company.gst_compliance_status?.toLowerCase()
-                if (gstStatus?.includes('regular') || gstStatus?.includes('active')) {
-                    acc.gst_compliance.compliant++
-                } else if (gstStatus?.includes('irregular') || gstStatus?.includes('inactive')) {
-                    acc.gst_compliance.non_compliant++
-                } else {
-                    acc.gst_compliance.unknown++
-                }
+    //         // Compliance summary using flattened compliance columns
+    //         const complianceSummary = companies.reduce((acc, company) => {
+    //             // GST compliance
+    //             const gstStatus = company.gst_compliance_status?.toLowerCase()
+    //             if (gstStatus?.includes('regular') || gstStatus?.includes('active')) {
+    //                 acc.gst_compliance.compliant++
+    //             } else if (gstStatus?.includes('irregular') || gstStatus?.includes('inactive')) {
+    //                 acc.gst_compliance.non_compliant++
+    //             } else {
+    //                 acc.gst_compliance.unknown++
+    //             }
 
-                // EPFO compliance
-                const epfoStatus = company.epfo_compliance_status?.toLowerCase()
-                if (epfoStatus?.includes('regular') || epfoStatus?.includes('active')) {
-                    acc.epfo_compliance.compliant++
-                } else if (epfoStatus?.includes('irregular') || epfoStatus?.includes('inactive')) {
-                    acc.epfo_compliance.non_compliant++
-                } else {
-                    acc.epfo_compliance.unknown++
-                }
+    //             // EPFO compliance
+    //             const epfoStatus = company.epfo_compliance_status?.toLowerCase()
+    //             if (epfoStatus?.includes('regular') || epfoStatus?.includes('active')) {
+    //                 acc.epfo_compliance.compliant++
+    //             } else if (epfoStatus?.includes('irregular') || epfoStatus?.includes('inactive')) {
+    //                 acc.epfo_compliance.non_compliant++
+    //             } else {
+    //                 acc.epfo_compliance.unknown++
+    //             }
 
-                // Audit status
-                const auditStatus = company.audit_qualification_status?.toLowerCase()
-                if (auditStatus?.includes('unqualified') || auditStatus?.includes('clean')) {
-                    acc.audit_status.qualified++
-                } else if (auditStatus?.includes('qualified') || auditStatus?.includes('adverse')) {
-                    acc.audit_status.unqualified++
-                } else {
-                    acc.audit_status.unknown++
-                }
+    //             // Audit status
+    //             const auditStatus = company.audit_qualification_status?.toLowerCase()
+    //             if (auditStatus?.includes('unqualified') || auditStatus?.includes('clean')) {
+    //                 acc.audit_status.qualified++
+    //             } else if (auditStatus?.includes('qualified') || auditStatus?.includes('adverse')) {
+    //                 acc.audit_status.unqualified++
+    //             } else {
+    //                 acc.audit_status.unknown++
+    //             }
 
-                return acc
-            }, {
-                gst_compliance: { compliant: 0, non_compliant: 0, unknown: 0 },
-                epfo_compliance: { compliant: 0, non_compliant: 0, unknown: 0 },
-                audit_status: { qualified: 0, unqualified: 0, unknown: 0 }
-            })
+    //             return acc
+    //         }, {
+    //             gst_compliance: { compliant: 0, non_compliant: 0, unknown: 0 },
+    //             epfo_compliance: { compliant: 0, non_compliant: 0, unknown: 0 },
+    //             audit_status: { qualified: 0, unqualified: 0, unknown: 0 }
+    //         })
 
-            // Calculate eligibility metrics
-            const baseEligibilityTotal = companies.reduce((sum, company) => sum + (company.base_eligibility || 0), 0)
-            const finalEligibilityTotal = companies.reduce((sum, company) => sum + (company.final_eligibility || 0), 0)
+    //         // Calculate eligibility metrics
+    //         const baseEligibilityTotal = companies.reduce((sum, company) => sum + (company.base_eligibility || 0), 0)
+    //         const finalEligibilityTotal = companies.reduce((sum, company) => sum + (company.final_eligibility || 0), 0)
 
-            return {
-                total_companies: totalCompanies,
-                total_exposure: totalExposure,
-                average_risk_score: averageRiskScore,
-                risk_distribution: riskDistribution,
-                industry_breakdown: industryBreakdown,
-                regional_distribution: regionalDistribution,
-                performance_trends: [], // Will be implemented in analytics service
-                compliance_summary: complianceSummary,
-                eligibility_summary: {
-                    total_eligible_amount: finalEligibilityTotal,
-                    average_eligibility: finalEligibilityTotal / Math.max(totalCompanies, 1),
-                    eligibility_distribution: {
-                        base_eligibility: baseEligibilityTotal,
-                        final_eligibility: finalEligibilityTotal,
-                        utilization_rate: baseEligibilityTotal > 0 ? (finalEligibilityTotal / baseEligibilityTotal) * 100 : 0
-                    },
-                    risk_adjusted_exposure: finalEligibilityTotal
-                }
-            }
-        } catch (error) {
-            console.error('Error calculating portfolio metrics from analytics:', error)
-            throw error
-        }
-    }
+    //         return {
+    //             total_companies: totalCompanies,
+    //             total_exposure: totalExposure,
+    //             average_risk_score: averageRiskScore,
+    //             risk_distribution: riskDistribution,
+    //             industry_breakdown: industryBreakdown,
+    //             regional_distribution: regionalDistribution,
+    //             performance_trends: [], // Will be implemented in analytics service
+    //             compliance_summary: complianceSummary,
+    //             eligibility_summary: {
+    //                 total_eligible_amount: finalEligibilityTotal,
+    //                 average_eligibility: finalEligibilityTotal / Math.max(totalCompanies, 1),
+    //                 eligibility_distribution: {
+    //                     base_eligibility: baseEligibilityTotal,
+    //                     final_eligibility: finalEligibilityTotal,
+    //                     utilization_rate: baseEligibilityTotal > 0 ? (finalEligibilityTotal / baseEligibilityTotal) * 100 : 0
+    //                 },
+    //                 risk_adjusted_exposure: finalEligibilityTotal
+    //             }
+    //         }
+    //     } catch (error) {
+    //         console.error('Error calculating portfolio metrics from analytics:', error)
+    //         throw error
+    //     }
+    // }
 
     // ============================================================================
     // ANALYTICS TABLE MANAGEMENT METHODS
@@ -2516,60 +2520,60 @@ export class PortfolioRepository {
     /**
      * Get analytics table status and health metrics
      */
-    async getAnalyticsTableStatus(): Promise<AnalyticsTableStatus> {
-        const supabase = await this.getSupabaseClient()
+    // async getAnalyticsTableStatus(): Promise<AnalyticsTableStatus> {
+    //     const supabase = await this.getSupabaseClient()
 
-        try {
-            // Get total records from main table
-            const { count: totalRecords } = await supabase
-                .from('document_processing_requests')
-                .select(`id, request_id, user_id, organization_id, original_filename,
-            company_name, industry, risk_score, risk_grade, recommended_limit,
-            currency, status, submitted_at, processing_started_at, completed_at,
-            file_size, file_extension, s3_upload_key, s3_folder_path,
-            pdf_filename, pdf_s3_key, pdf_file_size, model_type,
-            total_parameters, available_parameters, financial_parameters,
-            business_parameters, hygiene_parameters, banking_parameters,
-            error_message, retry_count, created_at, updated_at`, { count: 'exact', head: true })
-                .eq('status', 'completed')
+    //     try {
+    //         // Get total records from main table
+    //         const { count: totalRecords } = await supabase
+    //             .from('document_processing_requests')
+    //             .select(`id, request_id, user_id, organization_id, original_filename,
+    //         company_name, industry, risk_score, risk_grade, recommended_limit,
+    //         currency, status, submitted_at, processing_started_at, completed_at,
+    //         file_size, file_extension, s3_upload_key, s3_folder_path,
+    //         pdf_filename, pdf_s3_key, pdf_file_size, model_type,
+    //         total_parameters, available_parameters, financial_parameters,
+    //         business_parameters, hygiene_parameters, banking_parameters,
+    //         error_message, retry_count, created_at, updated_at`, { count: 'exact', head: true })
+    //             .eq('status', 'completed')
 
-            // Get synced records from analytics table
-            const { count: syncedRecords } = await supabase
-                .from('portfolio_analytics')
-                .select('*', { count: 'exact', head: true })
+    //         // Get synced records from analytics table
+    //         const { count: syncedRecords } = await supabase
+    //             .from('portfolio_analytics')
+    //             .select('*', { count: 'exact', head: true })
 
-            // Get error records
-            const { count: errorRecords } = await supabase
-                .from('portfolio_analytics_sync_errors')
-                .select('*', { count: 'exact', head: true })
-                .eq('resolved', false)
+    //         // Get error records
+    //         const { count: errorRecords } = await supabase
+    //             .from('portfolio_analytics_sync_errors')
+    //             .select('*', { count: 'exact', head: true })
+    //             .eq('resolved', false)
 
-            // Get last sync time
-            const { data: lastSyncData } = await supabase
-                .from('portfolio_analytics')
-                .select('updated_at')
-                .order('updated_at', { ascending: false })
-                .limit(1)
-                .single()
+    //         // Get last sync time
+    //         const { data: lastSyncData } = await supabase
+    //             .from('portfolio_analytics')
+    //             .select('updated_at')
+    //             .order('updated_at', { ascending: false })
+    //             .limit(1)
+    //             .single()
 
-            const total = totalRecords || 0
-            const synced = syncedRecords || 0
-            const errors = errorRecords || 0
-            const pending = Math.max(0, total - synced)
+    //         const total = totalRecords || 0
+    //         const synced = syncedRecords || 0
+    //         const errors = errorRecords || 0
+    //         const pending = Math.max(0, total - synced)
 
-            return {
-                total_records: total,
-                synced_records: synced,
-                pending_sync: pending,
-                error_records: errors,
-                last_sync_time: lastSyncData?.updated_at || null,
-                sync_coverage_percentage: total > 0 ? (synced / total) * 100 : 0
-            }
-        } catch (error) {
-            console.error('Error getting analytics table status:', error)
-            throw error
-        }
-    }
+    //         return {
+    //             total_records: total,
+    //             synced_records: synced,
+    //             pending_sync: pending,
+    //             error_records: errors,
+    //             last_sync_time: lastSyncData?.updated_at || null,
+    //             sync_coverage_percentage: total > 0 ? (synced / total) * 100 : 0
+    //         }
+    //     } catch (error) {
+    //         console.error('Error getting analytics table status:', error)
+    //         throw error
+    //     }
+    // }
 
     /**
      * Retry failed sync operations

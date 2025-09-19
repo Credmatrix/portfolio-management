@@ -2,14 +2,14 @@
 
 import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
-import { FileUpload } from "@/components/forms/FileUpload";
 import { CompanySearch } from "@/components/forms/CompanySearch";
+import { UnifiedProcessing } from "@/components/forms/UnifiedProcessing";
 import { UploadProgress } from "@/components/forms/UploadProgress";
 import { ProcessingQueue } from "@/components/forms/ProcessingQueue";
 import { UploadHistory } from "@/components/forms/UploadHistory";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/Tabs";
-import { Upload, History, ListChecks, Search } from "lucide-react";
-import { Button } from "@/components/ui";
+import { Upload, History, ListChecks, Search, Zap } from "lucide-react";
+import { Button } from "@/components/ui/Button";
 import { CompanyDetails } from "@/types/company.types";
 
 interface UploadRequest {
@@ -47,6 +47,23 @@ export default function UploadPage() {
 		setSelectedCompany(company);
 	};
 
+	// Handle API processing start
+	const handleApiProcessingStart = (requestId: string) => {
+		// Create a mock upload request for tracking
+		const newRequest: UploadRequest = {
+			id: requestId,
+			request_id: requestId,
+			company_name: selectedCompany?.company_name || 'Unknown',
+			filename: 'API_PROCESSING',
+			status: 'processing',
+			submitted_at: new Date().toISOString(),
+		};
+
+		setUploadRequests(prev => [newRequest, ...prev]);
+		setRefreshTrigger(prev => prev + 1);
+		setActiveTab("queue");
+	};
+
 	// Refresh data when upload completes or status changes
 	const handleUploadComplete = (newRequest: UploadRequest) => {
 		setUploadRequests(prev => [newRequest, ...prev]);
@@ -73,7 +90,7 @@ export default function UploadPage() {
 					Document Upload & Processing
 				</h1>
 				<p className="text-neutral-70">
-					Upload company documents for credit analysis and portfolio management
+					Upload company documents or process using API data for credit analysis and portfolio management
 				</p>
 			</div>
 
@@ -83,9 +100,9 @@ export default function UploadPage() {
 						<Search className="w-4 h-4" />
 						Company Search
 					</TabsTrigger>
-					<TabsTrigger value="upload" className="flex items-center gap-2">
-						<Upload className="w-4 h-4" />
-						Upload Documents
+					<TabsTrigger value="processing" className="flex items-center gap-2">
+						<Zap className="w-4 h-4" />
+						Processing
 					</TabsTrigger>
 					<TabsTrigger value="queue" className="flex items-center gap-2">
 						<ListChecks className="w-4 h-4" />
@@ -105,19 +122,20 @@ export default function UploadPage() {
 					{selectedCompany && (
 						<div className="flex justify-center">
 							<Button
-								onClick={() => setActiveTab("upload")}
+								onClick={() => setActiveTab("processing")}
 							>
-								Proceed to Upload Documents
+								Start Processing
 							</Button>
 						</div>
 					)}
 				</TabsContent>
 
-				<TabsContent value="upload" className="space-y-6">
-					<FileUpload
+				<TabsContent value="processing" className="space-y-6">
+					<UnifiedProcessing
+						selectedCompany={selectedCompany}
+						onProcessingStart={handleApiProcessingStart}
 						onUploadComplete={handleUploadComplete}
 						onStatusUpdate={handleStatusUpdate}
-						selectedCompany={selectedCompany}
 					/>
 					{uploadRequests.filter(req => req.status === 'processing' || req.status === 'submitted').length > 0 && (
 						<UploadProgress
