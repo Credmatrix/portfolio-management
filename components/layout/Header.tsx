@@ -1,6 +1,6 @@
 "use client";
 
-import { Bell, Search, LogOut, Settings, HelpCircle, ChevronDown,Plus } from "lucide-react";
+import { Bell, Search, LogOut, Settings, HelpCircle, ChevronDown, Plus } from "lucide-react";
 import { useAuth } from "@/lib/hooks/useAuth";
 import { useState, useRef, useEffect } from "react";
 import { Breadcrumbs } from "./Breadcrumbs";
@@ -135,23 +135,23 @@ export function Header() {
 					{/* Actions */}
 					<div className="flex items-center gap-2">
 						{/* Help Button */}
-						{!pathname.includes('/upload') && <Button
+						{!pathname.includes('/companies') && <Button
 							variant="primary"
-							onClick={() => router.push('/upload')}
+							onClick={() => router.push('/companies/add')}
 						>
 							<Plus className="w-4 h-4 mr-2" />
 							Create Credit Request
 						</Button>
-}
-						<button
+						}
+						{/* <button
 							className="p-2 hover:bg-neutral-10 rounded-lg transition-colors"
 							title="Help & Documentation"
 						>
 							<HelpCircle className="w-5 h-5 text-neutral-70" />
-						</button>
+						</button> */}
 
 						{/* Notifications */}
-						<div className="relative" ref={notificationsRef}>
+						{/* <div className="relative" ref={notificationsRef}>
 							<button
 								onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
 								className="p-2 hover:bg-neutral-10 rounded-lg relative transition-colors"
@@ -210,7 +210,7 @@ export function Header() {
 									</div>
 								</div>
 							)}
-						</div>
+						</div> */}
 
 						{/* User Menu */}
 						<div className="relative" ref={dropdownRef}>

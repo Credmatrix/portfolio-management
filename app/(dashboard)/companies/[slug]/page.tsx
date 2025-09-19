@@ -1,6 +1,7 @@
 'use client';
 
 import { CompanyHeader } from '@/app/(dashboard)/portfolio/[requestId]/components/CompanyHeader';
+import { CompanyInfoSection } from '@/components/company';
 import { Button } from '@/components/ui';
 import { Badge } from '@/components/ui/Badge';
 import { Card, CardContent } from '@/components/ui/Card';
@@ -219,6 +220,11 @@ export default function CompanyDetailsPage() {
                     company={companyData.latestRequest as any}
                     isCollapsed={false}
                 />
+            </div>
+
+            {/* Company Information Section */}
+            <div className="mb-6">
+                <CompanyInfoSection company={companyData.latestRequest as any} />
             </div>
 
             {/* Summary Cards */}

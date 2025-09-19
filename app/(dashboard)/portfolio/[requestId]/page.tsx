@@ -34,6 +34,7 @@ import {
 
 // Import the section components
 import { CompanyHeader } from './components/CompanyHeader'
+import { CompanyInfoSection } from '@/components/company'
 import { RiskAssessmentSection } from './components/RiskAssessmentSection'
 import { CreditEligibilitySection } from './components/CreditEligibilitySection'
 import { FinancialDataSection } from './components/FinancialDataSection'
@@ -506,10 +507,8 @@ export default function CompanyDetailPage({ }: CompanyDetailPageProps) {
                         <TabsContent value="overview" className="space-y-6">
                             <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
                                 <div className="xl:col-span-4 space-y-6">
-                                    {/* <RiskAssessmentSection
-                                        company={company}
-                                        industryBenchmarks={industryBenchmarks}
-                                    /> */}
+                                    {/* Company Information Section */}
+                                    <CompanyInfoSection company={company} />
                                     <CreditManagementSection requestId={requestId} />
                                 </div>
                                 {/* <div className="xl:col-span-1 space-y-6"> */}
