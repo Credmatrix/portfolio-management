@@ -15,7 +15,9 @@ const QUEUE_URL = process.env.SQS_QUEUE_URL || 'https://sqs.ap-south-1.amazonaws
 const MOOLA_API_BASE_URL = process.env.MOOLA_API_BASE_URL || 'https://moola-axl1.credmatrix.ai/api/v1';
 
 interface ProcessingRequest {
-    cin: string;
+    cin?: string;
+    pan?: string;
+    company_name?: string;
     industry: 'manufacturing' | 'manufacturing-oem' | 'epc';
     model_type: 'with_banking' | 'without_banking';
 }
@@ -34,11 +36,14 @@ export async function POST(request: NextRequest) {
         }
 
         const body: ProcessingRequest = await request.json();
-        const { cin, industry, model_type } = body;
+        const { cin, pan, company_name, industry, model_type } = body;
 
-        if (!cin || !industry || !model_type) {
+        const identifier = cin || pan;
+        const identifierType = cin ? 'CIN' : 'PAN';
+
+        if (!identifier || !industry || !model_type) {
             return NextResponse.json(
-                { success: false, error: 'Missing required fields: cin, industry, model_type' },
+                { success: false, error: 'Missing required fields: cin/pan, industry, model_type' },
                 { status: 400 }
             );
         }
@@ -55,8 +60,8 @@ export async function POST(request: NextRequest) {
         // Step 1: Check if company exists in our database with comprehensive_data
         const { data: existingCompany } = await supabase
             .from('companies')
-            .select('id, cin, comprehensive_data, comprehensive_data_cached_at')
-            .eq('cin', cin)
+            .select('id, cin, pan, comprehensive_data, comprehensive_data_cached_at')
+            .or(`cin.eq.${identifier},pan.eq.${identifier}`)
             .single();
 
         let requestId = uuidv4();
@@ -66,7 +71,10 @@ export async function POST(request: NextRequest) {
             .from('document_processing_requests')
             .insert({
                 id: requestId,
+                request_id: requestId,
                 cin: cin,
+                pan: pan,
+                company_name: company_name,
                 industry: industry,
                 model_type: model_type,
                 status: 'processing',
@@ -85,7 +93,7 @@ export async function POST(request: NextRequest) {
         if (existingCompany?.comprehensive_data) {
             // Company data exists, send SQS message directly
             await sendSQSMessage({
-                cin_or_pan: cin,
+                cin_or_pan: identifier,
                 user_id: user.id,
                 organization_id: user.id, // Using user_id as organization_id for now
                 model_type: model_type,
@@ -109,7 +117,7 @@ export async function POST(request: NextRequest) {
             try {
                 // Step 2: Check data status
                 const dataStatusResponse = await fetch(
-                    `${MOOLA_API_BASE_URL}/companies/${cin}/data-status?identifier_type=CIN`,
+                    `${MOOLA_API_BASE_URL}/companies/${identifier}/data-status?identifier_type=${identifierType}`,
                     {
                         headers: {
                             'accept': 'application/json',
@@ -135,7 +143,7 @@ export async function POST(request: NextRequest) {
 
                 // Step 3: Fetch comprehensive details
                 const comprehensiveResponse = await fetch(
-                    `${MOOLA_API_BASE_URL}/companies/${cin}/comprehensive-details?identifier_type=CIN&force_update=false`,
+                    `${MOOLA_API_BASE_URL}/companies/${identifier}/comprehensive-details?identifier_type=${identifierType}&force_update=false`,
                     {
                         headers: {
                             'accept': 'application/json',
@@ -150,7 +158,7 @@ export async function POST(request: NextRequest) {
 
                 // Step 5: Send SQS message for processing
                 await sendSQSMessage({
-                    cin_or_pan: cin,
+                    cin_or_pan: identifier,
                     user_id: user.id,
                     organization_id: user.id,
                     model_type: model_type,

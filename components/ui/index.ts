@@ -8,6 +8,9 @@ export type { CardProps, CardVariant, CardPadding } from './Card';
 export { Input } from './Input';
 export type { InputProps, InputSize, InputVariant } from './Input';
 
+export { Textarea } from './Textarea';
+export type { TextareaProps } from './Textarea';
+
 export { Select } from './Select';
 export type { SelectProps, SelectSize, SelectVariant } from './Select';
 
