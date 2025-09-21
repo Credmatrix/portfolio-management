@@ -87,26 +87,26 @@ async function handleEnhancedSearch(
 
     try {
         // 1. Search in MCA master data (Corporate entities)
-        const { data: mcaResults, error: mcaError } = await supabase
-            .from('mca_master_data')
-            .select(`
-                cin, 
-                company_name, 
-                company_status, 
-                company_class, 
-                company_type,
-                paidup_capital, 
-                authorized_capital,
-                registration_date,
-                company_state_code
-            `)
-            .or(`company_name.ilike.%${query}%,cin.ilike.%${query}%`)
-            .eq('company_status', filters.include_inactive ? undefined : 'Active')
-            .limit(limit * 2)
+        // const { data: mcaResults, error: mcaError } = await supabase
+        //     .from('mca_master_data')
+        //     .select(`
+        //         cin, 
+        //         company_name, 
+        //         company_status, 
+        //         company_class, 
+        //         company_type,
+        //         paidup_capital, 
+        //         authorized_capital,
+        //         registration_date,
+        //         company_state_code
+        //     `)
+        //     .or(`company_name.ilike.%${query}%,cin.ilike.%${query}%`)
+        //     .eq('company_status', filters.include_inactive ? undefined : 'Active')
+        //     .limit(limit * 2)
 
-        if (mcaError) {
-            console.error('MCA search error:', mcaError)
-        }
+        // if (mcaError) {
+        //     console.error('MCA search error:', mcaError)
+        // }
 
         // 2. Search using ClearTax name-to-PAN API for non-corporate entities
         let clearTaxResults: any[] = []
@@ -123,7 +123,7 @@ async function handleEnhancedSearch(
 
             if (clearTaxResponse.ok) {
                 clearTaxResults = await clearTaxResponse.json()
-                console.log('ClearTax API results:', clearTaxResults)
+                // console.log('ClearTax API results:', clearTaxResults)
             } else {
                 console.warn('ClearTax API failed:', clearTaxResponse.status)
             }
@@ -132,63 +132,63 @@ async function handleEnhancedSearch(
         }
 
         // 3. Search in existing companies table (both CIN and PAN)
-        const { data: existingCompanies, error: companiesError } = await supabase
-            .from('companies')
-            .select(`
-                id,
-                cin,
-                pan,
-                legal_name,
-                comprehensive_data,
-                comprehensive_data_cached_at,
-                created_at
-            `)
-            .or(`legal_name.ilike.%${query}%,cin.ilike.%${query}%,pan.ilike.%${query}%`)
-            .limit(limit)
+        // const { data: existingCompanies, error: companiesError } = await supabase
+        //     .from('companies')
+        //     .select(`
+        //         id,
+        //         cin,
+        //         pan,
+        //         legal_name,
+        //         comprehensive_data,
+        //         comprehensive_data_cached_at,
+        //         created_at
+        //     `)
+        //     .or(`legal_name.ilike.%${query}%,cin.ilike.%${query}%,pan.ilike.%${query}%`)
+        //     .limit(limit)
 
-        if (companiesError) {
-            console.error('Companies search error:', companiesError)
-        }
+        // if (companiesError) {
+        //     console.error('Companies search error:', companiesError)
+        // }
 
         // 4. Search in manual company entries
-        const { data: manualResults, error: manualError } = await supabase
-            .from('manual_company_entries')
-            .select(`
-                request_id,
-                entity_type,
-                basic_details,
-                data_source,
-                processing_status,
-                data_completeness_score,
-                created_at
-            `)
-            .or(`basic_details->>'legal_name'.ilike.%${query}%,basic_details->>'trade_name'.ilike.%${query}%`)
-            .eq('created_by', userId)
-            .limit(limit)
+        // const { data: manualResults, error: manualError } = await supabase
+        //     .from('manual_company_entries')
+        //     .select(`
+        //         request_id,
+        //         entity_type,
+        //         basic_details,
+        //         data_source,
+        //         processing_status,
+        //         data_completeness_score,
+        //         created_at
+        //     `)
+        //     .or(`basic_details->>'legal_name'.ilike.%${query}%,basic_details->>'trade_name'.ilike.%${query}%`)
+        //     .eq('created_by', userId)
+        //     .limit(limit)
 
-        if (manualError) {
-            console.error('Manual entries search error:', manualError)
-        }
+        // if (manualError) {
+        //     console.error('Manual entries search error:', manualError)
+        // }
 
         // Process MCA results
-        if (mcaResults) {
-            mcaResults.forEach((company: any) => {
-                const entityType = determineEntityTypeFromMCA(company.company_class, company.company_type)
-                const processingMethods = determineProcessingMethods(entityType, true, company.cin)
+        // if (mcaResults) {
+        //     mcaResults.forEach((company: any) => {
+        //         const entityType = determineEntityTypeFromMCA(company.company_class, company.company_type)
+        //         const processingMethods = determineProcessingMethods(entityType, true, company.cin)
 
-                results.push({
-                    id: company.cin || `mca_${company.company_name}`,
-                    name: company.company_name,
-                    entity_type: entityType,
-                    registration_number: company.cin,
-                    status: company.company_status || 'Unknown',
-                    data_sources: ['api', 'excel'],
-                    processing_eligibility: processingMethods,
-                    match_score: calculateMatchScore(query, company.company_name, 'mca'),
-                    match_reason: `MCA registered ${entityType.replace('_', ' ')} company`
-                })
-            })
-        }
+        //         results.push({
+        //             id: company.cin || `mca_${company.company_name}`,
+        //             name: company.company_name,
+        //             entity_type: entityType,
+        //             registration_number: company.cin,
+        //             status: company.company_status || 'Unknown',
+        //             data_sources: ['api', 'excel'],
+        //             processing_eligibility: processingMethods,
+        //             match_score: calculateMatchScore(query, company.company_name, 'mca'),
+        //             match_reason: `MCA registered ${entityType.replace('_', ' ')} company`
+        //         })
+        //     })
+        // }
 
         // Process ClearTax results (PAN-based entities)
         if (clearTaxResults && Array.isArray(clearTaxResults)) {
@@ -217,54 +217,54 @@ async function handleEnhancedSearch(
         }
 
         // Process existing companies
-        if (existingCompanies) {
-            existingCompanies.forEach((company: any) => {
-                const entityType = company.cin ? 'private_limited' : 'proprietorship'
-                const processingMethods = determineProcessingMethods(
-                    entityType,
-                    !!company.comprehensive_data,
-                    company.cin,
-                    company.pan
-                )
+        // if (existingCompanies) {
+        //     existingCompanies.forEach((company: any) => {
+        //         const entityType = company.cin ? 'private_limited' : 'proprietorship'
+        //         const processingMethods = determineProcessingMethods(
+        //             entityType,
+        //             !!company.comprehensive_data,
+        //             company.cin,
+        //             company.pan
+        //         )
 
-                results.push({
-                    id: company.id,
-                    name: company.legal_name || 'Unknown Company',
-                    entity_type: entityType,
-                    registration_number: company.cin || company.pan,
-                    status: 'Existing in Database',
-                    data_sources: ['api'],
-                    processing_eligibility: processingMethods,
-                    match_score: calculateMatchScore(query, company.legal_name, 'existing'),
-                    match_reason: `Existing company in database`,
-                    additional_info: {
-                        company_id: company.id,
-                        has_comprehensive_data: !!company.comprehensive_data,
-                        last_updated: company.comprehensive_data_cached_at
-                    }
-                })
-            })
-        }
+        //         results.push({
+        //             id: company.id,
+        //             name: company.legal_name || 'Unknown Company',
+        //             entity_type: entityType,
+        //             registration_number: company.cin || company.pan,
+        //             status: 'Existing in Database',
+        //             data_sources: ['api'],
+        //             processing_eligibility: processingMethods,
+        //             match_score: calculateMatchScore(query, company.legal_name, 'existing'),
+        //             match_reason: `Existing company in database`,
+        //             additional_info: {
+        //                 company_id: company.id,
+        //                 has_comprehensive_data: !!company.comprehensive_data,
+        //                 last_updated: company.comprehensive_data_cached_at
+        //             }
+        //         })
+        //     })
+        // }
 
         // Process manual entry results
-        if (manualResults) {
-            manualResults.forEach((entry: any) => {
-                const basicDetails = entry.basic_details as any
-                const processingMethods = determineProcessingMethods(entry.entity_type, false)
+        // if (manualResults) {
+        //     manualResults.forEach((entry: any) => {
+        //         const basicDetails = entry.basic_details as any
+        //         const processingMethods = determineProcessingMethods(entry.entity_type, false)
 
-                results.push({
-                    id: entry.request_id,
-                    name: basicDetails?.legal_name || basicDetails?.trade_name || 'Unknown Company',
-                    entity_type: entry.entity_type,
-                    registration_number: basicDetails?.registration_number,
-                    status: `Manual: ${entry.processing_status}`,
-                    data_sources: [entry.data_source],
-                    processing_eligibility: processingMethods,
-                    match_score: calculateMatchScore(query, basicDetails?.legal_name, 'manual'),
-                    match_reason: `Manually entered ${entry.entity_type.replace('_', ' ')} entity`
-                })
-            })
-        }
+        //         results.push({
+        //             id: entry.request_id,
+        //             name: basicDetails?.legal_name || basicDetails?.trade_name || 'Unknown Company',
+        //             entity_type: entry.entity_type,
+        //             registration_number: basicDetails?.registration_number,
+        //             status: `Manual: ${entry.processing_status}`,
+        //             data_sources: [entry.data_source],
+        //             processing_eligibility: processingMethods,
+        //             match_score: calculateMatchScore(query, basicDetails?.legal_name, 'manual'),
+        //             match_reason: `Manually entered ${entry.entity_type.replace('_', ' ')} entity`
+        //         })
+        //     })
+        // }
 
         // Sort results by match score and relevance
         results.sort((a, b) => {
@@ -294,10 +294,10 @@ async function handleEnhancedSearch(
 
         // Build data source availability info
         if (include_data_sources) {
-            dataSourceAvailability.mca_companies = mcaResults?.length || 0
+            // dataSourceAvailability.mca_companies = mcaResults?.length || 0
             dataSourceAvailability.cleartax_entities = clearTaxResults?.length || 0
-            dataSourceAvailability.existing_companies = existingCompanies?.length || 0
-            dataSourceAvailability.manual_entries = manualResults?.length || 0
+            // dataSourceAvailability.existing_companies = existingCompanies?.length || 0
+            // dataSourceAvailability.manual_entries = manualResults?.length || 0
             dataSourceAvailability.api_eligible = results.filter(r =>
                 r.processing_eligibility.some(p => p.type === 'api')
             ).length
@@ -473,7 +473,7 @@ function determineProcessingMethods(entityType: EntityType, hasApiData: boolean 
 
     // Corporate entities (API eligible)
     if (['private_limited', 'public_limited', 'llp'].includes(entityType)) {
-        if ((cin || pan) && hasApiData) {
+        if ((cin || pan)) {
             methods.push({
                 type: 'api',
                 eligibility_reason: 'Valid CIN/LLPIN/PAN found - API data available',
@@ -494,15 +494,15 @@ function determineProcessingMethods(entityType: EntityType, hasApiData: boolean 
 
     // Non-corporate entities (PAN-based)
     if (['proprietorship', 'partnership_registered', 'partnership_unregistered', 'huf', 'trust_private', 'trust_public', 'society'].includes(entityType)) {
-        if (pan) {
-            methods.push({
-                type: 'api',
-                eligibility_reason: 'PAN found - Limited API data available',
-                requirements: ['Valid PAN', 'Basic business information'],
-                estimated_time: '10-15 minutes',
-                data_completeness_expected: 60
-            })
-        }
+        // if (pan) {
+        //     methods.push({
+        //         type: 'api',
+        //         eligibility_reason: 'PAN found - Limited API data available',
+        //         requirements: ['Valid PAN', 'Basic business information'],
+        //         estimated_time: '10-15 minutes',
+        //         data_completeness_expected: 60
+        //     })
+        // }
 
         methods.push({
             type: 'excel',
