@@ -12,24 +12,21 @@ import {
     Users,
     Scale,
     AlertTriangle,
-    Building2,
     FileText,
     Play,
     Pause,
-    Download,
-    RefreshCw,
     CheckCircle,
     XCircle,
     Clock,
     Sparkles,
     Eye,
-    Zap,
-    TrendingUp,
     Activity,
     BookOpen,
     Target,
     AlertCircle,
-    ChevronRight
+    ChevronRight,
+    Zap,
+    TrendingUp
 } from 'lucide-react'
 import {
     DeepResearchJob,
@@ -38,6 +35,7 @@ import {
     ResearchPreset
 } from '@/types/deep-research.types'
 import { ResearchReportViewer } from './ResearchReportViewer'
+import { DetailedFindingsDisplay } from './DetailedFindingsDisplay'
 
 interface DeepResearchInterfaceProps {
     requestId: string
@@ -70,6 +68,7 @@ export function DeepResearchInterface({ requestId, companyName }: DeepResearchIn
     const [activeTab, setActiveTab] = useState('research')
     const [autoReportGenerated, setAutoReportGenerated] = useState(false)
     const [showAutoReportNotification, setShowAutoReportNotification] = useState(false)
+
 
     // Enhanced presets with Fluent design elements
     const enhancedPresets = useMemo(() => [
@@ -124,6 +123,8 @@ export function DeepResearchInterface({ requestId, companyName }: DeepResearchIn
         checkForAutoReport()
     }, [completedJobs])
 
+
+
     const fetchResearchJobs = async () => {
         try {
             const response = await fetch(`/api/deep-research/jobs?request_id=${requestId}`)
@@ -173,19 +174,24 @@ export function DeepResearchInterface({ requestId, companyName }: DeepResearchIn
                 body: JSON.stringify({
                     request_id: requestId,
                     job_type: jobType,
-                    research_scope: preset.research_scope,
-                    budget_tokens: preset.budget_tokens
+                    research_scope: {
+                        ...preset.research_scope,
+                        unlimited_budget: true,
+                        comprehensive_analysis: true
+                    },
+                    budget_tokens: 0 // Unlimited budget
                 })
             })
 
             const data = await response.json()
 
-            if (data.success) {
-                await fetchResearchJobs()
-                setActiveTab('active')
-            } else {
+            if (!data.success) {
                 setError(data.error || 'Failed to start research')
+                return
             }
+
+            await fetchResearchJobs()
+            setActiveTab('active')
         } catch (error) {
             setError('Failed to start research')
         } finally {
@@ -315,7 +321,7 @@ export function DeepResearchInterface({ requestId, companyName }: DeepResearchIn
                 )}
 
                 <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                    <TabsList className="grid w-full grid-cols-4 bg-white/60 backdrop-blur-sm border border-white/20">
+                    <TabsList className="grid w-full grid-cols-5 bg-white/60 backdrop-blur-sm border border-white/20">
                         <TabsTrigger
                             value="research"
                             className="data-[state=active]:bg-white data-[state=active]:shadow-sm"
@@ -348,6 +354,18 @@ export function DeepResearchInterface({ requestId, companyName }: DeepResearchIn
                             )}
                         </TabsTrigger>
                         <TabsTrigger
+                            value="findings"
+                            className="data-[state=active]:bg-white data-[state=active]:shadow-sm flex items-center gap-2"
+                        >
+                            <Eye className="w-4 h-4" />
+                            Detailed Findings
+                            {completedJobsWithReports.length > 0 && (
+                                <Badge variant="info" size="sm" className="ml-1">
+                                    {completedJobsWithReports.reduce((acc, job) => acc + (job.findings?.findings?.length || 0), 0)}
+                                </Badge>
+                            )}
+                        </TabsTrigger>
+                        <TabsTrigger
                             value="reports"
                             className="data-[state=active]:bg-white data-[state=active]:shadow-sm"
                         >
@@ -363,6 +381,7 @@ export function DeepResearchInterface({ requestId, companyName }: DeepResearchIn
 
                     {/* Research Types Tab - Enhanced Fluent Design */}
                     <TabsContent value="research" className="space-y-6 mt-6">
+
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             {enhancedPresets.map((preset) => {
                                 const Icon = preset.icon
@@ -436,38 +455,42 @@ export function DeepResearchInterface({ requestId, companyName }: DeepResearchIn
                                                     </span>
                                                 </div>
 
-                                                <Button
-                                                    size="sm"
-                                                    variant={isCompleted ? "outline" : "info"}
-                                                    onClick={(e) => {
-                                                        e.stopPropagation()
-                                                        if (!isRunning && !isCompleted) {
-                                                            startResearchJob(preset.job_type, preset)
+                                                <div className="flex gap-2">
+                                                    <Button
+                                                        size="sm"
+                                                        variant={isCompleted ? "outline" : "info"}
+                                                        onClick={(e) => {
+                                                            e.stopPropagation()
+                                                            if (!isRunning && !isCompleted) {
+                                                                startResearchJob(preset.job_type, preset)
+                                                            }
+                                                        }}
+                                                        disabled={loading || isRunning}
+                                                        className={isCompleted ?
+                                                            "text-emerald-600 border-emerald-200 hover:bg-emerald-50" :
+                                                            `bg-gradient-to-r ${preset.color} hover:opacity-90 text-white border-0`
                                                         }
-                                                    }}
-                                                    disabled={loading || isRunning}
-                                                    className={isCompleted ?
-                                                        "text-emerald-600 border-emerald-200 hover:bg-emerald-50" :
-                                                        `bg-gradient-to-r ${preset.color} hover:opacity-90 text-white border-0`
-                                                    }
-                                                >
-                                                    {isCompleted ? (
-                                                        <>
-                                                            <CheckCircle className="w-3 h-3 mr-1" />
-                                                            Completed
-                                                        </>
-                                                    ) : isRunning ? (
-                                                        <>
-                                                            <Activity className="w-3 h-3 mr-1 animate-pulse" />
-                                                            Running
-                                                        </>
-                                                    ) : (
-                                                        <>
-                                                            <Play className="w-3 h-3 mr-1" />
-                                                            Start Analysis
-                                                        </>
-                                                    )}
-                                                </Button>
+                                                    >
+                                                        {isCompleted ? (
+                                                            <>
+                                                                <CheckCircle className="w-3 h-3 mr-1" />
+                                                                Completed
+                                                            </>
+                                                        ) : isRunning ? (
+                                                            <>
+                                                                <Activity className="w-3 h-3 mr-1 animate-pulse" />
+                                                                Running
+                                                            </>
+                                                        ) : (
+                                                            <>
+                                                                <Play className="w-3 h-3 mr-1" />
+                                                                Start Analysis
+                                                            </>
+                                                        )}
+                                                    </Button>
+
+
+                                                </div>
                                             </div>
                                         </CardContent>
                                     </Card>
@@ -522,6 +545,8 @@ export function DeepResearchInterface({ requestId, companyName }: DeepResearchIn
                         )}
                     </TabsContent>
 
+
+
                     {/* Active Jobs Tab - Enhanced */}
                     <TabsContent value="active" className="space-y-4 mt-6">
                         {activeJobs.length === 0 ? (
@@ -565,6 +590,7 @@ export function DeepResearchInterface({ requestId, companyName }: DeepResearchIn
                                                             </h3>
                                                             <p className="text-sm text-slate-600">
                                                                 Advanced analysis in progress
+
                                                             </p>
                                                         </div>
                                                     </div>
@@ -631,6 +657,8 @@ export function DeepResearchInterface({ requestId, companyName }: DeepResearchIn
                         )}
                     </TabsContent>
 
+
+
                     {/* Completed Jobs Tab - Enhanced */}
                     <TabsContent value="completed" className="space-y-4 mt-6">
                         {completedJobs.length === 0 ? (
@@ -683,67 +711,133 @@ export function DeepResearchInterface({ requestId, companyName }: DeepResearchIn
                                                 </div>
 
                                                 {job.status === 'completed' && job.findings && (
-                                                    <div className="bg-gradient-to-r from-slate-50 to-slate-100 rounded-xl p-4 mb-4">
-                                                        <div className="flex items-center justify-between mb-3">
-                                                            <span className="text-sm font-medium text-slate-900 flex items-center gap-2">
-                                                                <TrendingUp className="w-4 h-4" />
-                                                                Business Intelligence Summary
-                                                            </span>
-                                                            <div className="flex items-center gap-2">
-                                                                <Badge
-                                                                    variant={
-                                                                        job.findings.risk_score >= 80 ? 'error' :
-                                                                            job.findings.risk_score >= 60 ? 'warning' :
-                                                                                job.findings.risk_score >= 40 ? 'info' : 'success'
-                                                                    }
-                                                                    className="font-medium text-xs"
-                                                                >
-                                                                    Risk: {job.findings.risk_score}/100
-                                                                </Badge>
-                                                                <Badge
-                                                                    variant={
-                                                                        job.findings.credit_recommendation === 'Decline' ? 'error' :
-                                                                            job.findings.credit_recommendation === 'Further Review' ? 'warning' :
-                                                                                job.findings.credit_recommendation === 'Conditional Approve' ? 'info' : 'success'
-                                                                    }
-                                                                    className="font-medium text-xs"
-                                                                >
-                                                                    {job.findings.credit_recommendation}
-                                                                </Badge>
-                                                            </div>
-                                                        </div>
-                                                        <div className="grid grid-cols-3 gap-3 text-sm">
-                                                            <div>
-                                                                <span className="text-slate-600">Findings:</span>
-                                                                <span className="font-medium text-slate-900 ml-2">
-                                                                    {job.findings.findings?.length || 0}
+                                                    <div className="space-y-4">
+                                                        {/* Enhanced Business Intelligence Summary */}
+                                                        <div className="bg-gradient-to-r from-slate-50 to-slate-100 rounded-xl p-4">
+                                                            <div className="flex items-center justify-between mb-3">
+                                                                <span className="text-sm font-medium text-slate-900 flex items-center gap-2">
+                                                                    <TrendingUp className="w-4 h-4" />
+                                                                    Due Diligence Summary
                                                                 </span>
-                                                            </div>
-                                                            <div>
-                                                                <span className="text-slate-600">Data Quality:</span>
-                                                                <span className="font-medium text-slate-900 ml-2">
-                                                                    {job.findings.data_completeness || 0}%
-                                                                </span>
-                                                            </div>
-                                                            <div>
-                                                                <span className="text-slate-600">Confidence:</span>
-                                                                <span className="font-medium text-slate-900 ml-2">
-                                                                    {job.findings.confidence_level}
-                                                                </span>
-                                                            </div>
-                                                        </div>
-                                                        {job.findings.key_risk_factors && job.findings.key_risk_factors.length > 0 && (
-                                                            <div className="mt-3 pt-3 border-t border-slate-200">
-                                                                <span className="text-xs font-medium text-slate-700">Key Risk Factors:</span>
-                                                                <div className="mt-1 flex flex-wrap gap-1">
-                                                                    {job.findings.key_risk_factors.slice(0, 3).map((factor, index) => (
-                                                                        <Badge key={index} variant="secondary" size="sm" className="text-xs">
-                                                                            {factor.length > 25 ? `${factor.substring(0, 25)}...` : factor}
+                                                                <div className="flex items-center gap-2">
+                                                                    <Badge
+                                                                        variant={
+                                                                            job.findings.risk_score >= 80 ? 'error' :
+                                                                                job.findings.risk_score >= 60 ? 'warning' :
+                                                                                    job.findings.risk_score >= 40 ? 'info' : 'success'
+                                                                        }
+                                                                        className="font-medium text-xs"
+                                                                    >
+                                                                        Risk: {job.findings.risk_score}/100
+                                                                    </Badge>
+                                                                    {job.findings.credit_recommendation && (
+                                                                        <Badge
+                                                                            variant={
+                                                                                job.findings.credit_recommendation === 'Decline' ? 'error' :
+                                                                                    job.findings.credit_recommendation === 'Further Review' ? 'warning' :
+                                                                                        job.findings.credit_recommendation === 'Conditional Approve' ? 'info' : 'success'
+                                                                            }
+                                                                            className="font-medium text-xs"
+                                                                        >
+                                                                            {job.findings.credit_recommendation}
                                                                         </Badge>
-                                                                    ))}
+                                                                    )}
                                                                 </div>
                                                             </div>
-                                                        )}
+
+                                                            <div className="grid grid-cols-4 gap-3 text-sm mb-3">
+                                                                <div>
+                                                                    <span className="text-slate-600">Findings:</span>
+                                                                    <span className="font-medium text-slate-900 ml-2">
+                                                                        {job.findings.findings?.length || 0}
+                                                                    </span>
+                                                                </div>
+                                                                <div>
+                                                                    <span className="text-slate-600">Critical:</span>
+                                                                    <span className="font-medium text-red-600 ml-2">
+                                                                        {job.findings.findings?.filter((f: any) => f.severity === 'CRITICAL').length || 0}
+                                                                    </span>
+                                                                </div>
+                                                                <div>
+                                                                    <span className="text-slate-600">Data Quality:</span>
+                                                                    <span className="font-medium text-slate-900 ml-2">
+                                                                        {job.findings.data_completeness || 0}%
+                                                                    </span>
+                                                                </div>
+                                                                <div>
+                                                                    <span className="text-slate-600">Confidence:</span>
+                                                                    <span className="font-medium text-slate-900 ml-2">
+                                                                        {job.findings.confidence_level}
+                                                                    </span>
+                                                                </div>
+                                                            </div>
+
+                                                            {/* Structured Findings Preview */}
+                                                            {job.findings.findings && job.findings.findings.length > 0 && (
+                                                                <div className="mt-3 pt-3 border-t border-slate-200">
+                                                                    <div className="flex items-center justify-between mb-2">
+                                                                        <span className="text-xs font-medium text-slate-700">Key Findings:</span>
+                                                                        <Button
+                                                                            size="sm"
+                                                                            variant="ghost"
+                                                                            onClick={() => {
+                                                                                // Toggle detailed findings view
+                                                                                setActiveTab('findings')
+                                                                            }}
+                                                                            className="text-xs text-blue-600 hover:text-blue-800"
+                                                                        >
+                                                                            <Eye className="w-3 h-3 mr-1" />
+                                                                            View Details
+                                                                        </Button>
+                                                                    </div>
+                                                                    <div className="space-y-2">
+                                                                        {job.findings.findings.slice(0, 3).map((finding: any, index: number) => (
+                                                                            <div key={index} className="flex items-start gap-2 text-xs">
+                                                                                <Badge
+                                                                                    variant={
+                                                                                        finding.severity === 'CRITICAL' ? 'error' :
+                                                                                            finding.severity === 'HIGH' ? 'warning' :
+                                                                                                finding.severity === 'MEDIUM' ? 'info' : 'secondary'
+                                                                                    }
+                                                                                    size="sm"
+                                                                                >
+                                                                                    {finding.severity}
+                                                                                </Badge>
+                                                                                <div className="flex-1">
+                                                                                    <div className="font-medium text-slate-900">
+                                                                                        {finding.title?.substring(0, 60)}
+                                                                                        {finding.title?.length > 60 ? '...' : ''}
+                                                                                    </div>
+                                                                                    <div className="text-slate-600 mt-1">
+                                                                                        {finding.category} • {finding.verification_level} Confidence
+                                                                                        {finding.amount && ` • ${finding.amount}`}
+                                                                                    </div>
+                                                                                </div>
+                                                                            </div>
+                                                                        ))}
+                                                                        {job.findings.findings.length > 3 && (
+                                                                            <div className="text-xs text-slate-500 text-center pt-2">
+                                                                                +{job.findings.findings.length - 3} more findings
+                                                                            </div>
+                                                                        )}
+                                                                    </div>
+                                                                </div>
+                                                            )}
+
+                                                            {/* Risk Factors */}
+                                                            {job.findings.key_risk_factors && job.findings.key_risk_factors.length > 0 && (
+                                                                <div className="mt-3 pt-3 border-t border-slate-200">
+                                                                    <span className="text-xs font-medium text-slate-700">Key Risk Factors:</span>
+                                                                    <div className="mt-1 flex flex-wrap gap-1">
+                                                                        {job.findings.key_risk_factors.slice(0, 3).map((factor, index) => (
+                                                                            <Badge key={index} variant="secondary" size="sm" className="text-xs">
+                                                                                {factor.length > 25 ? `${factor.substring(0, 25)}...` : factor}
+                                                                            </Badge>
+                                                                        ))}
+                                                                    </div>
+                                                                </div>
+                                                            )}
+                                                        </div>
                                                     </div>
                                                 )}
 
@@ -774,6 +868,14 @@ export function DeepResearchInterface({ requestId, companyName }: DeepResearchIn
                         )}
                     </TabsContent>
 
+                    {/* Detailed Findings Tab - Enhanced with Business Impact */}
+                    <TabsContent value="findings" className="space-y-6 mt-6">
+                        <DetailedFindingsDisplay
+                            jobs={[...activeJobs, ...completedJobs]}
+                            consolidatedFindings={undefined}
+                        />
+                    </TabsContent>
+
                     {/* Reports Tab */}
                     <TabsContent value="reports" className="mt-6">
                         <div className="bg-white/60 backdrop-blur-sm border border-white/20 rounded-2xl p-6">
@@ -785,3 +887,4 @@ export function DeepResearchInterface({ requestId, companyName }: DeepResearchIn
         </div>
     )
 }
+
