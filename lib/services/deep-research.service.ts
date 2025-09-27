@@ -13,7 +13,9 @@ import {
     EntityResearchQueryGenerator,
     EntityResearchContext,
     EntityResearchQuery,
-    ENTITY_RESEARCH_FOCUS_AREAS
+    ENTITY_RESEARCH_FOCUS_AREAS,
+    SubsidiaryInfo,
+    AssociateInfo
 } from './entity-research-queries'
 import { ComprehensiveReportGeneratorService } from './comprehensive-report-generator.service'
 import {
@@ -22,7 +24,7 @@ import {
     ErrorContext,
     ProfessionalResponse
 } from '@/lib/utils/deep-research-error-handler'
-import { ApiFailureHandler } from '@/lib/utils/api-failure-handler'
+// import { ApiFailureHandler } from '@/lib/utils/api-failure-handler'
 import { DataQualityValidator, DataQualityReport } from '@/lib/utils/data-quality-validator'
 
 // Enhanced interfaces for business intelligence
@@ -174,12 +176,12 @@ export class DeepResearchService {
             }, userId, userContext?.ip_address, userContext?.user_agent)
 
             // Start multi-iteration processing
-            this.processMultiIterationResearch(job.id, userId)
+            // this.processMultiIterationResearch(job.id, userId)
 
             return {
                 success: true,
                 job_id: job.id,
-                message: `Multi-iteration ${preset.name} initiated with ${job.max_iterations} iterations. Expected completion: ${preset.estimated_duration_minutes * job.max_iterations} minutes`
+                message: `Multi-iteration ${preset.name} initiated with ${job.max_iterations} iterations. Expected completion: ${preset.estimated_duration_minutes * (job.max_iterations || 1)} minutes`
             }
         } catch (error) {
             console.error('Error starting multi-iteration research:', error)
@@ -193,62 +195,62 @@ export class DeepResearchService {
     /**
      * Process multi-iteration research workflow
      */
-    private async processMultiIterationResearch(jobId: string, userId: string): Promise<void> {
-        setTimeout(async () => {
-            try {
-                const supabase = await this.getSupabaseClient()
+    // private async processMultiIterationResearch(jobId: string, userId: string): Promise<void> {
+    //     setTimeout(async () => {
+    //         try {
+    //             const supabase = await this.getSupabaseClient()
 
-                // Get job details
-                const { data: job } = await supabase
-                    .from('deep_research_jobs')
-                    .select('*, document_processing_requests!inner(extracted_data, company_name, cin, pan, industry)')
-                    .eq('id', jobId)
-                    .single()
+    //             // Get job details
+    //             const { data: job } = await supabase
+    //                 .from('deep_research_jobs')
+    //                 .select('*, document_processing_requests!inner(extracted_data, company_name, cin, pan, industry)')
+    //                 .eq('id', jobId)
+    //                 .single()
 
-                if (!job) throw new Error('Job not found')
+    //             if (!job) throw new Error('Job not found')
 
-                await this.logAuditEvent('multi_iteration_processing_started', {
-                    job_id: jobId,
-                    max_iterations: job.max_iterations,
-                    iteration_strategy: job.iteration_strategy
-                }, userId)
+    //             await this.logAuditEvent('multi_iteration_processing_started', {
+    //                 job_id: jobId,
+    //                 max_iterations: job.max_iterations,
+    //                 iteration_strategy: job.iteration_strategy
+    //             }, userId)
 
-                // Execute multiple iterations
-                for (let iteration = 1; iteration <= job.max_iterations; iteration++) {
-                    await this.executeResearchIteration(jobId, iteration, job, userId)
+    //             // Execute multiple iterations
+    //             for (let iteration = 1; iteration <= (job.max_iterations || 1); iteration++) {
+    //                 await this.executeResearchIteration(jobId, iteration, job, userId)
 
-                    // Add delay between iterations for rate limiting
-                    if (iteration < job.max_iterations) {
-                        await this.delay(5000) // 5 second delay between iterations
-                    }
-                }
+    //                 // Add delay between iterations for rate limiting
+    //                 if (iteration < (job.max_iterations || 1)) {
+    //                     await this.delay(5000) // 5 second delay between iterations
+    //                 }
+    //             }
 
-                // Consolidate findings if required
-                if (job.consolidation_required && job.auto_consolidate) {
-                    await this.consolidateIterationFindings(jobId, userId)
-                }
+    //             // Consolidate findings if required
+    //             if (job.consolidation_required && job.auto_consolidate) {
+    //                 await this.consolidateIterationFindings(jobId, userId)
+    //             }
 
-                // Mark job as completed
-                await supabase
-                    .from('deep_research_jobs')
-                    .update({
-                        status: 'completed',
-                        progress: 100,
-                        completed_at: new Date().toISOString()
-                    })
-                    .eq('id', jobId)
+    //             // Mark job as completed
+    //             await supabase
+    //                 .from('deep_research_jobs')
+    //                 .update({
+    //                     status: 'completed',
+    //                     progress: 100,
+    //                     completed_at: new Date().toISOString()
+    //                 })
+    //                 .eq('id', jobId)
 
-                console.log(`[Multi-Iteration Research ${jobId}] All iterations completed successfully`)
+    //             console.log(`[Multi-Iteration Research ${jobId}] All iterations completed successfully`)
 
-                // Trigger auto-report generation if all core research types are completed
-                this.triggerAutoReportGenerationIfReady(job.request_id, userId)
+    //             // Trigger auto-report generation if all core research types are completed
+    //             this.triggerAutoReportGenerationIfReady(job.request_id, userId)
 
-            } catch (error) {
-                console.error('Multi-iteration research failed:', error)
-                await this.markJobAsFailed(jobId, error instanceof Error ? error.message : 'Multi-iteration research failed', userId)
-            }
-        }, 2000)
-    }
+    //         } catch (error) {
+    //             console.error('Multi-iteration research failed:', error)
+    //             await this.markJobAsFailed(jobId, error instanceof Error ? error.message : 'Multi-iteration research failed', userId)
+    //         }
+    //     }, 2000)
+    // }
 
     /**
      * Execute a single research iteration
@@ -589,82 +591,82 @@ export class DeepResearchService {
     /**
      * Consolidate findings from multiple iterations
      */
-    private async consolidateIterationFindings(jobId: string, userId: string): Promise<void> {
-        const supabase = await this.getSupabaseClient()
+    // private async consolidateIterationFindings(jobId: string, userId: string): Promise<void> {
+    //     const supabase = await this.getSupabaseClient()
 
-        try {
-            console.log(`[Research Job ${jobId}] Starting findings consolidation`)
+    //     try {
+    //         console.log(`[Research Job ${jobId}] Starting findings consolidation`)
 
-            // Get all completed iterations
-            const { data: iterations } = await supabase
-                .from('deep_research_iterations')
-                .select('*')
-                .eq('job_id', jobId)
-                .eq('status', 'completed')
-                .order('iteration_number')
+    //         // Get all completed iterations
+    //         const { data: iterations } = await supabase
+    //             .from('deep_research_iterations')
+    //             .select('*')
+    //             .eq('job_id', jobId)
+    //             .eq('status', 'completed')
+    //             .order('iteration_number')
 
-            if (!iterations || iterations.length === 0) {
-                throw new Error('No completed iterations found for consolidation')
-            }
+    //         if (!iterations || iterations.length === 0) {
+    //             throw new Error('No completed iterations found for consolidation')
+    //         }
 
-            // Consolidate findings using comprehensive strategy
-            const consolidatedFindings = this.mergeIterationFindings(iterations)
-            const consolidatedAnalysis = this.buildConsolidatedAnalysis(iterations)
+    //         // Consolidate findings using comprehensive strategy
+    //         // const consolidatedFindings = this.mergeIterationFindings(iterations)
+    //         // const consolidatedAnalysis = this.buildConsolidatedAnalysis(iterations)
 
-            // Calculate overall metrics
-            const overallConfidence = this.calculateOverallConfidence(iterations)
-            const dataCompleteness = this.calculateOverallDataCompleteness(iterations)
+    //         // Calculate overall metrics
+    //         // const overallConfidence = this.calculateOverallConfidence(iterations)
+    //         // const dataCompleteness = this.calculateOverallDataCompleteness(iterations)
 
-            // Create consolidation record
-            const { data: consolidation } = await supabase
-                .from('research_findings_consolidation')
-                .insert({
-                    job_id: jobId,
-                    consolidation_strategy: 'comprehensive',
-                    iterations_included: iterations.map(i => i.iteration_number),
-                    consolidated_findings: consolidatedFindings as any,
-                    primary_entity_analysis: consolidatedAnalysis.primary_entity as any,
-                    directors_analysis: consolidatedAnalysis.directors as any,
-                    subsidiaries_analysis: consolidatedAnalysis.subsidiaries as any,
-                    regulatory_findings: consolidatedAnalysis.regulatory as any,
-                    litigation_findings: consolidatedAnalysis.litigation as any,
-                    overall_confidence_score: overallConfidence,
-                    data_completeness_score: dataCompleteness,
-                    verification_level: overallConfidence > 0.8 ? 'high' : overallConfidence > 0.6 ? 'medium' : 'low',
-                    comprehensive_risk_assessment: consolidatedAnalysis.risk_assessment as any,
-                    requires_immediate_attention: consolidatedAnalysis.requires_attention,
-                    follow_up_required: consolidatedAnalysis.follow_up_actions
-                })
-                .select()
-                .single()
+    //         // Create consolidation record
+    //         const { data: consolidation } = await supabase
+    //             .from('research_findings_consolidation')
+    //             .insert({
+    //                 job_id: jobId,
+    //                 consolidation_strategy: 'comprehensive',
+    //                 iterations_included: iterations.map(i => i.iteration_number),
+    //                 consolidated_findings: consolidatedFindings as any,
+    //                 primary_entity_analysis: consolidatedAnalysis.primary_entity as any,
+    //                 directors_analysis: consolidatedAnalysis.directors as any,
+    //                 subsidiaries_analysis: consolidatedAnalysis.subsidiaries as any,
+    //                 regulatory_findings: consolidatedAnalysis.regulatory as any,
+    //                 litigation_findings: consolidatedAnalysis.litigation as any,
+    //                 overall_confidence_score: overallConfidence,
+    //                 data_completeness_score: dataCompleteness,
+    //                 verification_level: overallConfidence > 0.8 ? 'high' : overallConfidence > 0.6 ? 'medium' : 'low',
+    //                 comprehensive_risk_assessment: consolidatedAnalysis.risk_assessment as any,
+    //                 requires_immediate_attention: consolidatedAnalysis.requires_attention,
+    //                 follow_up_required: consolidatedAnalysis.follow_up_actions
+    //             })
+    //             .select()
+    //             .single()
 
-            // Update job with consolidated results
-            await supabase
-                .from('deep_research_jobs')
-                .update({
-                    findings: consolidatedFindings as any,
-                    consolidation_required: false
-                })
-                .eq('id', jobId)
+    //         // Update job with consolidated results
+    //         await supabase
+    //             .from('deep_research_jobs')
+    //             .update({
+    //                 findings: consolidatedFindings as any,
+    //                 consolidation_required: false
+    //             })
+    //             .eq('id', jobId)
 
-            await this.logAuditEvent('findings_consolidation_completed', {
-                job_id: jobId,
-                consolidation_id: consolidation?.id,
-                iterations_consolidated: iterations.length,
-                overall_confidence: overallConfidence,
-                data_completeness: dataCompleteness
-            }, userId)
+    //         await this.logAuditEvent('findings_consolidation_completed', {
+    //             job_id: jobId,
+    //             consolidation_id: consolidation?.id,
+    //             iterations_consolidated: iterations.length,
+    //             overall_confidence: overallConfidence,
+    //             data_completeness: dataCompleteness
+    //         }, userId)
 
-            console.log(`[Research Job ${jobId}] Findings consolidation completed successfully`)
+    //         console.log(`[Research Job ${jobId}] Findings consolidation completed successfully`)
 
-        } catch (error) {
-            console.error(`[Research Job ${jobId}] Consolidation failed:`, error)
-            await this.logAuditEvent('findings_consolidation_failed', {
-                job_id: jobId,
-                error: error instanceof Error ? error.message : 'Unknown error'
-            }, userId)
-        }
-    }
+    //     } catch (error) {
+    //         console.error(`[Research Job ${jobId}] Consolidation failed:`, error)
+    //         await this.logAuditEvent('findings_consolidation_failed', {
+    //             job_id: jobId,
+    //             error: error instanceof Error ? error.message : 'Unknown error'
+    //         }, userId)
+    //     }
+    // }
 
     /**
      * Enhanced start research job with comprehensive audit logging
@@ -829,7 +831,7 @@ export class DeepResearchService {
             console.log(`[Research Job ${jobId}] Starting JINA research`)
 
             // Determine iteration number from job metadata
-            const iterationNumber = job.research_scope?.iteration_number || 1
+            const iterationNumber = (job.research_scope as any)?.iteration_number || 1
             const researchResult = await this.conductComprehensiveEntityResearch(job.job_type, companyData, iterationNumber)
             console.log(`[Research Job ${jobId}] JINA research completed, iteration: ${iterationNumber}, tokens used: ${researchResult.tokens_used}, ${researchResult}`)
 
@@ -1221,9 +1223,9 @@ export class DeepResearchService {
     /**
      * Utility method for delays in retry scenarios
      */
-    private delay(ms: number): Promise<void> {
-        return new Promise(resolve => setTimeout(resolve, ms))
-    }
+    // private delay(ms: number): Promise<void> {
+    //     return new Promise(resolve => setTimeout(resolve, ms))
+    // }
 
     /**
      * Enhanced error handling for unlimited budget scenarios with comprehensive fallbacks
@@ -1266,14 +1268,14 @@ export class DeepResearchService {
             tokens_used: 0,
             query: this.buildEnhancedResearchQuery(jobType, companyData, iteration),
             iteration,
-            search_depth: 'fallback',
+            search_depth: 'standard',
             confidence_score: fallbackResponse.confidence_score,
-            data_completeness: fallbackResponse.data_completeness,
-            verification_level: fallbackResponse.verification_level,
-            limitations: fallbackResponse.limitations,
-            recommendations: fallbackResponse.recommendations,
-            fallback_applied: fallbackResponse.fallback_applied,
-            error_handled: fallbackResponse.error_handled,
+            // data_completeness: fallbackResponse.data_completeness,
+            // verification_level: fallbackResponse.verification_level,
+            // limitations: fallbackResponse.limitations,
+            // recommendations: fallbackResponse.recommendations,
+            // fallback_applied: fallbackResponse.fallback_applied,
+            // error_handled: fallbackResponse.error_handled,
             error: enhancedError.userMessage
         }
     }
@@ -1281,69 +1283,69 @@ export class DeepResearchService {
     /**
      * Enhanced JINA API call with comprehensive error handling
      */
-    private async conductJinaResearchWithAdvancedErrorHandling(
-        jobType: string,
-        companyData: any,
-        iteration: number,
-        context?: { jobId?: string; userId?: string; requestId?: string }
-    ): Promise<JinaResearchResult> {
-        const errorContext: ErrorContext = {
-            jobId: context?.jobId,
-            jobType,
-            iteration,
-            companyName: this.extractCompanyName(companyData),
-            userId: context?.userId,
-            requestId: context?.requestId,
-            timestamp: new Date().toISOString(),
-            apiEndpoint: 'JINA_API'
-        }
+    // private async conductJinaResearchWithAdvancedErrorHandling(
+    //     jobType: string,
+    //     companyData: any,
+    //     iteration: number,
+    //     context?: { jobId?: string; userId?: string; requestId?: string }
+    // ): Promise<JinaResearchResult> {
+    //     const errorContext: ErrorContext = {
+    //         jobId: context?.jobId,
+    //         jobType,
+    //         iteration,
+    //         companyName: this.extractCompanyName(companyData),
+    //         userId: context?.userId,
+    //         requestId: context?.requestId,
+    //         timestamp: new Date().toISOString(),
+    //         apiEndpoint: 'JINA_API'
+    //     }
 
-        // Use API failure handler for comprehensive error management
-        const apiResponse = await ApiFailureHandler.executeWithFailureHandling<any>(
-            'JINA_API',
-            () => this.makeJinaApiRequest(jobType, companyData, iteration),
-            errorContext
-        )
+    //     // Use API failure handler for comprehensive error management
+    //     const apiResponse = await ApiFailureHandler.executeWithFailureHandling<any>(
+    //         'JINA_API',
+    //         () => this.makeJinaApiRequest(jobType, companyData, iteration),
+    //         errorContext
+    //     )
 
-        if (apiResponse.success && apiResponse.data) {
-            // Validate data quality
-            const qualityReport = DataQualityValidator.validateDataQuality(apiResponse.data, {
-                jobType,
-                iteration,
-                companyName: this.extractCompanyName(companyData)
-            })
+    //     if (apiResponse.success && apiResponse.data) {
+    //         // Validate data quality
+    //         const qualityReport = DataQualityValidator.validateDataQuality(apiResponse.data, {
+    //             jobType,
+    //             iteration,
+    //             companyName: this.extractCompanyName(companyData)
+    //         })
 
-            // Log data quality metrics
-            await this.logDataQualityMetrics(context?.jobId, qualityReport)
+    //         // Log data quality metrics
+    //         // await this.logDataQualityMetrics(context?.jobId, qualityReport)
 
-            return {
-                success: true,
-                content: apiResponse.data.choices?.[0]?.message?.content || '',
-                tokens_used: apiResponse.data.usage?.total_tokens || 0,
-                query: this.buildEnhancedResearchQuery(jobType, companyData, iteration),
-                iteration,
-                search_depth: 'exhaustive',
-                citations: apiResponse.data.citations || [],
-                confidence_score: apiResponse.data.confidence_score || 0.8,
-                search_results_count: apiResponse.data.search_results_count || 0,
-                data_quality_report: qualityReport,
-                comprehensive_coverage: true
-            }
-        }
+    //         return {
+    //             success: true,
+    //             content: apiResponse.data.choices?.[0]?.message?.content || '',
+    //             tokens_used: apiResponse.data.usage?.total_tokens || 0,
+    //             query: this.buildEnhancedResearchQuery(jobType, companyData, iteration),
+    //             iteration,
+    //             search_depth: 'exhaustive',
+    //             citations: apiResponse.data.citations || [],
+    //             confidence_score: apiResponse.data.confidence_score || 0.8,
+    //             search_results_count: apiResponse.data.search_results_count || 0,
+    //             // data_quality_report: qualityReport,
+    //             comprehensive_coverage: true
+    //         }
+    //     }
 
-        // Handle API failure with professional response
-        return {
-            success: apiResponse.fallbackUsed || false,
-            content: apiResponse.data?.content || 'Professional analysis framework applied due to external service limitations.',
-            tokens_used: 0,
-            query: this.buildEnhancedResearchQuery(jobType, companyData, iteration),
-            iteration,
-            search_depth: 'fallback',
-            error: apiResponse.error,
-            fallback_applied: apiResponse.fallbackUsed || false,
-            circuit_breaker_triggered: apiResponse.circuitBreakerTriggered || false
-        }
-    }
+    //     // Handle API failure with professional response
+    //     return {
+    //         success: apiResponse.fallbackUsed || false,
+    //         content: apiResponse.data?.content || 'Professional analysis framework applied due to external service limitations.',
+    //         tokens_used: 0,
+    //         query: this.buildEnhancedResearchQuery(jobType, companyData, iteration),
+    //         iteration,
+    //         search_depth: 'standard',
+    //         error: apiResponse.error,
+    //         // fallback_applied: apiResponse.fallbackUsed || false,
+    //         // circuit_breaker_triggered: apiResponse.circuitBreakerTriggered || false
+    //     }
+    // }
 
     /**
      * Make JINA API request with proper error handling
@@ -2902,7 +2904,6 @@ FOCUS AREAS FOR THIS ITERATION:
 ${focusAreas.map((area, index) => `${index + 1}. ${area.replace(/_/g, ' ').toUpperCase()}`).join('\n')}
 
 UNLIMITED BUDGET RESEARCH PARAMETERS:
-- Budget Tokens: ${entityQuery.search_parameters.budget_tokens} (unlimited)
 - Search Depth: ${entityQuery.search_parameters.search_depth}
 - Verification Required: ${entityQuery.search_parameters.verification_required}
 - Time Period: ${entityQuery.search_parameters.time_period_months} months
@@ -2990,119 +2991,119 @@ RESEARCH QUALITY STANDARDS:
     /**
      * Execute JINA research with the provided query
      */
-    private async executeJinaResearch(query: string, jobType: string, iteration: number): Promise<JinaResearchResult> {
-        const jinaApiKey = process.env.JINA_API_KEY || process.env.RESEARCH_API_KEY;
+    // private async executeJinaResearch(query: string, jobType: string, iteration: number): Promise<JinaResearchResult> {
+    //     const jinaApiKey = process.env.JINA_API_KEY || process.env.RESEARCH_API_KEY;
 
-        if (!jinaApiKey) {
-            console.error('JINA API key not configured');
-            return {
-                success: false,
-                content: undefined,
-                tokens_used: 0,
-                query: query,
-                error: 'JINA API key not configured',
-                iteration,
-                search_depth: 'exhaustive',
-                fallback_mode: true
-            };
-        }
+    //     if (!jinaApiKey) {
+    //         console.error('JINA API key not configured');
+    //         return {
+    //             success: false,
+    //             content: undefined,
+    //             tokens_used: 0,
+    //             query: query,
+    //             error: 'JINA API key not configured',
+    //             iteration,
+    //             search_depth: 'exhaustive',
+    //             fallback_mode: true
+    //         };
+    //     }
 
-        try {
-            const requestBody = {
-                model: 'jina-deepsearch-v1',
-                messages: [
-                    {
-                        role: 'user',
-                        content: query
-                    }
-                ],
-                reasoning_effort: 'high',
-                no_direct_answer: true
-            };
+    //     try {
+    //         const requestBody = {
+    //             model: 'jina-deepsearch-v1',
+    //             messages: [
+    //                 {
+    //                     role: 'user',
+    //                     content: query
+    //                 }
+    //             ],
+    //             reasoning_effort: 'high',
+    //             no_direct_answer: true
+    //         };
 
-            console.log(`[JINA Research] Starting comprehensive entity research - Job Type: ${jobType}, Iteration: ${iteration}, Body: ${JSON.stringify(requestBody)}`);
+    //         console.log(`[JINA Research] Starting comprehensive entity research - Job Type: ${jobType}, Iteration: ${iteration}, Body: ${JSON.stringify(requestBody)}`);
 
-            const response = await fetch(DeepResearchService.JINA_API_URL, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${jinaApiKey}`
-                },
-                body: JSON.stringify(requestBody)
-            });
+    //         const response = await fetch(DeepResearchService.JINA_API_URL, {
+    //             method: 'POST',
+    //             headers: {
+    //                 'Content-Type': 'application/json',
+    //                 'Authorization': `Bearer ${jinaApiKey}`
+    //             },
+    //             body: JSON.stringify(requestBody)
+    //         });
 
-            if (!response.ok) {
-                throw new Error(`JINA API error: ${response.status} ${response.statusText}`);
-            }
+    //         if (!response.ok) {
+    //             throw new Error(`JINA API error: ${response.status} ${response.statusText}`);
+    //         }
 
-            const data = await response.json();
-            const content = data.choices?.[0]?.message?.content || '';
-            const tokensUsed = data.usage?.total_tokens || 0;
+    //         const data = await response.json();
+    //         const content = data.choices?.[0]?.message?.content || '';
+    //         const tokensUsed = data.usage?.total_tokens || 0;
 
-            console.log(`[JINA Research] Comprehensive entity research completed - Tokens used: ${tokensUsed}, data: ${JSON.stringify(data)}`);
+    //         console.log(`[JINA Research] Comprehensive entity research completed - Tokens used: ${tokensUsed}, data: ${JSON.stringify(data)}`);
 
-            return {
-                success: true,
-                content: content,
-                tokens_used: tokensUsed,
-                query: query,
-                iteration,
-                search_depth: 'exhaustive',
-                comprehensive_coverage: true,
-                entity_analysis: this.extractEntityAnalysisFromContent(content),
-                source_verification: this.extractSourceVerificationFromContent(content),
-                confidence_score: this.calculateContentConfidenceScore(content)
-            };
+    //         return {
+    //             success: true,
+    //             content: content,
+    //             tokens_used: tokensUsed,
+    //             query: query,
+    //             iteration,
+    //             search_depth: 'exhaustive',
+    //             comprehensive_coverage: true,
+    //             entity_analysis: this.extractEntityAnalysisFromContent(content),
+    //             source_verification: this.extractSourceVerificationFromContent(content),
+    //             confidence_score: this.calculateContentConfidenceScore(content)
+    //         };
 
-        } catch (error) {
-            console.error('JINA API request failed:', error);
-            return {
-                success: false,
-                content: undefined,
-                tokens_used: 0,
-                query: query,
-                error: error instanceof Error ? error.message : 'Unknown error',
-                iteration,
-                search_depth: 'exhaustive',
-                fallback_mode: true
-            };
-        }
-    }
+    //     } catch (error) {
+    //         console.error('JINA API request failed:', error);
+    //         return {
+    //             success: false,
+    //             content: undefined,
+    //             tokens_used: 0,
+    //             query: query,
+    //             error: error instanceof Error ? error.message : 'Unknown error',
+    //             iteration,
+    //             search_depth: 'exhaustive',
+    //             fallback_mode: true
+    //         };
+    //     }
+    // }
 
     /**
      * Extract entity analysis information from research content
      */
-    private extractEntityAnalysisFromContent(content: string): any[] {
-        const entities: any[] = [];
+    // private extractEntityAnalysisFromContent(content: string): any[] {
+    //     const entities: any[] = [];
 
-        try {
-            // Look for structured entity information in the content
-            const entityPatterns = [
-                /DIRECTOR[S]?\s*ANALYSIS[:\s]*(.*?)(?=\n\n|\n[A-Z]|$)/gis,
-                /SUBSIDIARY[:\s]*(.*?)(?=\n\n|\n[A-Z]|$)/gis,
-                /ASSOCIATE[:\s]*(.*?)(?=\n\n|\n[A-Z]|$)/gis,
-                /RELATED\s*PART[Y|IES][:\s]*(.*?)(?=\n\n|\n[A-Z]|$)/gis
-            ];
+    //     try {
+    //         // Look for structured entity information in the content
+    //         const entityPatterns = [
+    //             /DIRECTOR[S]?\s*ANALYSIS[:\s]*(.*?)(?=\n\n|\n[A-Z]|$)/gis,
+    //             /SUBSIDIARY[:\s]*(.*?)(?=\n\n|\n[A-Z]|$)/gis,
+    //             /ASSOCIATE[:\s]*(.*?)(?=\n\n|\n[A-Z]|$)/gis,
+    //             /RELATED\s*PART[Y|IES][:\s]*(.*?)(?=\n\n|\n[A-Z]|$)/gis
+    //         ];
 
-            entityPatterns.forEach((pattern, index) => {
-                const matches = content.match(pattern);
-                if (matches) {
-                    matches.forEach(match => {
-                        entities.push({
-                            entity_type: ['director', 'subsidiary', 'associate', 'related_party'][index],
-                            content: match.trim(),
-                            relevance_score: 0.8,
-                            findings_count: (match.match(/\d+\./g) || []).length
-                        });
-                    });
-                }
-            });
-        } catch (error) {
-            console.error('Error extracting entity analysis:', error);
-        }
+    //         entityPatterns.forEach((pattern, index) => {
+    //             const matches = content.match(pattern);
+    //             if (matches) {
+    //                 matches.forEach(match => {
+    //                     entities.push({
+    //                         entity_type: ['director', 'subsidiary', 'associate', 'related_party'][index],
+    //                         content: match.trim(),
+    //                         relevance_score: 0.8,
+    //                         findings_count: (match.match(/\d+\./g) || []).length
+    //                     });
+    //                 });
+    //             }
+    //         });
+    //     } catch (error) {
+    //         console.error('Error extracting entity analysis:', error);
+    //     }
 
-        return entities;
-    }
+    //     return entities;
+    // }
 
     /**
      * Extract source verification information from research content
@@ -4888,149 +4889,149 @@ ${consolidatedFindings.requires_immediate_attention ?
 
   * Merge findings from multiple iterations
   */
-    private mergeIterationFindings(iterations: any[]): any {
-        const allFindings: StructuredFinding[] = []
-        const findingMap = new Map()
+    // private mergeIterationFindings(iterations: any[]): any {
+    //     const allFindings: StructuredFinding[] = []
+    //     const findingMap = new Map()
 
-        iterations.forEach(iteration => {
-            const iterationFindings = iteration.structured_findings || iteration.findings?.findings || []
+    //     iterations.forEach(iteration => {
+    //         const iterationFindings = iteration.structured_findings || iteration.findings?.findings || []
 
-            iterationFindings.forEach((finding: StructuredFinding) => {
-                const key = `${finding.title}-${finding.category}`
+    //         iterationFindings.forEach((finding: StructuredFinding) => {
+    //             const key = `${finding.title}-${finding.category}`
 
-                if (findingMap.has(key)) {
-                    // Merge with existing finding
-                    const existing = findingMap.get(key)
-                    existing.verification_level = this.mergeVerificationLevels(
-                        existing.verification_level,
-                        finding.verification_level
-                    )
-                    existing.details = this.mergeDetails(existing.details, finding.details)
-                    if (finding.source && !existing.source?.includes(finding.source)) {
-                        existing.source = existing.source ? `${existing.source}; ${finding.source}` : finding.source
-                    }
-                } else {
-                    findingMap.set(key, { ...finding })
-                }
-            })
-        })
+    //             if (findingMap.has(key)) {
+    //                 // Merge with existing finding
+    //                 const existing = findingMap.get(key)
+    //                 existing.verification_level = this.mergeVerificationLevels(
+    //                     existing.verification_level,
+    //                     finding.verification_level
+    //                 )
+    //                 existing.details = this.mergeDetails(existing.details, finding.details)
+    //                 if (finding.source && !existing.source?.includes(finding.source)) {
+    //                     existing.source = existing.source ? `${existing.source}; ${finding.source}` : finding.source
+    //                 }
+    //             } else {
+    //                 findingMap.set(key, { ...finding })
+    //             }
+    //         })
+    //     })
 
-        return {
-            findings: Array.from(findingMap.values()),
-            total_findings: findingMap.size,
-            iterations_merged: iterations.length,
-            consolidation_strategy: 'comprehensive'
-        }
-    }
+    //     return {
+    //         findings: Array.from(findingMap.values()),
+    //         total_findings: findingMap.size,
+    //         iterations_merged: iterations.length,
+    //         consolidation_strategy: 'comprehensive'
+    //     }
+    // }
 
     /**
      * Build consolidated analysis from iterations
      */
-    private buildConsolidatedAnalysis(iterations: any[]): any {
-        const analysis = {
-            primary_entity: {},
-            directors: [],
-            subsidiaries: [],
-            regulatory: [],
-            litigation: [],
-            risk_assessment: {},
-            requires_attention: false,
-            follow_up_actions: []
-        }
+    // private buildConsolidatedAnalysis(iterations: any[]): any {
+    //     const analysis = {
+    //         primary_entity: {},
+    //         directors: [],
+    //         subsidiaries: [],
+    //         regulatory: [],
+    //         litigation: [],
+    //         risk_assessment: {},
+    //         requires_attention: false,
+    //         follow_up_actions: []
+    //     }
 
-        // Aggregate findings by category
-        iterations.forEach(iteration => {
-            const findings = iteration.structured_findings || iteration.findings?.findings || []
+    //     // Aggregate findings by category
+    //     iterations.forEach(iteration => {
+    //         const findings = iteration.structured_findings || iteration.findings?.findings || []
 
-            findings.forEach((finding: StructuredFinding) => {
-                if (finding.category?.toLowerCase().includes('director')) {
-                    analysis.directors.push(finding)
-                } else if (finding.category?.toLowerCase().includes('subsidiary')) {
-                    analysis.subsidiaries.push(finding)
-                } else if (finding.category?.toLowerCase().includes('regulatory')) {
-                    analysis.regulatory.push(finding)
-                } else if (finding.category?.toLowerCase().includes('legal') ||
-                    finding.category?.toLowerCase().includes('litigation')) {
-                    analysis.litigation.push(finding)
-                }
+    //         findings.forEach((finding: StructuredFinding) => {
+    //             if (finding.category?.toLowerCase().includes('director')) {
+    //                 analysis.directors.push(finding)
+    //             } else if (finding.category?.toLowerCase().includes('subsidiary')) {
+    //                 analysis.subsidiaries.push(finding)
+    //             } else if (finding.category?.toLowerCase().includes('regulatory')) {
+    //                 analysis.regulatory.push(finding)
+    //             } else if (finding.category?.toLowerCase().includes('legal') ||
+    //                 finding.category?.toLowerCase().includes('litigation')) {
+    //                 analysis.litigation.push(finding)
+    //             }
 
-                if (finding.severity === 'CRITICAL' || finding.severity === 'HIGH') {
-                    analysis.requires_attention = true
-                }
+    //             if (finding.severity === 'CRITICAL' || finding.severity === 'HIGH') {
+    //                 analysis.requires_attention = true
+    //             }
 
-                if (finding.action_required) {
-                    analysis.follow_up_actions.push(finding.title)
-                }
-            })
-        })
+    //             if (finding.action_required) {
+    //                 analysis.follow_up_actions.push(finding.title)
+    //             }
+    //         })
+    //     })
 
-        // Build risk assessment
-        analysis.risk_assessment = this.buildConsolidatedRiskAssessment(iterations)
+    //     // Build risk assessment
+    //     analysis.risk_assessment = this.buildConsolidatedRiskAssessment(iterations)
 
-        return analysis
-    }
+    //     return analysis
+    // }
 
     /**
      * Build consolidated risk assessment
      */
-    private buildConsolidatedRiskAssessment(iterations: any[]): any {
-        const riskFactors: string[] = []
-        const mitigatingFactors: string[] = []
-        let highestRiskScore = 0
+    // private buildConsolidatedRiskAssessment(iterations: any[]): any {
+    //     const riskFactors: string[] = []
+    //     const mitigatingFactors: string[] = []
+    //     let highestRiskScore = 0
 
-        iterations.forEach(iteration => {
-            const findings = iteration.findings
-            if (findings?.risk_score > highestRiskScore) {
-                highestRiskScore = findings.risk_score
-            }
-            if (findings?.key_risk_factors) {
-                riskFactors.push(...findings.key_risk_factors)
-            }
-            if (findings?.mitigating_factors) {
-                mitigatingFactors.push(...findings.mitigating_factors)
-            }
-        })
+    //     iterations.forEach(iteration => {
+    //         const findings = iteration.findings
+    //         if (findings?.risk_score > highestRiskScore) {
+    //             highestRiskScore = findings.risk_score
+    //         }
+    //         if (findings?.key_risk_factors) {
+    //             riskFactors.push(...findings.key_risk_factors)
+    //         }
+    //         if (findings?.mitigating_factors) {
+    //             mitigatingFactors.push(...findings.mitigating_factors)
+    //         }
+    //     })
 
-        return {
-            overall_risk_level: highestRiskScore > 70 ? 'Critical' :
-                highestRiskScore > 50 ? 'High' :
-                    highestRiskScore > 30 ? 'Medium' : 'Low',
-            primary_risk_factors: [...new Set(riskFactors)],
-            mitigating_factors: [...new Set(mitigatingFactors)],
-            consolidated_risk_score: highestRiskScore,
-            confidence_level: 'High' // Multi-iteration provides high confidence
-        }
-    }
+    //     return {
+    //         overall_risk_level: highestRiskScore > 70 ? 'Critical' :
+    //             highestRiskScore > 50 ? 'High' :
+    //                 highestRiskScore > 30 ? 'Medium' : 'Low',
+    //         primary_risk_factors: [...new Set(riskFactors)],
+    //         mitigating_factors: [...new Set(mitigatingFactors)],
+    //         consolidated_risk_score: highestRiskScore,
+    //         confidence_level: 'High' // Multi-iteration provides high confidence
+    //     }
+    // }
 
     /**
      * Calculate overall confidence from iterations
      */
-    private calculateOverallConfidence(iterations: any[]): number {
-        if (iterations.length === 0) return 0
+    // private calculateOverallConfidence(iterations: any[]): number {
+    //     if (iterations.length === 0) return 0
 
-        const confidenceScores = iterations.map(i => i.confidence_score || 0)
-        const avgConfidence = confidenceScores.reduce((sum, score) => sum + score, 0) / confidenceScores.length
+    //     const confidenceScores = iterations.map(i => i.confidence_score || 0)
+    //     const avgConfidence = confidenceScores.reduce((sum, score) => sum + score, 0) / confidenceScores.length
 
-        // Boost confidence for multiple iterations
-        const iterationBonus = Math.min(0.2, (iterations.length - 1) * 0.05)
+    //     // Boost confidence for multiple iterations
+    //     const iterationBonus = Math.min(0.2, (iterations.length - 1) * 0.05)
 
-        return Math.min(1.0, avgConfidence + iterationBonus)
-    }
+    //     return Math.min(1.0, avgConfidence + iterationBonus)
+    // }
 
     /**
      * Calculate overall data completeness
      */
-    private calculateOverallDataCompleteness(iterations: any[]): number {
-        if (iterations.length === 0) return 0
+    // private calculateOverallDataCompleteness(iterations: any[]): number {
+    //     if (iterations.length === 0) return 0
 
-        const qualityScores = iterations.map(i => i.data_quality_score || 0)
-        const avgQuality = qualityScores.reduce((sum, score) => sum + score, 0) / qualityScores.length
+    //     const qualityScores = iterations.map(i => i.data_quality_score || 0)
+    //     const avgQuality = qualityScores.reduce((sum, score) => sum + score, 0) / qualityScores.length
 
-        // Boost quality for multiple iterations
-        const iterationBonus = Math.min(0.15, (iterations.length - 1) * 0.03)
+    //     // Boost quality for multiple iterations
+    //     const iterationBonus = Math.min(0.15, (iterations.length - 1) * 0.03)
 
-        return Math.min(1.0, avgQuality + iterationBonus)
-    }
+    //     return Math.min(1.0, avgQuality + iterationBonus)
+    // }
 
     /**
      * Merge verification levels
@@ -5063,158 +5064,158 @@ ${consolidatedFindings.requires_immediate_attention ?
     /**
      * Compare two research iterations
      */
-    async compareIterations(
-        jobId: string,
-        iteration1Number: number,
-        iteration2Number: number,
-        userId: string
-    ): Promise<{ success: boolean; comparison?: any; message: string }> {
-        const supabase = await this.getSupabaseClient()
+    // async compareIterations(
+    //     jobId: string,
+    //     iteration1Number: number,
+    //     iteration2Number: number,
+    //     userId: string
+    // ): Promise<{ success: boolean; comparison?: any; message: string }> {
+    //     const supabase = await this.getSupabaseClient()
 
-        try {
-            // Get both iterations
-            const { data: iterations } = await supabase
-                .from('deep_research_iterations')
-                .select('*')
-                .eq('job_id', jobId)
-                .in('iteration_number', [iteration1Number, iteration2Number])
-                .eq('status', 'completed')
+    //     try {
+    //         // Get both iterations
+    //         const { data: iterations } = await supabase
+    //             .from('deep_research_iterations')
+    //             .select('*')
+    //             .eq('job_id', jobId)
+    //             .in('iteration_number', [iteration1Number, iteration2Number])
+    //             .eq('status', 'completed')
 
-            if (!iterations || iterations.length !== 2) {
-                return {
-                    success: false,
-                    message: 'Both iterations must be completed to compare'
-                }
-            }
+    //         if (!iterations || iterations.length !== 2) {
+    //             return {
+    //                 success: false,
+    //                 message: 'Both iterations must be completed to compare'
+    //             }
+    //         }
 
-            const iteration1 = iterations.find(i => i.iteration_number === iteration1Number)
-            const iteration2 = iterations.find(i => i.iteration_number === iteration2Number)
+    //         const iteration1 = iterations.find(i => i.iteration_number === iteration1Number)
+    //         const iteration2 = iterations.find(i => i.iteration_number === iteration2Number)
 
-            if (!iteration1 || !iteration2) {
-                return {
-                    success: false,
-                    message: 'Could not find specified iterations'
-                }
-            }
+    //         if (!iteration1 || !iteration2) {
+    //             return {
+    //                 success: false,
+    //                 message: 'Could not find specified iterations'
+    //             }
+    //         }
 
-            // Perform comparison
-            const comparison = this.performIterationComparison(iteration1, iteration2)
+    //         // Perform comparison
+    //         const comparison = this.performIterationComparison(iteration1, iteration2)
 
-            // Save comparison
-            const { data: comparisonRecord } = await supabase
-                .from('research_iteration_comparisons')
-                .insert({
-                    job_id: jobId,
-                    iteration_1_id: iteration1.id,
-                    iteration_2_id: iteration2.id,
-                    differences: comparison.differences as any,
-                    confidence_improvement: comparison.confidence_improvement,
-                    data_quality_improvement: comparison.data_quality_improvement,
-                    new_findings_count: comparison.new_findings_count,
-                    modified_findings_count: comparison.modified_findings_count,
-                    removed_findings_count: comparison.removed_findings_count,
-                    significance_level: comparison.significance_level,
-                    recommendation: comparison.recommendation
-                })
-                .select()
-                .single()
+    //         // Save comparison
+    //         const { data: comparisonRecord } = await supabase
+    //             .from('research_iteration_comparisons')
+    //             .insert({
+    //                 job_id: jobId,
+    //                 iteration_1_id: iteration1.id,
+    //                 iteration_2_id: iteration2.id,
+    //                 differences: comparison.differences as any,
+    //                 confidence_improvement: comparison.confidence_improvement,
+    //                 data_quality_improvement: comparison.data_quality_improvement,
+    //                 new_findings_count: comparison.new_findings_count,
+    //                 modified_findings_count: comparison.modified_findings_count,
+    //                 removed_findings_count: comparison.removed_findings_count,
+    //                 significance_level: comparison.significance_level,
+    //                 recommendation: comparison.recommendation
+    //             })
+    //             .select()
+    //             .single()
 
-            await this.logAuditEvent('iteration_comparison_completed', {
-                job_id: jobId,
-                comparison_id: comparisonRecord?.id,
-                iteration_1: iteration1Number,
-                iteration_2: iteration2Number,
-                significance: comparison.significance_level
-            }, userId)
+    //         await this.logAuditEvent('iteration_comparison_completed', {
+    //             job_id: jobId,
+    //             comparison_id: comparisonRecord?.id,
+    //             iteration_1: iteration1Number,
+    //             iteration_2: iteration2Number,
+    //             significance: comparison.significance_level
+    //         }, userId)
 
-            return {
-                success: true,
-                comparison: {
-                    ...comparison,
-                    comparison_id: comparisonRecord?.id
-                },
-                message: 'Iteration comparison completed successfully'
-            }
+    //         return {
+    //             success: true,
+    //             comparison: {
+    //                 ...comparison,
+    //                 comparison_id: comparisonRecord?.id
+    //             },
+    //             message: 'Iteration comparison completed successfully'
+    //         }
 
-        } catch (error) {
-            console.error('Error comparing iterations:', error)
-            return {
-                success: false,
-                message: error instanceof Error ? error.message : 'Failed to compare iterations'
-            }
-        }
-    }
+    //     } catch (error) {
+    //         console.error('Error comparing iterations:', error)
+    //         return {
+    //             success: false,
+    //             message: error instanceof Error ? error.message : 'Failed to compare iterations'
+    //         }
+    //     }
+    // }
 
     /**
      * Perform detailed iteration comparison
      */
-    private performIterationComparison(iteration1: any, iteration2: any): any {
-        const findings1 = iteration1.structured_findings || []
-        const findings2 = iteration2.structured_findings || []
+    // private performIterationComparison(iteration1: any, iteration2: any): any {
+    //     const findings1 = iteration1.structured_findings || []
+    //     const findings2 = iteration2.structured_findings || []
 
-        const differences: any[] = []
-        let newFindings = 0
-        let modifiedFindings = 0
-        let removedFindings = 0
+    //     const differences: any[] = []
+    //     let newFindings = 0
+    //     let modifiedFindings = 0
+    //     let removedFindings = 0
 
-        // Create maps for comparison
-        const findings1Map = new Map(findings1.map((f: any) => [`${f.title}-${f.category}`, f]))
-        const findings2Map = new Map(findings2.map((f: any) => [`${f.title}-${f.category}`, f]))
+    //     // Create maps for comparison
+    //     const findings1Map = new Map(findings1.map((f: any) => [`${f.title}-${f.category}`, f]))
+    //     const findings2Map = new Map(findings2.map((f: any) => [`${f.title}-${f.category}`, f]))
 
-        // Find new findings in iteration 2
-        findings2Map.forEach((finding, key) => {
-            if (!findings1Map.has(key)) {
-                differences.push({
-                    type: 'new',
-                    finding_id: finding.id,
-                    description: `New finding: ${finding.title}`,
-                    significance: finding.severity === 'CRITICAL' || finding.severity === 'HIGH' ? 'High' : 'Medium'
-                })
-                newFindings++
-            }
-        })
+    //     // Find new findings in iteration 2
+    //     findings2Map.forEach((finding, key) => {
+    //         if (!findings1Map.has(key)) {
+    //             differences.push({
+    //                 type: 'new',
+    //                 finding_id: finding.id,
+    //                 description: `New finding: ${finding.title}`,
+    //                 significance: finding.severity === 'CRITICAL' || finding.severity === 'HIGH' ? 'High' : 'Medium'
+    //             })
+    //             newFindings++
+    //         }
+    //     })
 
-        // Find removed findings
-        findings1Map.forEach((finding, key) => {
-            if (!findings2Map.has(key)) {
-                differences.push({
-                    type: 'removed',
-                    finding_id: finding.id,
-                    description: `Removed finding: ${finding.title}`,
-                    significance: finding.severity === 'CRITICAL' || finding.severity === 'HIGH' ? 'High' : 'Low'
-                })
-                removedFindings++
-            }
-        })
+    //     // Find removed findings
+    //     findings1Map.forEach((finding, key) => {
+    //         if (!findings2Map.has(key)) {
+    //             differences.push({
+    //                 type: 'removed',
+    //                 finding_id: finding.id,
+    //                 description: `Removed finding: ${finding.title}`,
+    //                 significance: finding.severity === 'CRITICAL' || finding.severity === 'HIGH' ? 'High' : 'Low'
+    //             })
+    //             removedFindings++
+    //         }
+    //     })
 
-        // Find modified findings
-        findings1Map.forEach((finding1, key) => {
-            const finding2 = findings2Map.get(key)
-            if (finding2 && this.findingsAreDifferent(finding1, finding2)) {
-                differences.push({
-                    type: 'modified',
-                    finding_id: finding1.id,
-                    description: `Modified finding: ${finding1.title}`,
-                    significance: 'Medium'
-                })
-                modifiedFindings++
-            }
-        })
+    //     // Find modified findings
+    //     findings1Map.forEach((finding1, key) => {
+    //         const finding2 = findings2Map.get(key)
+    //         if (finding2 && this.findingsAreDifferent(finding1, finding2)) {
+    //             differences.push({
+    //                 type: 'modified',
+    //                 finding_id: finding1.id,
+    //                 description: `Modified finding: ${finding1.title}`,
+    //                 significance: 'Medium'
+    //             })
+    //             modifiedFindings++
+    //         }
+    //     })
 
-        const confidenceImprovement = (iteration2.confidence_score || 0) - (iteration1.confidence_score || 0)
-        const qualityImprovement = (iteration2.data_quality_score || 0) - (iteration1.data_quality_score || 0)
+    //     const confidenceImprovement = (iteration2.confidence_score || 0) - (iteration1.confidence_score || 0)
+    //     const qualityImprovement = (iteration2.data_quality_score || 0) - (iteration1.data_quality_score || 0)
 
-        return {
-            differences,
-            confidence_improvement: confidenceImprovement,
-            data_quality_improvement: qualityImprovement,
-            new_findings_count: newFindings,
-            modified_findings_count: modifiedFindings,
-            removed_findings_count: removedFindings,
-            significance_level: this.calculateComparisonSignificance(differences),
-            recommendation: this.generateComparisonRecommendation(differences, confidenceImprovement, qualityImprovement)
-        }
-    }
+    //     return {
+    //         differences,
+    //         confidence_improvement: confidenceImprovement,
+    //         data_quality_improvement: qualityImprovement,
+    //         new_findings_count: newFindings,
+    //         modified_findings_count: modifiedFindings,
+    //         removed_findings_count: removedFindings,
+    //         significance_level: this.calculateComparisonSignificance(differences),
+    //         recommendation: this.generateComparisonRecommendation(differences, confidenceImprovement, qualityImprovement)
+    //     }
+    // }
 
     /**
      * Check if two findings are different
@@ -5264,84 +5265,84 @@ ${consolidatedFindings.requires_immediate_attention ?
     /**
      * Get multi-iteration research status
      */
-    async getMultiIterationStatus(jobId: string): Promise<{ success: boolean; status?: any; message: string }> {
-        const supabase = await this.getSupabaseClient()
+    // async getMultiIterationStatus(jobId: string): Promise<{ success: boolean; status?: any; message: string }> {
+    //     const supabase = await this.getSupabaseClient()
 
-        try {
-            // Get job details
-            const { data: job } = await supabase
-                .from('deep_research_jobs')
-                .select('*')
-                .eq('id', jobId)
-                .single()
+    //     try {
+    //         // Get job details
+    //         const { data: job } = await supabase
+    //             .from('deep_research_jobs')
+    //             .select('*')
+    //             .eq('id', jobId)
+    //             .single()
 
-            if (!job) {
-                return {
-                    success: false,
-                    message: 'Job not found'
-                }
-            }
+    //         if (!job) {
+    //             return {
+    //                 success: false,
+    //                 message: 'Job not found'
+    //             }
+    //         }
 
-            // Get iterations
-            const { data: iterations } = await supabase
-                .from('deep_research_iterations')
-                .select('*')
-                .eq('job_id', jobId)
-                .order('iteration_number')
+    //         // Get iterations
+    //         const { data: iterations } = await supabase
+    //             .from('deep_research_iterations')
+    //             .select('*')
+    //             .eq('job_id', jobId)
+    //             .order('iteration_number')
 
-            // Get consolidation status
-            const { data: consolidation } = await supabase
-                .from('research_findings_consolidation')
-                .select('*')
-                .eq('job_id', jobId)
-                .single()
+    //         // Get consolidation status
+    //         const { data: consolidation } = await supabase
+    //             .from('research_findings_consolidation')
+    //             .select('*')
+    //             .eq('job_id', jobId)
+    //             .single()
 
-            const completedIterations = iterations?.filter(i => i.status === 'completed').length || 0
-            const failedIterations = iterations?.filter(i => i.status === 'failed').length || 0
-            const pendingIterations = iterations?.filter(i => i.status === 'pending').length || 0
-            const runningIterations = iterations?.filter(i => i.status === 'running').length || 0
+    //         const completedIterations = iterations?.filter(i => i.status === 'completed').length || 0
+    //         const failedIterations = iterations?.filter(i => i.status === 'failed').length || 0
+    //         const pendingIterations = iterations?.filter(i => i.status === 'pending').length || 0
+    //         const runningIterations = iterations?.filter(i => i.status === 'running').length || 0
 
-            const overallProgress = job.max_iterations > 0 ?
-                (completedIterations / job.max_iterations) * 100 : 0
+    //         const overallProgress = job.max_iterations > 0 ?
+    //             (completedIterations / job.max_iterations) * 100 : 0
 
-            return {
-                success: true,
-                status: {
-                    job_id: jobId,
-                    job_status: job.status,
-                    iteration_strategy: job.iteration_strategy,
-                    max_iterations: job.max_iterations,
-                    current_iteration: job.current_iteration,
-                    completed_iterations: completedIterations,
-                    failed_iterations: failedIterations,
-                    pending_iterations: pendingIterations,
-                    running_iterations: runningIterations,
-                    overall_progress: Math.round(overallProgress),
-                    consolidation_status: consolidation ? 'completed' :
-                        job.consolidation_required ? 'required' : 'not_required',
-                    consolidation_data: consolidation,
-                    iterations: iterations?.map(i => ({
-                        iteration_number: i.iteration_number,
-                        status: i.status,
-                        confidence_score: i.confidence_score,
-                        data_quality_score: i.data_quality_score,
-                        tokens_used: i.tokens_used,
-                        started_at: i.started_at,
-                        completed_at: i.completed_at,
-                        error_message: i.error_message
-                    }))
-                },
-                message: 'Multi-iteration status retrieved successfully'
-            }
+    //         return {
+    //             success: true,
+    //             status: {
+    //                 job_id: jobId,
+    //                 job_status: job.status,
+    //                 iteration_strategy: job.iteration_strategy,
+    //                 max_iterations: job.max_iterations,
+    //                 current_iteration: job.current_iteration,
+    //                 completed_iterations: completedIterations,
+    //                 failed_iterations: failedIterations,
+    //                 pending_iterations: pendingIterations,
+    //                 running_iterations: runningIterations,
+    //                 overall_progress: Math.round(overallProgress),
+    //                 consolidation_status: consolidation ? 'completed' :
+    //                     job.consolidation_required ? 'required' : 'not_required',
+    //                 consolidation_data: consolidation,
+    //                 iterations: iterations?.map(i => ({
+    //                     iteration_number: i.iteration_number,
+    //                     status: i.status,
+    //                     confidence_score: i.confidence_score,
+    //                     data_quality_score: i.data_quality_score,
+    //                     tokens_used: i.tokens_used,
+    //                     started_at: i.started_at,
+    //                     completed_at: i.completed_at,
+    //                     error_message: i.error_message
+    //                 }))
+    //             },
+    //             message: 'Multi-iteration status retrieved successfully'
+    //         }
 
-        } catch (error) {
-            console.error('Error getting multi-iteration status:', error)
-            return {
-                success: false,
-                message: error instanceof Error ? error.message : 'Failed to get status'
-            }
-        }
-    }
+    //     } catch (error) {
+    //         console.error('Error getting multi-iteration status:', error)
+    //         return {
+    //             success: false,
+    //             message: error instanceof Error ? error.message : 'Failed to get status'
+    //         }
+    //     }
+    // }
 
     /**
      * Utility method for delays
@@ -5406,7 +5407,13 @@ ${consolidatedFindings.requires_immediate_attention ?
      * Analyze corporate structure and subsidiary relationships
      */
     private analyzeCorporateStructure(findings: StructuredFinding[], context: EntityResearchContext): any {
-        const structure = {
+        const structure: {
+            subsidiaries: SubsidiaryInfo[],
+            associates: AssociateInfo[],
+            structure_risks: StructuredFinding[],
+            compliance_issues: StructuredFinding[],
+            financial_interdependencies: StructuredFinding[]
+        } = {
             subsidiaries: context.subsidiaries || [],
             associates: context.associates || [],
             structure_risks: [],
@@ -5440,7 +5447,12 @@ ${consolidatedFindings.requires_immediate_attention ?
      * Assess related party transaction risks
      */
     private assessRelatedPartyRisks(findings: StructuredFinding[]): any {
-        const risks = {
+        const risks: {
+            high_value_transactions: StructuredFinding[],
+            governance_violations: StructuredFinding[],
+            conflict_indicators: StructuredFinding[],
+            total_exposure: number
+        } = {
             high_value_transactions: [],
             governance_violations: [],
             conflict_indicators: [],
@@ -5475,7 +5487,12 @@ ${consolidatedFindings.requires_immediate_attention ?
      * Identify governance concerns from findings
      */
     private identifyGovernanceConcerns(findings: StructuredFinding[]): any {
-        const concerns = {
+        const concerns: {
+            board_effectiveness: StructuredFinding[],
+            independence_issues: StructuredFinding[],
+            transparency_concerns: StructuredFinding[],
+            risk_management_gaps: StructuredFinding[]
+        } = {
             board_effectiveness: [],
             independence_issues: [],
             transparency_concerns: [],
@@ -5513,7 +5530,14 @@ ${consolidatedFindings.requires_immediate_attention ?
      * Assess regulatory exposure across entities
      */
     private assessRegulatoryExposure(findings: StructuredFinding[]): any {
-        const exposure = {
+        const exposure: {
+            sebi_actions: StructuredFinding[],
+            mca_violations: StructuredFinding[],
+            rbi_issues: StructuredFinding[],
+            tax_disputes: StructuredFinding[],
+            sectoral_violations: StructuredFinding[],
+            total_penalties: number
+        } = {
             sebi_actions: [],
             mca_violations: [],
             rbi_issues: [],
@@ -5710,34 +5734,34 @@ ${consolidatedFindings.requires_immediate_attention ?
     /**
       * Log data quality metrics for monitoring
       */
-    private async logDataQualityMetrics(jobId: string | undefined, qualityReport: DataQualityReport): Promise<void> {
-        if (!jobId) return
+    // private async logDataQualityMetrics(jobId: string | undefined, qualityReport: DataQualityReport): Promise<void> {
+    //     if (!jobId) return
 
-        try {
-            const supabase = await this.getSupabaseClient()
+    //     try {
+    //         const supabase = await this.getSupabaseClient()
 
-            // Create quality metrics record
-            await supabase
-                .from('deep_research_audit_log')
-                .insert({
-                    job_id: jobId,
-                    action: 'data_quality_assessment',
-                    details: {
-                        overall_score: qualityReport.overall_score,
-                        dimensions: qualityReport.dimensions,
-                        verification_status: qualityReport.verification_status,
-                        critical_issues_count: qualityReport.critical_issues.length,
-                        warnings_count: qualityReport.warnings.length,
-                        recommendations_count: qualityReport.recommendations.length
-                    } as Json,
-                    timestamp: new Date().toISOString()
-                })
+    //         // Create quality metrics record
+    //         await supabase
+    //             .from('deep_research_audit_log')
+    //             .insert({
+    //                 job_id: jobId,
+    //                 action: 'data_quality_assessment',
+    //                 details: {
+    //                     overall_score: qualityReport.overall_score,
+    //                     dimensions: qualityReport.dimensions,
+    //                     verification_status: qualityReport.verification_status,
+    //                     critical_issues_count: qualityReport.critical_issues.length,
+    //                     warnings_count: qualityReport.warnings.length,
+    //                     recommendations_count: qualityReport.recommendations.length
+    //                 } as Json,
+    //                 timestamp: new Date().toISOString()
+    //             })
 
-            console.log(`[Data Quality] Logged metrics for job ${jobId}: ${qualityReport.overall_score}/100`)
-        } catch (error) {
-            console.error('Failed to log data quality metrics:', error)
-        }
-    }
+    //         console.log(`[Data Quality] Logged metrics for job ${jobId}: ${qualityReport.overall_score}/100`)
+    //     } catch (error) {
+    //         console.error('Failed to log data quality metrics:', error)
+    //     }
+    // }
 
     /**
      * Validate research findings quality
@@ -5968,9 +5992,9 @@ ${consolidatedFindings.requires_immediate_attention ?
             })
 
             // Log quality metrics
-            if (context?.jobId) {
-                await this.logDataQualityMetrics(context.jobId, qualityReport)
-            }
+            // if (context?.jobId) {
+            //     await this.logDataQualityMetrics(context.jobId, qualityReport)
+            // }
 
             // Check if data meets minimum quality standards
             const isValid = qualityReport.overall_score >= 40 && qualityReport.critical_issues.length === 0

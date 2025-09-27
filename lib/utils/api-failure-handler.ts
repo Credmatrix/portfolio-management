@@ -96,7 +96,7 @@ export class ApiFailureHandler {
         requestFn: () => Promise<Response>,
         context: ErrorContext,
         config?: Partial<RetryConfig>
-    ): Promise<ApiResponse<T>> {
+    ) {
         const finalConfig = { ...this.DEFAULT_RETRY_CONFIG, ...config }
         const endpointConfig = this.getEndpointConfig(apiName)
 
@@ -553,26 +553,26 @@ export class ApiFailureHandler {
     /**
      * Health check for all APIs
      */
-    static async performHealthCheck(): Promise<Record<string, boolean>> {
-        const healthStatus: Record<string, boolean> = {}
+    // static async performHealthCheck(): Promise<Record<string, boolean>> {
+    //     const healthStatus: Record<string, boolean> = {}
 
-        // Check each configured API
-        const apis = ['JINA_API', 'CLAUDE_API']
+    //     // Check each configured API
+    //     const apis = ['JINA_API', 'CLAUDE_API']
 
-        for (const api of apis) {
-            try {
-                const config = this.getEndpointConfig(api)
-                const response = await fetch(config.url, {
-                    method: 'HEAD',
-                    timeout: 5000
-                })
+    //     for (const api of apis) {
+    //         try {
+    //             const config = this.getEndpointConfig(api)
+    //             const response = await fetch(config.url, {
+    //                 method: 'HEAD',
+    //                 timeout: 5000
+    //             })
 
-                healthStatus[api] = response.ok
-            } catch (error) {
-                healthStatus[api] = false
-            }
-        }
+    //             healthStatus[api] = response.ok
+    //         } catch (error) {
+    //             healthStatus[api] = false
+    //         }
+    //     }
 
-        return healthStatus
-    }
+    //     return healthStatus
+    // }
 }

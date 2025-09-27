@@ -99,7 +99,7 @@ const styles = StyleSheet.create({
         fontSize: 42,
         fontWeight: 700,
         marginBottom: 12,
-        letterSpacing: 1,
+        letterSpacing: 1.5,
         textTransform: 'uppercase',
         textAlign: 'center',
         color: 'white',
@@ -734,7 +734,7 @@ const renderTable = (data: string[][], key: number): React.ReactNode => {
                     <View key={`header-${i}`} style={[
                         styles.tableCell,
                         styles.tableHeaderCell,
-                        i === headers.length - 1 && styles.tableCellLast
+                        ...(i === headers.length - 1 ? [styles.tableCellLast] : [])
                     ]}>
                         <Text style={styles.bold}>{header}</Text>
                     </View>
@@ -745,12 +745,12 @@ const renderTable = (data: string[][], key: number): React.ReactNode => {
             {rows.map((row, rowIndex) => (
                 <View key={`row-${rowIndex}`} style={[
                     styles.tableRow,
-                    rowIndex === rows.length - 1 && styles.tableRowLast
+                    ...(rowIndex === rows.length - 1 ? [styles.tableRowLast] : [])
                 ]}>
                     {row.map((cell, cellIndex) => (
                         <View key={`cell-${cellIndex}`} style={[
                             styles.tableCell,
-                            cellIndex === row.length - 1 && styles.tableCellLast
+                            ...(cellIndex === row.length - 1 ? [styles.tableCellLast] : [])
                         ]}>
                             <Text>{cell}</Text>
                         </View>

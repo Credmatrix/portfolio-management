@@ -8,7 +8,8 @@ import {
     ConsolidatedFindings,
     ComprehensiveRiskAssessment,
     StructuredFinding,
-    BusinessImpact
+    BusinessImpact,
+    ResearchJobType
 } from '@/types/deep-research.types'
 import { Json } from '@/types/database.types'
 
@@ -163,7 +164,7 @@ export class ComprehensiveReportGeneratorService {
     /**
      * Get all completed research jobs for a request
      */
-    private async getCompletedResearchJobs(requestId: string, userId: string): Promise<DeepResearchJob[]> {
+    private async getCompletedResearchJobs(requestId: string, userId: string) {
         const supabase = await this.getSupabaseClient()
 
         const { data: jobs, error } = await supabase
@@ -190,8 +191,8 @@ export class ComprehensiveReportGeneratorService {
     /**
      * Check if all core research types are completed
      */
-    private areAllCoreResearchTypesCompleted(jobs: DeepResearchJob[]): boolean {
-        const coreResearchTypes = ['directors_research', 'legal_research', 'negative_news', 'regulatory_research']
+    private areAllCoreResearchTypesCompleted(jobs): boolean {
+        const coreResearchTypes: ResearchJobType[] = ['directors_research', 'legal_research', 'negative_news', 'regulatory_research']
         const completedTypes = jobs.map(job => job.job_type)
 
         return coreResearchTypes.every(type => completedTypes.includes(type))
@@ -219,7 +220,7 @@ export class ComprehensiveReportGeneratorService {
     /**
      * Consolidate findings from all completed research jobs
      */
-    private async consolidateAllFindings(jobs: DeepResearchJob[]): Promise<ConsolidatedFindings> {
+    private async consolidateAllFindings(jobs): Promise<ConsolidatedFindings> {
         const consolidatedFindings: ConsolidatedFindings = {
             primary_entity: {
                 entity_id: 'primary',
@@ -455,7 +456,7 @@ export class ComprehensiveReportGeneratorService {
     private async generateComprehensiveReportSections(
         consolidatedFindings: ConsolidatedFindings,
         companyInfo: any,
-        jobs: DeepResearchJob[],
+        jobs: any[],
         config: ReportGenerationConfig
     ): Promise<ComprehensiveReportSections> {
         const sections: ComprehensiveReportSections = {
@@ -974,7 +975,7 @@ Analysis results are available in the detailed sections of this report.`
     /**
      * Calculate overall risk assessment from jobs
      */
-    private calculateOverallRiskAssessment(consolidatedFindings: ConsolidatedFindings, jobs: DeepResearchJob[]): ComprehensiveRiskAssessment {
+    private calculateOverallRiskAssessment(consolidatedFindings: ConsolidatedFindings, jobs: any[]): ComprehensiveRiskAssessment {
         return consolidatedFindings.overall_risk_assessment
     }
 
@@ -989,7 +990,7 @@ Analysis results are available in the detailed sections of this report.`
         executiveSummary: string,
         consolidatedFindings: ConsolidatedFindings,
         riskAssessment: ComprehensiveRiskAssessment,
-        jobs: DeepResearchJob[]
+        jobs: any[]
     ) {
         const supabase = await this.getSupabaseClient()
 

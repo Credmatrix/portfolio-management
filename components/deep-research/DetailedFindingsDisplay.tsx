@@ -157,7 +157,7 @@ export function DetailedFindingsDisplay({ jobs, consolidatedFindings }: Detailed
         }
     }
 
-    function getRiskColor(risk: string): string {
+    function getRiskColor(risk: string) {
         switch (risk) {
             case 'High': return 'error'
             case 'Medium': return 'warning'

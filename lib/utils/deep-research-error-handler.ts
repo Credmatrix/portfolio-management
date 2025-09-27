@@ -276,7 +276,7 @@ export class DeepResearchErrorHandler {
             context: context,
             timestamp: new Date().toISOString(),
             user_agent: typeof window !== 'undefined' ? navigator.userAgent : undefined
-        } as Json
+        } as unknown as Json
     }
 
     /**

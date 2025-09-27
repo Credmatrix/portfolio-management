@@ -298,7 +298,7 @@ export async function GET(request: NextRequest) {
         const isReady = completedJobs && completedJobs.length > 0
 
         // Calculate overall risk indicators
-        const riskLevels = completedJobs?.map(job => job.risk_assessment?.overall_risk_level).filter(Boolean) || []
+        const riskLevels = completedJobs?.map(job => (job.risk_assessment as any)?.overall_risk_level).filter(Boolean) || []
         const hasHighRisk = riskLevels.includes('HIGH')
         const hasMediumRisk = riskLevels.includes('MEDIUM')
 
