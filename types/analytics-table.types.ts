@@ -1,9 +1,9 @@
 import { Database } from './database.types'
 
-// Portfolio Analytics table types
-export type PortfolioAnalytics = Database['public']['Tables']['portfolio_analytics']['Row']
-export type PortfolioAnalyticsInsert = Database['public']['Tables']['portfolio_analytics']['Insert']
-export type PortfolioAnalyticsUpdate = Database['public']['Tables']['portfolio_analytics']['Update']
+// // Portfolio Analytics table types
+// export type PortfolioAnalytics = Database['public']['Tables']['portfolio_analytics']['Row']
+// export type PortfolioAnalyticsInsert = Database['public']['Tables']['portfolio_analytics']['Insert']
+// export type PortfolioAnalyticsUpdate = Database['public']['Tables']['portfolio_analytics']['Update']
 
 // Sync error types
 export type AnalyticsSyncError = Database['public']['Tables']['portfolio_analytics_sync_errors']['Row']
@@ -196,10 +196,10 @@ export interface AnalyticsFilterCriteria {
 }
 
 // Sort criteria for analytics queries
-export interface AnalyticsSortCriteria {
-  field: keyof PortfolioAnalytics
-  direction: 'asc' | 'desc'
-}
+// export interface AnalyticsSortCriteria {
+//   field: keyof PortfolioAnalytics
+//   direction: 'asc' | 'desc'
+// }
 
 // Pagination parameters
 export interface AnalyticsPaginationParams {
@@ -208,14 +208,14 @@ export interface AnalyticsPaginationParams {
 }
 
 // Analytics query response
-export interface AnalyticsQueryResponse {
-  data: PortfolioAnalytics[]
-  total_count: number
-  page: number
-  limit: number
-  has_next: boolean
-  has_previous: boolean
-}
+// export interface AnalyticsQueryResponse {
+//   data: PortfolioAnalytics[]
+//   total_count: number
+//   page: number
+//   limit: number
+//   has_next: boolean
+//   has_previous: boolean
+// }
 
 // Analytics metrics summary
 export interface AnalyticsMetrics {

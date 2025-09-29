@@ -1,11 +1,12 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect } from 'react'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 import { Card, CardContent, CardHeader } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import { Alert } from '@/components/ui/Alert'
-import { Progress } from '@/components/ui/Progress'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/Tabs'
 import {
     FileText,
@@ -14,27 +15,25 @@ import {
     Trash2,
     AlertTriangle,
     CheckCircle,
-    Clock,
     Building2,
-    TrendingUp,
     Shield,
     Users,
     Scale,
     Activity,
     BookOpen,
     ArrowLeft,
-    ExternalLink,
     Target,
     Zap,
     BarChart3,
-    PieChart,
-    AlertCircle,
     Info,
-    ChevronRight,
     Calendar,
-    FileCheck
+    FileCheck,
+    Sparkles,
+    Brain,
+    TrendingUp
 } from 'lucide-react'
-import { DeepResearchReport } from '@/types/deep-research.types'
+import { DeepResearchReport, FindingsSummary } from '@/types/deep-research.types'
+import { PDFExportHandler } from '@/lib/utils/pdf-export-handler'
 
 interface ResearchReportViewerProps {
     requestId: string
@@ -42,16 +41,31 @@ interface ResearchReportViewerProps {
 
 interface EnhancedReport extends DeepResearchReport {
     auto_generated?: boolean
+    comprehensive_analysis?: boolean
     company_info?: {
         name: string
         industry: string
         location: string
+        cin?: string
+        pan?: string
     }
     research_completion_date?: string
     critical_findings?: number
     high_risk_findings?: number
-    medium_risk_findings?: number,
-    data_quality_score: number
+    medium_risk_findings?: number
+    data_quality_score?: number
+    risk_score?: number
+    credit_recommendation?: string
+    key_risk_factors?: string[]
+    mitigating_factors?: string[]
+}
+
+interface ComprehensiveReportGenerationStatus {
+    is_ready: boolean
+    total_completed_jobs: number
+    completed_research_types: string[]
+    missing_core_types: string[]
+    existing_reports: any[]
 }
 
 /**
@@ -77,10 +91,15 @@ export function ResearchReportViewer({ requestId }: ResearchReportViewerProps) {
     const [selectedReport, setSelectedReport] = useState<EnhancedReport | null>(null)
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
-    const [activeSection, setActiveSection] = useState('summary')
+    const [activeSection, setActiveSection] = useState('recommendations')
+    const [generationStatus, setGenerationStatus] = useState<ComprehensiveReportGenerationStatus | null>(null)
+    const [isGenerating, setIsGenerating] = useState(false)
+    const [showGenerationOptions, setShowGenerationOptions] = useState(false)
+    const [exportingReports, setExportingReports] = useState<Set<string>>(new Set())
 
     useEffect(() => {
         fetchReports()
+        fetchGenerationStatus()
     }, [requestId])
 
     const fetchReports = async () => {
@@ -147,6 +166,107 @@ export function ResearchReportViewer({ requestId }: ResearchReportViewerProps) {
         }
     }
 
+    const fetchGenerationStatus = async () => {
+        try {
+            const response = await fetch(`/api/deep-research/reports/${requestId}`)
+            if (response.ok) {
+                const data = await response.json()
+                if (data.success) {
+                    setGenerationStatus(data.readiness_assessment)
+                }
+            }
+        } catch (error) {
+            console.error('Error fetching generation status:', error)
+        }
+    }
+
+    const generateComprehensiveReport = async (options: {
+        force_regenerate?: boolean
+        title?: string
+        include_executive_summary?: boolean
+        include_detailed_findings?: boolean
+        include_risk_assessment?: boolean
+        include_recommendations?: boolean
+    } = {}) => {
+        try {
+            setIsGenerating(true)
+            setError(null)
+
+            const response = await fetch('/api/deep-research/reports/generate-comprehensive', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    request_id: requestId,
+                    force_regenerate: options.force_regenerate || false,
+                    title: options.title,
+                    include_executive_summary: options.include_executive_summary !== false,
+                    include_detailed_findings: options.include_detailed_findings !== false,
+                    include_risk_assessment: options.include_risk_assessment !== false,
+                    include_recommendations: options.include_recommendations !== false
+                })
+            })
+
+            const data = await response.json()
+
+            if (data.success) {
+                // Refresh reports list
+                await fetchReports()
+                await fetchGenerationStatus()
+                setShowGenerationOptions(false)
+
+                // Auto-select the new report
+                if (data.report?.report_id) {
+                    await viewReport(data.report.report_id)
+                }
+            } else {
+                setError(data.message || 'Failed to generate comprehensive report')
+            }
+        } catch (error) {
+            setError('Error generating comprehensive report')
+            console.error('Error generating comprehensive report:', error)
+        } finally {
+            setIsGenerating(false)
+        }
+    }
+
+    const triggerAutoReportGeneration = async () => {
+        try {
+            setIsGenerating(true)
+            setError(null)
+
+            const response = await fetch('/api/deep-research/reports/auto-generate', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    request_id: requestId,
+                    force_generate: false
+                })
+            })
+
+            const data = await response.json()
+
+            if (data.success) {
+                await fetchReports()
+                await fetchGenerationStatus()
+
+                if (data.report_id) {
+                    await viewReport(data.report_id)
+                }
+            } else {
+                setError(data.message || 'Auto-report generation failed')
+            }
+        } catch (error) {
+            setError('Error triggering auto-report generation')
+            console.error('Error triggering auto-report generation:', error)
+        } finally {
+            setIsGenerating(false)
+        }
+    }
+
     const getRiskColor = (riskLevel?: string) => {
         switch (riskLevel) {
             case 'HIGH': return 'from-red-500 to-red-600'
@@ -156,30 +276,51 @@ export function ResearchReportViewer({ requestId }: ResearchReportViewerProps) {
         }
     }
 
-    const exportToPDF = async (reportId: string) => {
-        try {
-            const response = await fetch(`/api/deep-research/reports/${reportId}/export?format=pdf`)
-            if (response.ok) {
-                const blob = await response.blob()
-                const url = window.URL.createObjectURL(blob)
-                const a = document.createElement('a')
-                a.href = url
-                a.download = `due-diligence-report-${reportId}.pdf`
-                document.body.appendChild(a)
-                a.click()
-                window.URL.revokeObjectURL(url)
-                document.body.removeChild(a)
-            }
-        } catch (error) {
-            console.error('Export failed:', error)
+    const exportToPDF = async (reportId: string, type: 'full' | 'summary' = 'full') => {
+        // Check browser support
+        if (!PDFExportHandler.isBrowserSupported()) {
+            setError('PDF export is not supported in this browser')
+            return
         }
+
+        // Validate parameters
+        try {
+            PDFExportHandler.validateExportParams(reportId, type)
+        } catch (validationError) {
+            setError(PDFExportHandler.getErrorMessage(validationError))
+            return
+        }
+
+        await PDFExportHandler.exportReport(reportId, {
+            type,
+            onStart: () => {
+                setError(null)
+                setExportingReports(prev => new Set(prev).add(`${reportId}-${type}`))
+            },
+            onSuccess: (filename) => {
+                setExportingReports(prev => {
+                    const newSet = new Set(prev)
+                    newSet.delete(`${reportId}-${type}`)
+                    return newSet
+                })
+                // Could add a success toast here if you have a toast system
+            },
+            onError: (errorMessage) => {
+                setExportingReports(prev => {
+                    const newSet = new Set(prev)
+                    newSet.delete(`${reportId}-${type}`)
+                    return newSet
+                })
+                setError(PDFExportHandler.getErrorMessage(errorMessage))
+            }
+        })
     }
 
     // Enhanced report sections processing
     const processReportSections = (sections: any) => {
         if (!sections) return []
 
-        return Object.entries(sections).map(([key, content]) => ({
+        return Object.entries(sections).filter(([key, content]) => content !== "").map(([key, content]) => ({
             id: key.toLowerCase().replace(/\s+/g, '-'),
             title: key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
             content: content as string,
@@ -197,35 +338,142 @@ export function ResearchReportViewer({ requestId }: ResearchReportViewerProps) {
         return FileText
     }
 
-    const formatReportContent = (content: string) => {
-        return content.split('\n').map((line, index) => {
-            line = line.trim()
-            if (!line) return <br key={index} />
-
-            if (line.startsWith('# ')) {
-                return <h1 key={index} className="text-2xl font-bold text-slate-900 mb-4 mt-6">{line.substring(2)}</h1>
-            } else if (line.startsWith('## ')) {
-                return <h2 key={index} className="text-xl font-semibold text-slate-800 mb-3 mt-5">{line.substring(3)}</h2>
-            } else if (line.startsWith('### ')) {
-                return <h3 key={index} className="text-lg font-medium text-slate-800 mb-2 mt-4">{line.substring(4)}</h3>
-            } else if (line.startsWith('- ')) {
+    // Enhanced markdown components for research reports
+    const markdownComponents = {
+        // Tables - Enhanced styling for better readability
+        table: ({ children }: any) => (
+            <div className="overflow-x-auto my-4 rounded-lg border border-slate-200 shadow-sm">
+                <table className="min-w-full border-collapse bg-white text-sm">
+                    {children}
+                </table>
+            </div>
+        ),
+        thead: ({ children }: any) => (
+            <thead className="bg-gradient-to-r from-blue-50 to-indigo-50">
+                {children}
+            </thead>
+        ),
+        tbody: ({ children }: any) => (
+            <tbody className="bg-white divide-y divide-slate-200">
+                {children}
+            </tbody>
+        ),
+        tr: ({ children }: any) => (
+            <tr className="hover:bg-slate-25 transition-colors duration-150">
+                {children}
+            </tr>
+        ),
+        th: ({ children }: any) => (
+            <th className="px-4 py-3 text-left font-semibold text-slate-900 border-b border-slate-200 text-xs uppercase tracking-wider">
+                {children}
+            </th>
+        ),
+        td: ({ children }: any) => (
+            <td className="px-4 py-3 text-slate-700 border-b border-slate-100 whitespace-nowrap">
+                {children}
+            </td>
+        ),
+        // Headers - Enhanced with better spacing and styling
+        h1: ({ children }: any) => (
+            <h1 className="text-2xl font-bold text-slate-900 mb-4 mt-6 first:mt-0 pb-2 border-b border-slate-200">
+                {children}
+            </h1>
+        ),
+        h2: ({ children }: any) => (
+            <h2 className="text-xl font-bold text-slate-900 mb-3 mt-5 first:mt-0 pb-1 border-b border-slate-100">
+                {children}
+            </h2>
+        ),
+        h3: ({ children }: any) => (
+            <h3 className="text-lg font-semibold text-slate-900 mb-2 mt-4 first:mt-0 text-blue-900">
+                {children}
+            </h3>
+        ),
+        h4: ({ children }: any) => (
+            <h4 className="text-base font-semibold text-slate-800 mb-2 mt-3 first:mt-0 text-blue-800">
+                {children}
+            </h4>
+        ),
+        h5: ({ children }: any) => (
+            <h5 className="text-sm font-semibold text-slate-800 mb-2 mt-3 first:mt-0 text-blue-700">
+                {children}
+            </h5>
+        ),
+        h6: ({ children }: any) => (
+            <h6 className="text-sm font-medium text-slate-700 mb-2 mt-2 first:mt-0 text-blue-600">
+                {children}
+            </h6>
+        ),
+        // Paragraphs and text - Better spacing
+        p: ({ children }: any) => (
+            <p className="mb-3 text-slate-700 leading-relaxed text-sm">
+                {children}
+            </p>
+        ),
+        // Lists - Enhanced styling
+        ul: ({ children }: any) => (
+            <ul className="list-disc list-outside ml-4 mb-3 space-y-1 text-slate-700">
+                {children}
+            </ul>
+        ),
+        ol: ({ children }: any) => (
+            <ol className="list-decimal list-outside ml-4 mb-3 space-y-1 text-slate-700">
+                {children}
+            </ol>
+        ),
+        li: ({ children }: any) => (
+            <li className="text-slate-700 text-sm leading-relaxed">
+                {children}
+            </li>
+        ),
+        // Code - Enhanced styling
+        code: ({ children, className }: any) => {
+            const isInline = !className
+            if (isInline) {
                 return (
-                    <div key={index} className="flex items-start gap-2 mb-1">
-                        <div className="w-1.5 h-1.5 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
-                        <span className="text-slate-700">{line.substring(2)}</span>
-                    </div>
+                    <code className="bg-blue-50 text-blue-800 px-2 py-1 rounded text-xs font-mono border border-blue-200">
+                        {children}
+                    </code>
                 )
-            } else if (line.match(/^\d+\./)) {
-                return (
-                    <div key={index} className="flex items-start gap-2 mb-1">
-                        <span className="text-blue-600 font-medium">{line.match(/^\d+\./)![0]}</span>
-                        <span className="text-slate-700">{line.replace(/^\d+\.\s*/, '')}</span>
-                    </div>
-                )
-            } else {
-                return <p key={index} className="text-slate-700 mb-2 leading-relaxed">{line}</p>
             }
-        })
+            return (
+                <pre className="bg-gray-900 text-gray-100 p-4 rounded-lg overflow-x-auto text-xs font-mono mb-4 border border-gray-700">
+                    <code>{children}</code>
+                </pre>
+            )
+        },
+        // Emphasis - Enhanced styling
+        strong: ({ children }: any) => (
+            <strong className="font-semibold text-slate-900 bg-yellow-100 px-1 rounded">
+                {children}
+            </strong>
+        ),
+        em: ({ children }: any) => (
+            <em className="italic text-slate-700 font-medium">
+                {children}
+            </em>
+        ),
+        // Blockquotes - Enhanced styling for research findings
+        blockquote: ({ children }: any) => (
+            <blockquote className="border-l-4 border-blue-400 pl-4 py-3 my-4 bg-gradient-to-r from-blue-50 to-blue-25 text-slate-700 italic rounded-r-lg">
+                {children}
+            </blockquote>
+        ),
+        // Horizontal rule - Enhanced styling
+        hr: () => (
+            <hr className="border-t-2 border-gradient-to-r from-transparent via-slate-300 to-transparent my-6" />
+        ),
+        // Links - Enhanced styling
+        a: ({ children, href }: any) => (
+            <a
+                href={href}
+                className="text-blue-600 hover:text-blue-800 underline decoration-2 underline-offset-2 hover:bg-blue-50 px-1 rounded transition-colors"
+                target="_blank"
+                rel="noopener noreferrer"
+            >
+                {children}
+            </a>
+        )
     }
 
     if (loading) {
@@ -271,15 +519,47 @@ export function ResearchReportViewer({ requestId }: ResearchReportViewerProps) {
                                     {selectedReport.risk_level || 'PENDING'} RISK
                                 </Badge>
 
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => exportToPDF(selectedReport.id)}
-                                    className="hover:bg-white/60"
-                                >
-                                    <Download className="w-4 h-4 mr-2" />
-                                    Export Report
-                                </Button>
+                                <div className="flex items-center gap-2">
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => exportToPDF(selectedReport.id, 'full')}
+                                        disabled={exportingReports.has(`${selectedReport.id}-full`)}
+                                        className="hover:bg-white/60"
+                                    >
+                                        {exportingReports.has(`${selectedReport.id}-full`) ? (
+                                            <>
+                                                <div className="w-4 h-4 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin mr-2" />
+                                                Generating...
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Download className="w-4 h-4 mr-2" />
+                                                Full Report
+                                            </>
+                                        )}
+                                    </Button>
+
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => exportToPDF(selectedReport.id, 'summary')}
+                                        disabled={exportingReports.has(`${selectedReport.id}-summary`)}
+                                        className="hover:bg-white/60"
+                                    >
+                                        {exportingReports.has(`${selectedReport.id}-summary`) ? (
+                                            <>
+                                                <div className="w-4 h-4 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin mr-2" />
+                                                Generating...
+                                            </>
+                                        ) : (
+                                            <>
+                                                <FileText className="w-4 h-4 mr-2" />
+                                                Summary
+                                            </>
+                                        )}
+                                    </Button>
+                                </div>
                             </div>
                         </div>
 
@@ -377,7 +657,7 @@ export function ResearchReportViewer({ requestId }: ResearchReportViewerProps) {
                                     <h3 className="font-semibold text-slate-900">Report Sections</h3>
                                 </CardHeader>
                                 <CardContent className="space-y-1">
-                                    <Button
+                                    {/* <Button
                                         variant={activeSection === 'summary' ? 'info' : 'ghost'}
                                         size="sm"
                                         className="w-full justify-start"
@@ -385,7 +665,7 @@ export function ResearchReportViewer({ requestId }: ResearchReportViewerProps) {
                                     >
                                         <Target className="w-4 h-4 mr-2" />
                                         Executive Summary
-                                    </Button>
+                                    </Button> */}
 
                                     {reportSections.map((section) => {
                                         const Icon = section.icon
@@ -403,7 +683,7 @@ export function ResearchReportViewer({ requestId }: ResearchReportViewerProps) {
                                         )
                                     })}
 
-                                    <Button
+                                    {/* <Button
                                         variant={activeSection === 'recommendations' ? 'info' : 'ghost'}
                                         size="sm"
                                         className="w-full justify-start"
@@ -411,7 +691,7 @@ export function ResearchReportViewer({ requestId }: ResearchReportViewerProps) {
                                     >
                                         <CheckCircle className="w-4 h-4 mr-2" />
                                         Recommendations
-                                    </Button>
+                                    </Button> */}
                                 </CardContent>
                             </Card>
                         </div>
@@ -420,31 +700,6 @@ export function ResearchReportViewer({ requestId }: ResearchReportViewerProps) {
                         <div className="lg:col-span-3">
                             <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-sm">
                                 <CardContent className="p-0">
-                                    {/* Executive Summary */}
-                                    {activeSection === 'summary' && (
-                                        <div className="p-6">
-                                            <div className="flex items-center gap-2 mb-4">
-                                                <Target className="w-5 h-5 text-blue-600" />
-                                                <h2 className="text-xl font-semibold text-slate-900">Executive Summary</h2>
-                                            </div>
-
-                                            {selectedReport.executive_summary ? (
-                                                <div className="prose prose-slate max-w-none">
-                                                    {formatReportContent(selectedReport.executive_summary)}
-                                                </div>
-                                            ) : (
-                                                <Alert className="bg-blue-50 border-blue-200">
-                                                    <Info className="w-4 h-4 text-blue-600" />
-                                                    <div>
-                                                        <h4 className="font-semibold text-blue-900">Report Summary</h4>
-                                                        <p className="text-sm text-blue-800">
-                                                            This comprehensive due diligence report provides detailed analysis across multiple risk categories. Navigate through the sections to review specific findings and recommendations.
-                                                        </p>
-                                                    </div>
-                                                </Alert>
-                                            )}
-                                        </div>
-                                    )}
 
                                     {/* Dynamic Section Content */}
                                     {reportSections.map((section) => (
@@ -456,41 +711,16 @@ export function ResearchReportViewer({ requestId }: ResearchReportViewerProps) {
                                                 </div>
 
                                                 <div className="prose prose-slate max-w-none">
-                                                    {formatReportContent(section.content)}
+                                                    <ReactMarkdown
+                                                        remarkPlugins={[remarkGfm]}
+                                                        components={markdownComponents}
+                                                    >
+                                                        {section.content}
+                                                    </ReactMarkdown>
                                                 </div>
                                             </div>
                                         )
                                     ))}
-
-                                    {/* Recommendations Section */}
-                                    {activeSection === 'recommendations' && (
-                                        <div className="p-6">
-                                            <div className="flex items-center gap-2 mb-4">
-                                                <CheckCircle className="w-5 h-5 text-emerald-600" />
-                                                <h2 className="text-xl font-semibold text-slate-900">Recommendations</h2>
-                                            </div>
-
-                                            {selectedReport.recommendations && selectedReport.recommendations.length > 0 ? (
-                                                <div className="space-y-3">
-                                                    {selectedReport.recommendations.map((recommendation, index) => (
-                                                        <div key={index} className="flex items-start gap-3 p-3 bg-emerald-50 rounded-lg border border-emerald-200">
-                                                            <div className="w-6 h-6 bg-emerald-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                                                                <span className="text-emerald-700 font-semibold text-sm">{index + 1}</span>
-                                                            </div>
-                                                            <p className="text-emerald-800 leading-relaxed">{recommendation}</p>
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            ) : (
-                                                <Alert className="bg-slate-50 border-slate-200">
-                                                    <Info className="w-4 h-4 text-slate-600" />
-                                                    <p className="text-slate-700">
-                                                        Recommendations will be populated based on the specific findings and risk assessment results.
-                                                    </p>
-                                                </Alert>
-                                            )}
-                                        </div>
-                                    )}
                                 </CardContent>
                             </Card>
                         </div>
@@ -527,6 +757,163 @@ export function ResearchReportViewer({ requestId }: ResearchReportViewerProps) {
                             <p className="text-sm">{error}</p>
                         </div>
                     </Alert>
+                )}
+
+                {/* Comprehensive Report Generation Section */}
+                {generationStatus && (
+                    <Card className="bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200">
+                        <CardContent className="p-6">
+                            <div className="flex items-start justify-between">
+                                <div className="flex items-center gap-3">
+                                    <div className="p-3 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl shadow-lg">
+                                        <Brain className="w-6 h-6 text-white" />
+                                    </div>
+                                    <div>
+                                        <h3 className="text-lg font-semibold text-slate-900 flex items-center gap-2">
+                                            AI-Powered Comprehensive Report
+                                            <Sparkles className="w-4 h-4 text-purple-500" />
+                                        </h3>
+                                        <p className="text-slate-600 text-sm">
+                                            Generate professional due diligence reports with Claude AI synthesis
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div className="flex items-center gap-2">
+                                    {generationStatus.is_ready ? (
+                                        <Badge variant="success" className="flex items-center gap-1">
+                                            <CheckCircle className="w-3 h-3" />
+                                            Ready
+                                        </Badge>
+                                    ) : (
+                                        <Badge variant="warning" className="flex items-center gap-1">
+                                            <AlertTriangle className="w-3 h-3" />
+                                            Pending
+                                        </Badge>
+                                    )}
+                                </div>
+                            </div>
+
+                            <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div className="bg-white/60 rounded-lg p-3">
+                                    <div className="text-2xl font-bold text-blue-600">
+                                        {generationStatus.total_completed_jobs}
+                                    </div>
+                                    <div className="text-sm text-slate-600">Completed Research Jobs</div>
+                                </div>
+                                <div className="bg-white/60 rounded-lg p-3">
+                                    <div className="text-2xl font-bold text-green-600">
+                                        {generationStatus.completed_research_types.length}
+                                    </div>
+                                    <div className="text-sm text-slate-600">Research Types Done</div>
+                                </div>
+                                <div className="bg-white/60 rounded-lg p-3">
+                                    <div className="text-2xl font-bold text-purple-600">
+                                        {generationStatus.existing_reports && generationStatus.existing_reports.length}
+                                    </div>
+                                    <div className="text-sm text-slate-600">Existing Reports</div>
+                                </div>
+                            </div>
+
+                            {generationStatus.missing_core_types.length > 0 && (
+                                <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                                    <div className="flex items-center gap-2 text-amber-800 mb-2">
+                                        <Info className="w-4 h-4" />
+                                        <span className="font-medium">Missing Core Research</span>
+                                    </div>
+                                    <div className="text-sm text-amber-700">
+                                        Complete these research types for optimal report quality: {generationStatus.missing_core_types.join(', ')}
+                                    </div>
+                                </div>
+                            )}
+
+                            <div className="mt-4 flex items-center gap-3">
+                                {generationStatus.is_ready ? (
+                                    <>
+                                        <Button
+                                            onClick={() => triggerAutoReportGeneration()}
+                                            disabled={isGenerating}
+                                            className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700"
+                                        >
+                                            {isGenerating ? (
+                                                <>
+                                                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2" />
+                                                    Generating...
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <Sparkles className="w-4 h-4 mr-2" />
+                                                    Generate Comprehensive Report
+                                                </>
+                                            )}
+                                        </Button>
+
+                                        <Button
+                                            variant="outline"
+                                            onClick={() => setShowGenerationOptions(!showGenerationOptions)}
+                                            disabled={isGenerating}
+                                        >
+                                            <Target className="w-4 h-4 mr-2" />
+                                            Custom Options
+                                        </Button>
+                                    </>
+                                ) : (
+                                    <Button disabled className="bg-gray-400">
+                                        <AlertTriangle className="w-4 h-4 mr-2" />
+                                        Complete Research First
+                                    </Button>
+                                )}
+
+                                {generationStatus.existing_reports && generationStatus.existing_reports.length > 0 && (
+                                    <Button
+                                        variant="outline"
+                                        onClick={() => generateComprehensiveReport({ force_regenerate: true })}
+                                        disabled={isGenerating}
+                                        className="text-orange-600 border-orange-300 hover:bg-orange-50"
+                                    >
+                                        <TrendingUp className="w-4 h-4 mr-2" />
+                                        Regenerate
+                                    </Button>
+                                )}
+                            </div>
+
+                            {showGenerationOptions && (
+                                <div className="mt-4 p-4 bg-white/80 rounded-lg border border-blue-200">
+                                    <h4 className="font-medium text-slate-900 mb-3">Custom Report Options</h4>
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => generateComprehensiveReport({
+                                                include_executive_summary: true,
+                                                include_detailed_findings: true,
+                                                include_risk_assessment: true,
+                                                include_recommendations: true
+                                            })}
+                                            disabled={isGenerating}
+                                        >
+                                            <FileCheck className="w-4 h-4 mr-2" />
+                                            Full Report
+                                        </Button>
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => generateComprehensiveReport({
+                                                include_executive_summary: true,
+                                                include_risk_assessment: true,
+                                                include_recommendations: true,
+                                                include_detailed_findings: false
+                                            })}
+                                            disabled={isGenerating}
+                                        >
+                                            <BarChart3 className="w-4 h-4 mr-2" />
+                                            Executive Summary
+                                        </Button>
+                                    </div>
+                                </div>
+                            )}
+                        </CardContent>
+                    </Card>
                 )}
 
                 {reports.length === 0 ? (
@@ -595,23 +982,35 @@ export function ResearchReportViewer({ requestId }: ResearchReportViewerProps) {
                                             <span>Generated {new Date(report.generated_at).toLocaleDateString()}</span>
                                         </div>
 
-                                        {report.auto_generated && (
-                                            <div className="flex items-center gap-2">
+                                        <div className="flex items-center gap-2 flex-wrap">
+                                            {report.auto_generated && (
                                                 <Badge variant="secondary" size="sm" className="flex items-center gap-1">
                                                     <Zap className="w-3 h-3" />
                                                     Auto-Generated
                                                 </Badge>
-                                            </div>
-                                        )}
+                                            )}
+                                            {report.comprehensive_analysis && (
+                                                <Badge variant="primary" size="sm" className="flex items-center gap-1 bg-gradient-to-r from-blue-500 to-purple-600">
+                                                    <Brain className="w-3 h-3" />
+                                                    AI-Enhanced
+                                                </Badge>
+                                            )}
+                                            {report.report_type === 'comprehensive_due_diligence' && (
+                                                <Badge variant="success" size="sm" className="flex items-center gap-1">
+                                                    <Sparkles className="w-3 h-3" />
+                                                    Comprehensive
+                                                </Badge>
+                                            )}
+                                        </div>
                                     </div>
 
                                     {/* Risk Summary Dashboard */}
                                     {report.findings_summary && (
                                         <div className="bg-gradient-to-r from-slate-50 to-slate-100/50 rounded-lg p-3 mb-4">
-                                            <div className="grid grid-cols-4 gap-2 text-center">
+                                            <div className="grid grid-cols-4 gap-2 text-center mb-3">
                                                 <div>
                                                     <div className="text-lg font-bold text-red-600">
-                                                        {report.findings_summary.high_risk_findings || 0}
+                                                        {report.findings_summary.critical_findings || report.findings_summary.high_risk_findings || 0}
                                                     </div>
                                                     <div className="text-xs text-slate-600">Critical</div>
                                                 </div>
@@ -634,6 +1033,44 @@ export function ResearchReportViewer({ requestId }: ResearchReportViewerProps) {
                                                     <div className="text-xs text-slate-600">Total</div>
                                                 </div>
                                             </div>
+
+                                            {/* Enhanced metrics for comprehensive reports */}
+                                            {report.report_type === 'comprehensive_due_diligence' && (
+                                                <div className="border-t border-slate-200 pt-3">
+                                                    <div className="grid grid-cols-2 gap-3 text-center">
+                                                        {report.risk_score && (
+                                                            <div className="bg-white/60 rounded p-2">
+                                                                <div className="text-sm font-bold text-purple-600">
+                                                                    {report.risk_score}/100
+                                                                </div>
+                                                                <div className="text-xs text-slate-600">Risk Score</div>
+                                                            </div>
+                                                        )}
+                                                        {report.data_quality_score && (
+                                                            <div className="bg-white/60 rounded p-2">
+                                                                <div className="text-sm font-bold text-green-600">
+                                                                    {report.data_quality_score}%
+                                                                </div>
+                                                                <div className="text-xs text-slate-600">Data Quality</div>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                    {report.credit_recommendation && (
+                                                        <div className="mt-2 text-center">
+                                                            <Badge
+                                                                variant={
+                                                                    report.credit_recommendation === 'Approve' ? 'success' :
+                                                                        report.credit_recommendation === 'Decline' ? 'error' :
+                                                                            'warning'
+                                                                }
+                                                                size="sm"
+                                                            >
+                                                                {report.credit_recommendation}
+                                                            </Badge>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            )}
                                         </div>
                                     )}
 
@@ -651,17 +1088,43 @@ export function ResearchReportViewer({ requestId }: ResearchReportViewerProps) {
                                             View Report
                                         </Button>
 
-                                        <Button
-                                            variant="outline"
-                                            size="sm"
-                                            onClick={(e) => {
-                                                e.stopPropagation()
-                                                exportToPDF(report.id)
-                                            }}
-                                            className="hover:bg-white/60"
-                                        >
-                                            <Download className="w-3 h-3" />
-                                        </Button>
+                                        <div className="flex items-center gap-1">
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={(e) => {
+                                                    e.stopPropagation()
+                                                    exportToPDF(report.id, 'full')
+                                                }}
+                                                disabled={exportingReports.has(`${report.id}-full`)}
+                                                className="hover:bg-white/60"
+                                                title="Export Full Report"
+                                            >
+                                                {exportingReports.has(`${report.id}-full`) ? (
+                                                    <div className="w-3 h-3 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin" />
+                                                ) : (
+                                                    <Download className="w-3 h-3" />
+                                                )}
+                                            </Button>
+
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={(e) => {
+                                                    e.stopPropagation()
+                                                    exportToPDF(report.id, 'summary')
+                                                }}
+                                                disabled={exportingReports.has(`${report.id}-summary`)}
+                                                className="hover:bg-white/60"
+                                                title="Export Summary"
+                                            >
+                                                {exportingReports.has(`${report.id}-summary`) ? (
+                                                    <div className="w-3 h-3 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin" />
+                                                ) : (
+                                                    <FileText className="w-3 h-3" />
+                                                )}
+                                            </Button>
+                                        </div>
 
                                         <Button
                                             variant="outline"

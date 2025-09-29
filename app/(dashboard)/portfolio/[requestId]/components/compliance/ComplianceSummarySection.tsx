@@ -111,7 +111,7 @@ export function ComplianceSummarySection({ company }: ComplianceSummarySectionPr
             epfoExtractedData.raw_data.forEach((item: any) => {
                 if (item['WORKING STATUS'] === 'LIVE ESTABLISHMENT') {
                     activeEstablishments++
-                    totalEmployees += parseInt(item['NO. OF EMPLOYEES']) || 0
+                    totalEmployees += parseInt(item['NO. OF EMPLOYEES']?.replace(/,/g, '') || '0') || 0
 
                     if (item['FLAGS']?.includes('Payment After Due Date')) {
                         complianceIssues++
