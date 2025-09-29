@@ -324,8 +324,8 @@ export type Database = {
           ar_values: number | null
           case_notes: string | null
           collection_feedback:
-            | Database["public"]["Enums"]["collection_feedback_type"]
-            | null
+          | Database["public"]["Enums"]["collection_feedback_type"]
+          | null
           collection_remarks: string | null
           created_at: string | null
           created_by: string | null
@@ -345,8 +345,8 @@ export type Database = {
           repayment: Database["public"]["Enums"]["repayment_type"] | null
           request_id: string
           security_requirements:
-            | Database["public"]["Enums"]["security_requirement_type"]
-            | null
+          | Database["public"]["Enums"]["security_requirement_type"]
+          | null
           updated_at: string | null
           updated_by: string | null
         }
@@ -359,8 +359,8 @@ export type Database = {
           ar_values?: number | null
           case_notes?: string | null
           collection_feedback?:
-            | Database["public"]["Enums"]["collection_feedback_type"]
-            | null
+          | Database["public"]["Enums"]["collection_feedback_type"]
+          | null
           collection_remarks?: string | null
           created_at?: string | null
           created_by?: string | null
@@ -380,8 +380,8 @@ export type Database = {
           repayment?: Database["public"]["Enums"]["repayment_type"] | null
           request_id: string
           security_requirements?:
-            | Database["public"]["Enums"]["security_requirement_type"]
-            | null
+          | Database["public"]["Enums"]["security_requirement_type"]
+          | null
           updated_at?: string | null
           updated_by?: string | null
         }
@@ -394,8 +394,8 @@ export type Database = {
           ar_values?: number | null
           case_notes?: string | null
           collection_feedback?:
-            | Database["public"]["Enums"]["collection_feedback_type"]
-            | null
+          | Database["public"]["Enums"]["collection_feedback_type"]
+          | null
           collection_remarks?: string | null
           created_at?: string | null
           created_by?: string | null
@@ -415,8 +415,8 @@ export type Database = {
           repayment?: Database["public"]["Enums"]["repayment_type"] | null
           request_id?: string
           security_requirements?:
-            | Database["public"]["Enums"]["security_requirement_type"]
-            | null
+          | Database["public"]["Enums"]["security_requirement_type"]
+          | null
           updated_at?: string | null
           updated_by?: string | null
         }
@@ -2050,6 +2050,346 @@ export type Database = {
           },
         ]
       }
+      manual_company_entries: {
+        Row: {
+          id: string
+          request_id: string
+          entity_type: Database["public"]["Enums"]["entity_type_enum"]
+          data_source: Database["public"]["Enums"]["data_source_enum"]
+          basic_details: Json
+          ownership_structure: Json | null
+          financial_data: Json | null
+          compliance_data: Json | null
+          data_completeness_score: number
+          data_quality_indicators: Json
+          processing_status: string
+          processing_notes: string | null
+          created_at: string
+          updated_at: string
+          created_by: string
+          updated_by: string | null
+        }
+        Insert: {
+          id?: string
+          request_id: string
+          entity_type: Database["public"]["Enums"]["entity_type_enum"]
+          data_source?: Database["public"]["Enums"]["data_source_enum"]
+          basic_details: Json
+          ownership_structure?: Json | null
+          financial_data?: Json | null
+          compliance_data?: Json | null
+          data_completeness_score?: number
+          data_quality_indicators?: Json
+          processing_status?: string
+          processing_notes?: string | null
+          created_at?: string
+          updated_at?: string
+          created_by: string
+          updated_by?: string | null
+        }
+        Update: {
+          id?: string
+          request_id?: string
+          entity_type?: Database["public"]["Enums"]["entity_type_enum"]
+          data_source?: Database["public"]["Enums"]["data_source_enum"]
+          basic_details?: Json
+          ownership_structure?: Json | null
+          financial_data?: Json | null
+          compliance_data?: Json | null
+          data_completeness_score?: number
+          data_quality_indicators?: Json
+          processing_status?: string
+          processing_notes?: string | null
+          created_at?: string
+          updated_at?: string
+          created_by?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "manual_company_entries_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      non_corporate_financial_data: {
+        Row: {
+          id: string
+          request_id: string
+          financial_year: string
+          balance_sheet: Json
+          profit_loss: Json
+          cash_flow: Json | null
+          ratios: Json
+          notes: Json | null
+          validation_status: string
+          validation_errors: Json
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          request_id: string
+          financial_year: string
+          balance_sheet?: Json
+          profit_loss?: Json
+          cash_flow?: Json | null
+          ratios?: Json
+          notes?: Json | null
+          validation_status?: string
+          validation_errors?: Json
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          request_id?: string
+          financial_year?: string
+          balance_sheet?: Json
+          profit_loss?: Json
+          cash_flow?: Json | null
+          ratios?: Json
+          notes?: Json | null
+          validation_status?: string
+          validation_errors?: Json
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "non_corporate_financial_data_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "manual_company_entries"
+            referencedColumns: ["request_id"]
+          },
+        ]
+      }
+      manual_gst_data: {
+        Row: {
+          id: string
+          request_id: string
+          gstin: string
+          registration_date: string | null
+          registration_status: string | null
+          business_nature: string | null
+          filing_history: Json
+          compliance_status: string | null
+          compliance_score: number | null
+          turnover_details: Json
+          return_filing_status: Json
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          request_id: string
+          gstin: string
+          registration_date?: string | null
+          registration_status?: string | null
+          business_nature?: string | null
+          filing_history?: Json
+          compliance_status?: string | null
+          compliance_score?: number | null
+          turnover_details?: Json
+          return_filing_status?: Json
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          request_id?: string
+          gstin?: string
+          registration_date?: string | null
+          registration_status?: string | null
+          business_nature?: string | null
+          filing_history?: Json
+          compliance_status?: string | null
+          compliance_score?: number | null
+          turnover_details?: Json
+          return_filing_status?: Json
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "manual_gst_data_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "manual_company_entries"
+            referencedColumns: ["request_id"]
+          },
+        ]
+      }
+      manual_epfo_data: {
+        Row: {
+          id: string
+          request_id: string
+          establishment_code: string | null
+          establishment_name: string | null
+          registration_date: string | null
+          registration_status: string | null
+          employee_count: number
+          active_members: number
+          monthly_contribution_amount: number
+          compliance_status: string | null
+          compliance_score: number | null
+          contribution_history: Json
+          coverage_details: Json
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          request_id: string
+          establishment_code?: string | null
+          establishment_name?: string | null
+          registration_date?: string | null
+          registration_status?: string | null
+          employee_count?: number
+          active_members?: number
+          monthly_contribution_amount?: number
+          compliance_status?: string | null
+          compliance_score?: number | null
+          contribution_history?: Json
+          coverage_details?: Json
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          request_id?: string
+          establishment_code?: string | null
+          establishment_name?: string | null
+          registration_date?: string | null
+          registration_status?: string | null
+          employee_count?: number
+          active_members?: number
+          monthly_contribution_amount?: number
+          compliance_status?: string | null
+          compliance_score?: number | null
+          contribution_history?: Json
+          coverage_details?: Json
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "manual_epfo_data_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "manual_company_entries"
+            referencedColumns: ["request_id"]
+          },
+        ]
+      }
+      manual_legal_data: {
+        Row: {
+          id: string
+          request_id: string
+          legal_cases: Json
+          regulatory_compliance: Json
+          licenses_permits: Json
+          audit_details: Json
+          auditor_comments: Json
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          request_id: string
+          legal_cases?: Json
+          regulatory_compliance?: Json
+          licenses_permits?: Json
+          audit_details?: Json
+          auditor_comments?: Json
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          request_id?: string
+          legal_cases?: Json
+          regulatory_compliance?: Json
+          licenses_permits?: Json
+          audit_details?: Json
+          auditor_comments?: Json
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "manual_legal_data_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "manual_company_entries"
+            referencedColumns: ["request_id"]
+          },
+        ]
+      }
+      data_enhancement_log: {
+        Row: {
+          id: string
+          request_id: string
+          enhancement_type: string
+          data_source: string
+          enhanced_fields: Json
+          conflicts_detected: Json
+          conflicts_resolved: Json
+          resolution_method: string | null
+          quality_before: number | null
+          quality_after: number | null
+          created_at: string
+          created_by: string
+        }
+        Insert: {
+          id?: string
+          request_id: string
+          enhancement_type: string
+          data_source: string
+          enhanced_fields?: Json
+          conflicts_detected?: Json
+          conflicts_resolved?: Json
+          resolution_method?: string | null
+          quality_before?: number | null
+          quality_after?: number | null
+          created_at?: string
+          created_by: string
+        }
+        Update: {
+          id?: string
+          request_id?: string
+          enhancement_type?: string
+          data_source?: string
+          enhanced_fields?: Json
+          conflicts_detected?: Json
+          conflicts_resolved?: Json
+          resolution_method?: string | null
+          quality_before?: number | null
+          quality_after?: number | null
+          created_at?: string
+          created_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "data_enhancement_log_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "manual_company_entries"
+            referencedColumns: ["request_id"]
+          },
+          {
+            foreignKeyName: "data_enhancement_log_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       active_companies: {
@@ -2958,25 +3298,37 @@ export type Database = {
     }
     Enums: {
       collection_feedback_type:
-        | "Good"
-        | "OK"
-        | "Bad"
-        | "No-Go"
-        | "Credit Call"
-        | "Business Call"
-        | "No Business"
-        | "Limited rotations"
+      | "Good"
+      | "OK"
+      | "Bad"
+      | "No-Go"
+      | "Credit Call"
+      | "Business Call"
+      | "No Business"
+      | "Limited rotations"
       credit_type: "Secured" | "Unsecured" | "Secured+Unsecured"
+      data_source_enum: "manual" | "api" | "excel" | "hybrid"
+      entity_type_enum:
+      | "private_limited"
+      | "public_limited"
+      | "llp"
+      | "partnership_registered"
+      | "partnership_unregistered"
+      | "proprietorship"
+      | "huf"
+      | "trust_private"
+      | "trust_public"
+      | "society"
       industry_type: "manufacturing" | "manufacturing-oem" | "epc"
       lpi_received_type: "NA" | "Yes" | "No"
       model_type: "with_banking" | "without_banking"
       processing_status:
-        | "submitted"
-        | "processing"
-        | "completed"
-        | "failed"
-        | "upload_pending"
-        | "created"
+      | "submitted"
+      | "processing"
+      | "completed"
+      | "failed"
+      | "upload_pending"
+      | "created"
       repayment_type: "Before time" | "Timely" | "Slight Delay" | "Huge Delay"
       security_requirement_type: "CC" | "BG" | "Advance" | "Others"
     }
@@ -2992,116 +3344,116 @@ type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
 
 export type Tables<
   DefaultSchemaTableNameOrOptions extends
-    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
-    | { schema: keyof DatabaseWithoutInternals },
+  | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
+  | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
-        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never = never,
+  ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+    DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
+  : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
   ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
-      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+    DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
       Row: infer R
     }
-    ? R
-    : never
+  ? R
+  : never
   : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
-        DefaultSchema["Views"])
-    ? (DefaultSchema["Tables"] &
-        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
-        Row: infer R
-      }
-      ? R
-      : never
-    : never
+    DefaultSchema["Views"])
+  ? (DefaultSchema["Tables"] &
+    DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
+      Row: infer R
+    }
+  ? R
+  : never
+  : never
 
 export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
-    | keyof DefaultSchema["Tables"]
-    | { schema: keyof DatabaseWithoutInternals },
+  | keyof DefaultSchema["Tables"]
+  | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+  ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+  : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
   ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
-      Insert: infer I
-    }
-    ? I
-    : never
+    Insert: infer I
+  }
+  ? I
+  : never
   : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
-    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
-        Insert: infer I
-      }
-      ? I
-      : never
-    : never
+  ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+    Insert: infer I
+  }
+  ? I
+  : never
+  : never
 
 export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
-    | keyof DefaultSchema["Tables"]
-    | { schema: keyof DatabaseWithoutInternals },
+  | keyof DefaultSchema["Tables"]
+  | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+  ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+  : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
   ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
-      Update: infer U
-    }
-    ? U
-    : never
+    Update: infer U
+  }
+  ? U
+  : never
   : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
-    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
-        Update: infer U
-      }
-      ? U
-      : never
-    : never
+  ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+    Update: infer U
+  }
+  ? U
+  : never
+  : never
 
 export type Enums<
   DefaultSchemaEnumNameOrOptions extends
-    | keyof DefaultSchema["Enums"]
-    | { schema: keyof DatabaseWithoutInternals },
+  | keyof DefaultSchema["Enums"]
+  | { schema: keyof DatabaseWithoutInternals },
   EnumName extends DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-    : never = never,
+  ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
+  : never = never,
 > = DefaultSchemaEnumNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
   ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
   : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
-    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
-    : never
+  ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
+  : never
 
 export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
-    | keyof DefaultSchema["CompositeTypes"]
-    | { schema: keyof DatabaseWithoutInternals },
+  | keyof DefaultSchema["CompositeTypes"]
+  | { schema: keyof DatabaseWithoutInternals },
   CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never = never,
+  ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+  : never = never,
 > = PublicCompositeTypeNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
   ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
   : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
-    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
-    : never
+  ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+  : never
 
 export const Constants = {
   public: {
