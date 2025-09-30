@@ -36,8 +36,14 @@ export async function POST(request: NextRequest) {
             )
         }
 
-        // Parse request body
-        const body: StartResearchJobRequest = await request.json()
+        // Parse request body with enhanced iteration support
+        const body: StartResearchJobRequest & {
+            iteration_config?: {
+                iteration_number: number;
+                total_iterations: number;
+                delay_seconds: number;
+            }
+        } = await request.json()
 
         // Validate required fields
         if (!body.request_id || !body.job_type) {
@@ -61,22 +67,25 @@ export async function POST(request: NextRequest) {
             )
         }
 
-        // Check for existing active jobs of the same type
-        const { data: existingJobs } = await supabase
-            .from('deep_research_jobs')
-            .select('id, status')
-            .eq('request_id', body.request_id)
-            .eq('job_type', body.job_type)
-            .in('status', ['pending', 'running'])
+        // For multi-iteration research, allow multiple jobs of the same type
+        if (!body.iteration_config || body.iteration_config.iteration_number === 1) {
+            // Check for existing active jobs of the same type (only for single iteration or first iteration)
+            const { data: existingJobs } = await supabase
+                .from('deep_research_jobs')
+                .select('id, status')
+                .eq('request_id', body.request_id)
+                .eq('job_type', body.job_type)
+                .in('status', ['pending', 'running'])
 
-        if (existingJobs && existingJobs.length > 0) {
-            return NextResponse.json(
-                {
-                    error: 'A research job of this type is already running for this company',
-                    existing_job_id: existingJobs[0].id
-                },
-                { status: 409 }
-            )
+            if (existingJobs && existingJobs.length > 0) {
+                return NextResponse.json(
+                    {
+                        error: 'A research job of this type is already running for this company',
+                        existing_job_id: existingJobs[0].id
+                    },
+                    { status: 409 }
+                )
+            }
         }
 
         // Extract user context for audit logging
