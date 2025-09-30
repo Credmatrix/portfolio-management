@@ -28,32 +28,32 @@ const RISK_GRADE_CONFIG = {
 	cm1: {
 		label: 'CM1',
 		color: FluentColors.success,
-		description: 'Excellent Risk'
+		description: 'Low Risk'
 	},
 	cm2: {
 		label: 'CM2',
 		color: '#0E8A0E',
-		description: 'Good Risk'
+		description: 'Low Risk'
 	},
 	cm3: {
 		label: 'CM3',
 		color: FluentColors.warning,
-		description: 'Average Risk'
+		description: 'Low Moderate Risk'
 	},
 	cm4: {
 		label: 'CM4',
 		color: FluentColors.orange,
-		description: 'Poor Risk'
+		description: 'Moderate Risk'
 	},
 	cm5: {
 		label: 'CM5',
 		color: FluentColors.error,
-		description: 'Critical Risk'
+		description: 'Moderate Risk'
 	},
 	ungraded: {
 		label: 'Ungraded',
 		color: FluentColors.neutral[50],
-		description: 'Not Assessed'
+		description: 'High Risk'
 	}
 };
 
@@ -333,15 +333,16 @@ export function RiskDistribution({
 
 			{/* Summary Statistics */}
 			<div className="mt-4 pt-4 border-t border-neutral-30">
-				<div className="grid grid-cols-2 gap-4 text-sm">
+				<div className="grid grid-cols-3 gap-4 text-sm">
+
 					<div
 						className={`group transition-all duration-200 ${isInteractive ? 'cursor-pointer hover:bg-neutral-10 rounded p-2 -m-2' : ''
 							}`}
-						onClick={() => handleSummaryClick('high')}
+						onClick={() => handleSummaryClick('low')}
 					>
-						<span className="text-neutral-60">High Risk (CM4-CM5):</span>
+						<span className="text-neutral-60">Low Risk (CM1-CM2):</span>
 						<span className="ml-2 font-medium text-neutral-90">
-							{((data.cm4 || 0) + (data.cm5 || 0))} companies
+							{((data.cm1 || 0) + (data.cm2 || 0))} companies
 						</span>
 						{isInteractive && (
 							<span className={getHoverHintClasses(isInteractive, true)}>
@@ -352,11 +353,26 @@ export function RiskDistribution({
 					<div
 						className={`group transition-all duration-200 ${isInteractive ? 'cursor-pointer hover:bg-neutral-10 rounded p-2 -m-2' : ''
 							}`}
-						onClick={() => handleSummaryClick('low')}
+						onClick={() => handleSummaryClick('high')}
 					>
-						<span className="text-neutral-60">Low Risk (CM1-CM2):</span>
+						<span className="text-neutral-60">Moderate Risk (CM3-CM5):</span>
 						<span className="ml-2 font-medium text-neutral-90">
-							{((data.cm1 || 0) + (data.cm2 || 0))} companies
+							{((data.cm3 || 0) + (data.cm4 || 0) + (data.cm5 || 0))} companies
+						</span>
+						{isInteractive && (
+							<span className={getHoverHintClasses(isInteractive, true)}>
+								Click to filter
+							</span>
+						)}
+					</div>
+					<div
+						className={`group transition-all duration-200 ${isInteractive ? 'cursor-pointer hover:bg-neutral-10 rounded p-2 -m-2' : ''
+							}`}
+						onClick={() => handleSummaryClick('high')}
+					>
+						<span className="text-neutral-60">High Risk (CM6-CM9):</span>
+						<span className="ml-2 font-medium text-neutral-90">
+							{(data.ungraded || 0)} companies
 						</span>
 						{isInteractive && (
 							<span className={getHoverHintClasses(isInteractive, true)}>
