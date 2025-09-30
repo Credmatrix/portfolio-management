@@ -1,0 +1,1 @@
+export { CompanyInfoSection } from './CompanyInfoSection'

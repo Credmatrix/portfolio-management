@@ -42,12 +42,12 @@ const navigation = [
 		icon: Building2,
 		description: "Manage company profiles"
 	},
-	{
-		name: "Create Request",
-		href: "/upload",
-		icon: Upload,
-		description: "Process new company data"
-	},
+	// {
+	// 	name: "Create Request",
+	// 	href: "/upload",
+	// 	icon: Upload,
+	// 	description: "Process new company data"
+	// },
 ];
 
 const secondaryNavigation = [
