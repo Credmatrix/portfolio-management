@@ -102,8 +102,10 @@ export function ApiProcessingForm({
 
     // Enhanced validation and eligibility checking
     useEffect(() => {
+        console.log(cinLlpin, selectedCompany)
         if (cinLlpin) {
             const validation = validateCinLlpin(cinLlpin, selectedCompany.entity_type)
+            console.log(validation)
             if (validation.isValid) {
                 setValidationError(null)
                 setValidationWarnings(validation.warnings || [])
@@ -332,7 +334,7 @@ export function ApiProcessingForm({
                     API Processing
                 </h3>
                 <p className="text-sm text-neutral-60 max-w-md mx-auto">
-                    We'll fetch comprehensive company data directly from government databases using your CIN/LLPIN.
+                    We'll fetch comprehensive company data directly from government databases using your CIN/LLPIN/PAN.
                 </p>
             </div>
 
@@ -404,7 +406,7 @@ export function ApiProcessingForm({
 
                     <div>
                         <label className="text-sm font-medium text-neutral-70 block mb-2">
-                            CIN/LLPIN *
+                            {selectedCompany?.registration_number && selectedCompany?.registration_number.length === 10 ? 'PAN *' : 'CIN/LLPIN *'}
                         </label>
                         <Input
                             type="text"

@@ -90,6 +90,23 @@ export async function POST(request: NextRequest) {
             );
         }
 
+        // Get the created request with updated request_id from trigger
+        const { data: createdRequest, error: fetchError } = await supabase
+            .from('document_processing_requests')
+            .select('request_id')
+            .eq('id', requestId)
+            .single();
+
+        if (fetchError || !createdRequest || !createdRequest.request_id) {
+            console.error('Error fetching created request:', fetchError);
+            return NextResponse.json(
+                { success: false, error: 'Failed to retrieve processing request' },
+                { status: 500 }
+            );
+        }
+        const requestID = createdRequest.request_id;
+
+
         if (existingCompany?.comprehensive_data) {
             // Company data exists, send SQS message directly
             await sendSQSMessage({
@@ -106,7 +123,7 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({
                 success: true,
                 data: {
-                    request_id: requestId,
+                    request_id: requestID,
                     status: 'processing',
                     message: 'Processing started with existing company data',
                     has_existing_data: true,
@@ -171,7 +188,7 @@ export async function POST(request: NextRequest) {
                 return NextResponse.json({
                     success: true,
                     data: {
-                        request_id: requestId,
+                        request_id: requestID,
                         status: 'processing',
                         message: 'Company data fetched and processing started',
                         has_existing_data: false,

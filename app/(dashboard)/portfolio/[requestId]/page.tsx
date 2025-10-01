@@ -29,7 +29,8 @@ import {
     CheckCircle,
     Search,
     Scale,
-    FileCheck
+    FileCheck,
+    IndianRupee
 } from 'lucide-react'
 
 // Import the section components
@@ -93,6 +94,24 @@ export default function CompanyDetailPage({ }: CompanyDetailPageProps) {
             fetchCompanyDetails()
         }
     }, [requestId])
+
+    // Polling effect for processing status
+    useEffect(() => {
+        let intervalId: NodeJS.Timeout | null = null
+
+        if (company && company.status === 'processing') {
+            intervalId = setInterval(() => {
+                fetchCompanyDetails()
+            }, 23000) // 10 seconds
+        }
+
+        return () => {
+            if (intervalId) {
+                clearInterval(intervalId)
+            }
+        }
+    }, [company])
+
 
     const fetchCompanyDetails = async () => {
         try {
@@ -464,10 +483,14 @@ export default function CompanyDetailPage({ }: CompanyDetailPageProps) {
 
                     {/* Tabbed Interface */}
                     <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                        <TabsList className="grid w-full grid-cols-7">
+                        <TabsList className="grid w-full grid-cols-8">
                             <TabsTrigger value="overview" className="flex items-center gap-2">
                                 <BarChart3 className="w-4 h-4" />
                                 Overview
+                            </TabsTrigger>
+                            <TabsTrigger value="credit" className="flex items-center gap-2">
+                                <IndianRupee className="w-4 h-4" />
+                                Credit
                             </TabsTrigger>
                             <TabsTrigger value="financial" className="flex items-center gap-2">
                                 <TrendingUp className="w-4 h-4" />
@@ -509,7 +532,6 @@ export default function CompanyDetailPage({ }: CompanyDetailPageProps) {
                                 <div className="xl:col-span-4 space-y-6">
                                     {/* Company Information Section */}
                                     <CompanyInfoSection company={company} />
-                                    <CreditManagementSection requestId={requestId} />
                                 </div>
                                 {/* <div className="xl:col-span-1 space-y-6"> */}
                                 {/* <ComplianceSection company={company} /> */}
@@ -550,6 +572,10 @@ export default function CompanyDetailPage({ }: CompanyDetailPageProps) {
                                     )} */}
                                 {/* </div> */}
                             </div>
+                        </TabsContent>
+
+                        <TabsContent value="credit" className="space-y-6">
+                            <CreditManagementSection requestId={requestId} />
                         </TabsContent>
 
                         {/* Financial Tab */}

@@ -310,15 +310,10 @@ export function ExcelUploadForm({
                 } : f
             ));
 
+            const res = await confirmResponse.json();
+
             // Notify parent component
-            onUploadComplete({
-                id: request_id,
-                request_id,
-                company_name: selectedCompany?.name || companyName,
-                filename: file.name,
-                status: 'submitted',
-                submitted_at: new Date().toISOString()
-            });
+            onUploadComplete(res.request_id);
 
             // Start polling for processing status
             startStatusPolling(request_id, file.id);

@@ -224,7 +224,7 @@ export function CompanySearchStep({
                             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-neutral-400" />
                             <Input
                                 type="text"
-                                placeholder="Enter company name, CIN, PAN, or GSTIN..."
+                                placeholder="Enter company name"
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                                 className="pl-10 pr-12 py-3 text-base"
@@ -240,7 +240,7 @@ export function CompanySearchStep({
                                         variant="ghost"
                                         size="sm"
                                         onClick={clearSearch}
-                                        className="h-6 w-6 p-0 hover:bg-neutral-100"
+                                        className="h-6 w-6 p-0 hover:bg-neutral-10"
                                     >
                                         <X className="w-3 h-3" />
                                     </Button>
@@ -286,7 +286,7 @@ export function CompanySearchStep({
                                                     variant="ghost"
                                                     size="sm"
                                                     onClick={() => handleSuggestionClick(historyItem)}
-                                                    className="text-xs text-neutral-600 hover:bg-neutral-50"
+                                                    className="text-xs text-neutral-600 hover:bg-neutral-10"
                                                 >
                                                     {historyItem}
                                                 </Button>
@@ -321,7 +321,7 @@ export function CompanySearchStep({
                         )}
 
                         {/* Enhanced Data Source Summary */}
-                        {Object.keys(dataSourceInfo).length > 0 && (
+                        {/* {Object.keys(dataSourceInfo).length > 0 && (
                             <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-4 border border-blue-100">
                                 <div className="flex items-center gap-2 mb-3">
                                     <Database className="w-4 h-4 text-blue-600" />
@@ -374,7 +374,7 @@ export function CompanySearchStep({
                                     </div>
                                 )}
                             </div>
-                        )}
+                        )} */}
                     </div>
                 </CardContent>
             </Card>
@@ -490,7 +490,7 @@ export function CompanySearchStep({
                                 key={company.id}
                                 className={`cursor-pointer transition-all hover:shadow-md border-l-4 ${selectedCompany?.id === company.id
                                     ? 'ring-2 ring-blue-500 bg-blue-50 border-l-blue-500'
-                                    : 'hover:bg-neutral-50 border-l-transparent hover:border-l-blue-200'
+                                    : 'hover:bg-neutral-20 border-l-transparent hover:border-l-blue-200'
                                     }`}
                                 onClick={() => onCompanySelect(company)}
                             >
@@ -560,7 +560,7 @@ export function CompanySearchStep({
                                                     <div className="space-y-2">
                                                         <div className="flex items-center gap-2">
                                                             <span className="text-xs text-neutral-500">Processing options:</span>
-                                                            <Badge variant="info" size="sm" className="flex items-center gap-1">
+                                                            <Badge variant="success" size="sm" className="flex items-center gap-1">
                                                                 <Clock className="w-3 h-3" />
                                                                 {processingTime}
                                                             </Badge>
@@ -611,7 +611,7 @@ export function CompanySearchStep({
                                                         variant={company.match_score >= 90 ? "success" : company.match_score >= 70 ? "info" : "secondary"}
                                                         size="sm"
                                                     >
-                                                        {company.match_score}% match
+                                                        {Math.round(company.match_score)}% match
                                                     </Badge>
 
                                                     {selectedCompany?.id === company.id && (
