@@ -48,7 +48,7 @@ export function getProcessingStatusText(
     if (status === 'processing' && processingStartedAt) {
         const startTime = new Date(processingStartedAt);
         const elapsed = calculateElapsedTime(startTime);
-        return `Processing for ${elapsed.text}`;
+        return `Processing.....`;
     }
 
     if (status !== 'processing' && processingStartedAt && completedAt) {

@@ -101,8 +101,8 @@ export default function CompanyDetailPage({ }: CompanyDetailPageProps) {
 
         if (company && company.status === 'processing') {
             intervalId = setInterval(() => {
-                fetchCompanyDetails()
-            }, 23000) // 10 seconds
+                fetchCompanyDetails(false)
+            }, 50000) // 50 seconds
         }
 
         return () => {
@@ -113,9 +113,9 @@ export default function CompanyDetailPage({ }: CompanyDetailPageProps) {
     }, [company])
 
 
-    const fetchCompanyDetails = async () => {
+    const fetchCompanyDetails = async (isLoading = true) => {
         try {
-            setLoading(true)
+            setLoading(isLoading)
             setError(null)
 
             const response = await fetch(`/api/portfolio/${requestId}`)
@@ -488,23 +488,23 @@ export default function CompanyDetailPage({ }: CompanyDetailPageProps) {
                                 <BarChart3 className="w-4 h-4" />
                                 Overview
                             </TabsTrigger>
-                            <TabsTrigger value="credit" className="flex items-center gap-2">
+                            <TabsTrigger value="credit" className="flex items-center gap-2" disabled={company?.status !== 'completed'}>
                                 <IndianRupee className="w-4 h-4" />
                                 Credit
                             </TabsTrigger>
-                            <TabsTrigger value="financial" className="flex items-center gap-2">
+                            <TabsTrigger value="financial" className="flex items-center gap-2" disabled={company?.status !== 'completed'}>
                                 <TrendingUp className="w-4 h-4" />
                                 Financial
                             </TabsTrigger>
-                            <TabsTrigger value="risk" className="flex items-center gap-2">
+                            <TabsTrigger value="risk" className="flex items-center gap-2" disabled={company?.status !== 'completed'}>
                                 <Shield className="w-4 h-4" />
                                 Risk
                             </TabsTrigger>
-                            <TabsTrigger value="governance" className="flex items-center gap-2">
+                            <TabsTrigger value="governance" className="flex items-center gap-2" disabled={company?.status !== 'completed'}>
                                 <Users className="w-4 h-4" />
                                 Governance
                             </TabsTrigger>
-                            <TabsTrigger value="compliance" className="flex items-center gap-2">
+                            <TabsTrigger value="compliance" className="flex items-center gap-2" disabled={company?.status !== 'completed'}>
                                 <CheckCircle className="w-4 h-4" />
                                 Compliance
                             </TabsTrigger>
