@@ -280,7 +280,7 @@ export default function CompanyDetailsPage() {
                             <div>
                                 <p className="text-sm font-medium text-gray-600">Credit Limit</p>
                                 <p className="text-2xl font-bold text-purple-700">
-                                    {formatCurrency(companyData.summary.latestRecommendedLimit)}
+                                    ₹{companyData.summary.latestRecommendedLimit?.toFixed(1) || 0}Cr
                                 </p>
                             </div>
                             <div className="p-3 bg-purple-100 rounded-lg">
@@ -378,10 +378,10 @@ export default function CompanyDetailsPage() {
                                                         Rating: <strong>{request.credit_rating}</strong>
                                                     </span>
                                                 )}
-                                                {request.recommended_limit && (
+                                                {(
                                                     <span className="flex items-center gap-1">
                                                         <CreditCard className="w-4 h-4 text-green-500" />
-                                                        Limit: <strong>{formatCurrency(request.recommended_limit)}</strong>
+                                                        Limit: <strong> ₹{request.recommended_limit?.toFixed(1) || 0}Cr</strong>
                                                     </span>
                                                 )}
                                             </div>
