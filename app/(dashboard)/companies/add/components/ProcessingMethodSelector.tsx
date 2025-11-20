@@ -48,26 +48,25 @@ export function ProcessingMethodSelector({
             if (selectedCompany?.registration_number) {
                 methods.push({
                     type: 'api',
-                    eligibility_reason: 'Valid CIN/LLPIN found - fastest processing with comprehensive data',
+                    eligibility_reason: 'Valid CIN/LLPIN/PAN found - fastest processing with comprehensive data',
                     requirements: [
-                        'Valid CIN/LLPIN',
+                        'Valid CIN/LLPIN/PAN',
                         'Active registration status',
-                        'Internet connection for real-time data fetch'
                     ],
-                    estimated_time: '5-10 minutes',
-                    data_completeness_expected: 85
+                    estimated_time: '1-2 minutes',
+                    data_completeness_expected: 95
                 })
             } else {
                 methods.push({
                     type: 'api',
-                    eligibility_reason: 'API processing available but requires valid CIN/LLPIN',
+                    eligibility_reason: 'API processing available but requires valid CIN/LLPIN/PAN',
                     requirements: [
-                        'Valid CIN/LLPIN (to be entered)',
+                        'Valid CIN/LLPIN/PAN (to be entered)',
                         'Active registration status',
                         'Internet connection for real-time data fetch'
                     ],
-                    estimated_time: '5-10 minutes',
-                    data_completeness_expected: 85
+                    estimated_time: '1-2 minutes',
+                    data_completeness_expected: 95
                 })
             }
 
@@ -80,8 +79,8 @@ export function ProcessingMethodSelector({
                     'Company basic details',
                     'Properly formatted data sheets'
                 ],
-                estimated_time: '15-30 minutes',
-                data_completeness_expected: 70
+                estimated_time: '2-3 minutes',
+                data_completeness_expected: 90
             })
         }
 
@@ -95,8 +94,8 @@ export function ProcessingMethodSelector({
                 'Optional: Compliance data (GST, EPFO)',
                 'Optional: Legal and audit information'
             ],
-            estimated_time: '30-60 minutes',
-            data_completeness_expected: 60
+            estimated_time: '15-20 minutes',
+            data_completeness_expected: 80
         })
 
         return methods
@@ -216,7 +215,7 @@ export function ProcessingMethodSelector({
                                             <div>
                                                 <div className="flex items-center gap-2">
                                                     <h4 className="font-semibold text-neutral-90 text-lg">
-                                                        {method.type.charAt(0).toUpperCase() + method.type.slice(1)} Processing
+                                                        {method.type === 'api' ? ('API') : method.type.charAt(0).toUpperCase() + method.type.slice(1)} Processing
                                                     </h4>
 
                                                     {isRecommended && (
@@ -353,17 +352,17 @@ export function ProcessingMethodSelector({
                                         <Wifi className="w-4 h-4 text-green-600" />
                                         API
                                     </td>
-                                    <td className="py-2 text-green-600 font-medium">5-10 min</td>
-                                    <td className="py-2 text-green-600 font-medium">85%</td>
-                                    <td className="py-2 text-neutral-600">Corporate entities with CIN/LLPIN</td>
+                                    <td className="py-2 text-green-600 font-medium">1-2 min</td>
+                                    <td className="py-2 text-green-600 font-medium">95%</td>
+                                    <td className="py-2 text-neutral-600">Corporate entities with CIN/LLPIN/PAN</td>
                                 </tr>
                                 <tr className="border-b border-neutral-100">
                                     <td className="py-2 flex items-center gap-2">
                                         <FileText className="w-4 h-4 text-blue-600" />
                                         Excel
                                     </td>
-                                    <td className="py-2 text-blue-600 font-medium">15-30 min</td>
-                                    <td className="py-2 text-blue-600 font-medium">70%</td>
+                                    <td className="py-2 text-blue-600 font-medium">2-3 min</td>
+                                    <td className="py-2 text-blue-600 font-medium">90%</td>
                                     <td className="py-2 text-neutral-600">When you have financial documents</td>
                                 </tr>
                                 <tr>
@@ -371,8 +370,8 @@ export function ProcessingMethodSelector({
                                         <Database className="w-4 h-4 text-orange-600" />
                                         Manual
                                     </td>
-                                    <td className="py-2 text-orange-600 font-medium">30-60 min</td>
-                                    <td className="py-2 text-orange-600 font-medium">60%</td>
+                                    <td className="py-2 text-orange-600 font-medium">15-20 min</td>
+                                    <td className="py-2 text-orange-600 font-medium">80%</td>
                                     <td className="py-2 text-neutral-600">All entity types, complete control</td>
                                 </tr>
                             </tbody>

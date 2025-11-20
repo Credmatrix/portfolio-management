@@ -74,7 +74,7 @@ interface PortfolioGridProps {
 
 export function PortfolioGrid({
 	initialFilters = {},
-	initialSort = { field: 'risk_score', direction: 'desc' },
+	initialSort = { field: 'completed_at', direction: 'desc' },
 	showFilters = false,
 	compactMode = false,
 	onUploadNew,
@@ -571,7 +571,7 @@ export function PortfolioGrid({
 			setInternalFilters({});
 			setSearchQuery('');
 			setSearchInput('');
-			setSortCriteria({ field: 'risk_score', direction: 'desc' });
+			setSortCriteria({ field: 'completed_at', direction: 'desc' });
 			setPagination({ page: 1, limit: 20 });
 
 			// Clear dashboard filter state

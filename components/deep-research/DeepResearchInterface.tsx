@@ -113,7 +113,7 @@ export function DeepResearchInterface({ requestId, companyName }: DeepResearchIn
 
         const interval = setInterval(() => {
             fetchResearchJobs()
-        }, 5000)
+        }, 15000)
 
         return () => clearInterval(interval)
     }, [activeJobs.length])

@@ -7,14 +7,14 @@ const AWS_API_BASE = 'https://z6px6n7b13.execute-api.ap-south-1.amazonaws.com/de
 export async function POST(request: NextRequest) {
     try {
         const supabase = await createServerSupabaseClient()
-        
+
         const { data: { user }, error: authError } = await supabase.auth.getUser()
         if (authError || !user) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
         }
 
         const body = await request.json()
-        
+
         // Validate required fields
         const { request_id, file_size } = body
         if (!request_id) {
@@ -44,8 +44,24 @@ export async function POST(request: NextRequest) {
         }
 
         const awsData = await awsResponse.json()
-        
-        return NextResponse.json(awsData)
+
+        // Get the created request with updated request_id from trigger
+        const { data: createdRequest, error: fetchError } = await supabase
+            .from('document_processing_requests')
+            .select('request_id')
+            .eq('id', request_id)
+            .single();
+
+        if (fetchError || !createdRequest || !createdRequest.request_id) {
+            console.error('Error fetching created request:', fetchError);
+            return NextResponse.json(
+                { success: false, error: 'Failed to retrieve processing request' },
+                { status: 500 }
+            );
+        }
+        const requestID = createdRequest.request_id;
+
+        return NextResponse.json({ ...awsData, request_id: requestID })
 
     } catch (error) {
         console.error('Upload confirmation error:', error)

@@ -23,8 +23,9 @@ import {
     Maximize2,
     Minimize2
 } from 'lucide-react'
-import { formatCurrency, formatDate } from '@/lib/utils'
+import { formatCurrency, formatDate, formatDateTime } from '@/lib/utils'
 import { Button } from '@/components/ui'
+import { getProcessingStatusText } from '@/lib/utils/processing-time'
 
 interface CompanyHeaderProps {
     company: PortfolioCompany
@@ -165,10 +166,10 @@ export function CompanyHeader({
     }
 
     const riskGradeBadge = getRiskGradeBadge(company.risk_grade)
-    const aboutCompany = company.extracted_data['About the Company']
+    const aboutCompany = company.extracted_data ? company?.extracted_data['About the Company'] : null
     const registeredAddress = aboutCompany?.addresses?.business_address
-    const companyInfo = aboutCompany.company_info
-    const riskAnalysis = company.risk_analysis
+    const companyInfo = aboutCompany?.company_info
+    const riskAnalysis = company?.risk_analysis
 
     // Extract rating details
     const ratingDetails = extractRatingDetails(company.risk_analysis)
@@ -282,14 +283,12 @@ export function CompanyHeader({
                                                 </span>
                                                 <span className="flex items-center gap-1">
                                                     {getStatusIcon(company.status)}
-                                                    Processing {company.status || 'unknown'}
+                                                    {getProcessingStatusText(
+                                                        company.status || 'unknown',
+                                                        company.processing_started_at,
+                                                        company.completed_at
+                                                    )}
                                                 </span>
-                                                {company.completed_at && (
-                                                    <span className="flex items-center gap-1">
-                                                        <Calendar className="w-4 h-4" />
-                                                        Completed {formatDate(company.completed_at)}
-                                                    </span>
-                                                )}
                                             </div>
                                         </div>
 

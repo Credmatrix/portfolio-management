@@ -344,13 +344,24 @@ export function determineProcessingEligibility(
             } else {
                 reasons.push(`Invalid LLPIN: ${llpinValidation.error}`)
             }
-        } else if ((entityType === 'private_limited' || entityType === 'public_limited') && cin) {
-            const cinValidation = validateCIN(cin)
-            if (cinValidation.isValid) {
-                apiEligible = true
-                reasons.push('Valid CIN provided for company')
-            } else {
-                reasons.push(`Invalid CIN: ${cinValidation.error}`)
+        } else if ((entityType === 'private_limited' || entityType === 'public_limited')) {
+            if (cin) {
+                const cinValidation = validateCIN(cin)
+                if (cinValidation.isValid) {
+                    apiEligible = true
+                    reasons.push('Valid CIN provided for company')
+                } else {
+                    reasons.push(`Invalid CIN: ${cinValidation.error}`)
+                }
+            }
+            if (pan) {
+                const panValidation = validatePAN(pan)
+                if (panValidation.isValid) {
+                    apiEligible = true
+                    reasons.push('Valid PAN provided for company')
+                } else {
+                    reasons.push(`Invalid PAN: ${panValidation.error}`)
+                }
             }
         } else {
             reasons.push('Missing required identifier for API processing')

@@ -87,7 +87,9 @@ export function EpfoDetailsSection({ company }: EpfoDetailsSectionProps) {
                         city: item['CITY'] || '',
                         state: item['STATE'] || '',
                         working_status: item['WORKING STATUS'] || '',
-                        no_of_employees: parseInt(item['NO. OF EMPLOYEES']?.replace(/,/g, '') || '0') || 0,
+                        no_of_employees: typeof item['NO. OF EMPLOYEES'] === 'string'
+                            ? parseInt(item['NO. OF EMPLOYEES'].replace(/,/g, '')) || 0
+                            : parseInt(item['NO. OF EMPLOYEES'] || '0') || 0,
                         principal_business_activities: item['PRINCIPAL BUSINESS ACTIVITIES'] || '',
                         flags: item['FLAGS'] || ''
                     })
@@ -111,7 +113,12 @@ export function EpfoDetailsSection({ company }: EpfoDetailsSectionProps) {
                 const paymentDate = item['DATE OF CREDIT'] || ''
                 const dueDate = item['PAYMENT DUE DATE'] || ''
                 const amount = parseFloat(item['AMOUNT (Rs. Crore)']) || 0
-                const employees = parseInt(item['NO. OF EMPLOYEES'] ? `${item['NO. OF EMPLOYEES']}`?.replace(/,/g, '') : '0') || 0
+                const employeesValue = item['NO. OF EMPLOYEES']
+                const employees = typeof employeesValue === 'string'
+                    ? parseInt(employeesValue.replace(/,/g, '')) || 0
+                    : typeof employeesValue === 'number'
+                        ? employeesValue
+                        : 0
                 const status = item['STATUS'] || ''
 
                 // Calculate delay days
