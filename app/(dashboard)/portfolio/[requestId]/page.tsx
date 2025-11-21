@@ -319,7 +319,7 @@ export default function CompanyDetailPage({ }: CompanyDetailPageProps) {
                             <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={fetchCompanyDetails}
+                                onClick={() => fetchCompanyDetails()}
                                 className="mt-3"
                             >
                                 Try Again
