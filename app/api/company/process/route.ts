@@ -12,7 +12,7 @@ const sqs = new SQSClient({
 });
 
 const QUEUE_URL = process.env.SQS_QUEUE_URL || 'https://sqs.ap-south-1.amazonaws.com/012509421224/credmatrix-probe-api-processing-dev';
-const MOOLA_API_BASE_URL = process.env.MOOLA_API_BASE_URL || 'https://moola-axl1.credmatrix.ai/api/v1';
+const MOOLA_API_BASE_URL = process.env.MOOLA_API_BASE_URL || 'https://moola-axl0.credmatrix.ai/api/v1';
 
 interface ProcessingRequest {
     cin?: string;

@@ -710,6 +710,8 @@ export interface CompanySearchResult {
         company_id?: string
         has_comprehensive_data?: boolean
         last_updated?: string
+        bid?: string
+        entity_category?: string
     }
 }
 

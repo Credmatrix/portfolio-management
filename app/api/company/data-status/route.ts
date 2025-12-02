@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { validateCinLlpin } from '@/lib/utils/validators';
 
-const MOOLA_API_BASE_URL = process.env.MOOLA_API_BASE_URL || 'https://moola-axl1.credmatrix.ai/api/v1';
+const MOOLA_API_BASE_URL = process.env.MOOLA_API_BASE_URL || 'https://moola-axl0.credmatrix.ai/api/v1';
 
 export async function GET(request: NextRequest) {
     try {
