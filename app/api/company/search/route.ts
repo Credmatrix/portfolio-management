@@ -1,10 +1,23 @@
 // Enhanced Company Search API - Supports intelligent search with multiple data sources
+// 
+// Search Priority:
+// 1. Probe42 API (PRIMARY) - Most comprehensive and reliable source for companies, LLPs, and PNPs
+// 2. ClearTax API - PAN-based entities and non-corporate structures
+// 3. Existing companies database - Previously processed companies
+// 4. Manual entries - User-created company records
+//
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { CompanySearchResult, EntityType, ProcessingMethod } from '@/types/manual-company.types'
 
+// API Configuration
 const AWS_API_BASE_URL = 'https://nqrkc60k1g.execute-api.ap-south-1.amazonaws.com/dev'
 const CLEARTAX_API_BASE_URL = 'https://cleartax.in/f'
+
+// Probe42 API - PRIMARY search source for comprehensive company data
+const PROBE42_API_BASE_URL = 'https://moola-axl0.credmatrix.ai/api/v1'
+// TODO: Move this token to environment variables for security
+const PROBE42_AUTH_TOKEN = 'eyJhbGciOiJIUzI1NiIsImtpZCI6ImEwNHdlZnFidjh2Y2tTM0MiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL3Nsa29zZXp5YW1kbXZhYXJtd293LnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiJlMmM1ODA1Ni00M2U0LTRiY2ItOWIwMC0yMTk1YTgzZDYwZjIiLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzY0NjUzOTIyLCJpYXQiOjE3NjQ2NTAzMjIsImVtYWlsIjoic3VrZXNoLnBAemV0d2Vyay5jb20iLCJwaG9uZSI6IiIsImFwcF9tZXRhZGF0YSI6eyJwcm92aWRlciI6ImVtYWlsIiwicHJvdmlkZXJzIjpbImVtYWlsIl19LCJ1c2VyX21ldGFkYXRhIjp7ImVtYWlsX3ZlcmlmaWVkIjp0cnVlfSwicm9sZSI6ImF1dGhlbnRpY2F0ZWQiLCJhYWwiOiJhYWwxIiwiYW1yIjpbeyJtZXRob2QiOiJwYXNzd29yZCIsInRpbWVzdGFtcCI6MTc2NDYzOTg5OH1dLCJzZXNzaW9uX2lkIjoiMjlkNTRlZTUtYmI1YS00MWVjLWExMWMtYzc0OWE0OWE1Njg0IiwiaXNfYW5vbnltb3VzIjpmYWxzZX0.n2kP70hTVSexCz_zRSAmKS3uivYN6drp0Og7zms6IsU'
 
 interface SearchFilters {
     entity_types?: EntityType[]
@@ -86,7 +99,57 @@ async function handleEnhancedSearch(
     const dataSourceAvailability: Record<string, any> = {}
 
     try {
-        // 1. Search in MCA master data (Corporate entities)
+        // 1. PRIMARY: Search using Probe42 API (most comprehensive)
+        let probe42Results: any[] = []
+        try {
+            const probe42Response = await fetch(
+                `${PROBE42_API_BASE_URL}/companies/search?name_starts_with=${encodeURIComponent(query)}&limit=${limit}`,
+                {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${PROBE42_AUTH_TOKEN}`,
+                        'Content-Type': 'application/json',
+                    },
+                }
+            )
+
+            if (probe42Response.ok) {
+                const probe42Data = await probe42Response.json()
+                if (probe42Data.success && probe42Data.data?.results?.entities) {
+                    const entities = probe42Data.data.results.entities
+
+                    // Process companies
+                    if (entities.companies && Array.isArray(entities.companies)) {
+                        probe42Results.push(...entities.companies.map((c: any) => ({
+                            ...c,
+                            entity_category: 'company'
+                        })))
+                    }
+
+                    // Process LLPs
+                    if (entities.llps && Array.isArray(entities.llps)) {
+                        probe42Results.push(...entities.llps.map((l: any) => ({
+                            ...l,
+                            entity_category: 'llp'
+                        })))
+                    }
+
+                    // Process PNPs (if any)
+                    if (entities.pnps && Array.isArray(entities.pnps)) {
+                        probe42Results.push(...entities.pnps.map((p: any) => ({
+                            ...p,
+                            entity_category: 'pnp'
+                        })))
+                    }
+                }
+            } else {
+                console.warn('Probe42 API failed:', probe42Response.status)
+            }
+        } catch (probe42Error) {
+            console.warn('Probe42 API error:', probe42Error)
+        }
+
+        // 2. Search in MCA master data (Corporate entities)
         // const { data: mcaResults, error: mcaError } = await supabase
         //     .from('mca_master_data')
         //     .select(`
@@ -108,7 +171,33 @@ async function handleEnhancedSearch(
         //     console.error('MCA search error:', mcaError)
         // }
 
-        // 2. Search using ClearTax name-to-PAN API for non-corporate entities
+        // Process Probe42 results (PRIMARY SOURCE)
+        if (probe42Results.length > 0) {
+            probe42Results.forEach((entity: any) => {
+                const entityType = determineEntityTypeFromProbe42(entity.entity_category, entity.legal_name)
+                const registrationNumber = entity.cin || entity.llpin || entity.pnp_number
+                const processingMethods = determineProcessingMethods(entityType, true, registrationNumber)
+
+                results.push({
+                    id: entity.bid || registrationNumber || `probe42_${entity.legal_name}`,
+                    name: entity.legal_name,
+                    entity_type: entityType,
+                    registration_number: registrationNumber,
+                    status: entity.status || 'Unknown',
+                    data_sources: ['api', 'excel'],
+                    processing_eligibility: processingMethods,
+                    match_score: calculateMatchScore(query, entity.legal_name, 'probe42'),
+                    match_reason: `Probe42 verified ${entity.entity_category.toUpperCase()} entity`,
+                    additional_info: {
+                        bid: entity.bid,
+                        source: 'probe42',
+                        entity_category: entity.entity_category
+                    }
+                })
+            })
+        }
+
+        // 3. Search using ClearTax name-to-PAN API for non-corporate entities
         let clearTaxResults: any[] = []
         try {
             const clearTaxResponse = await fetch(
@@ -130,7 +219,7 @@ async function handleEnhancedSearch(
             console.warn('ClearTax API error:', clearTaxError)
         }
 
-        // 3. Search in existing companies table (both CIN and PAN)
+        // 4. Search in existing companies table (both CIN and PAN)
         // const { data: existingCompanies, error: companiesError } = await supabase
         //     .from('companies')
         //     .select(`
@@ -149,7 +238,7 @@ async function handleEnhancedSearch(
         //     console.error('Companies search error:', companiesError)
         // }
 
-        // // 4. Search in manual company entries
+        // // 5. Search in manual company entries
         // const { data: manualResults, error: manualError } = await supabase
         //     .from('manual_company_entries')
         //     .select(`
@@ -293,6 +382,7 @@ async function handleEnhancedSearch(
 
         // Build data source availability info
         if (include_data_sources) {
+            dataSourceAvailability.probe42_entities = probe42Results?.length || 0
             dataSourceAvailability.mca_companies = 0
             dataSourceAvailability.cleartax_entities = clearTaxResults?.length || 0
             dataSourceAvailability.existing_companies = 0
@@ -318,7 +408,8 @@ async function handleEnhancedSearch(
                 query,
                 filters_applied: filters,
                 search_time: Date.now(),
-                sources_searched: ['mca', 'cleartax', 'existing_companies', 'manual'],
+                sources_searched: ['probe42', 'mca', 'cleartax', 'existing_companies', 'manual'],
+                primary_source: 'probe42',
                 enhanced_mode: true
             },
             user_id: userId
@@ -524,7 +615,35 @@ function determineProcessingMethods(entityType: EntityType, hasApiData: boolean 
     return methods
 }
 
-function calculateMatchScore(query: string, companyName: string, source: 'mca' | 'pan' | 'existing' | 'manual'): number {
+function determineEntityTypeFromProbe42(category: string, legalName?: string): EntityType {
+    const categoryLower = category.toLowerCase()
+    const nameLower = (legalName || '').toLowerCase()
+
+    if (categoryLower === 'llp') {
+        return 'llp'
+    }
+
+    if (categoryLower === 'company') {
+        // Determine if private or public limited based on name
+        if (nameLower.includes('private limited') || nameLower.includes('pvt ltd')) {
+            return 'private_limited'
+        }
+        if (nameLower.includes('public limited')) {
+            return 'public_limited'
+        }
+        // Default to private limited for companies
+        return 'private_limited'
+    }
+
+    if (categoryLower === 'pnp') {
+        return 'partnership_registered'
+    }
+
+    // Default fallback
+    return 'private_limited'
+}
+
+function calculateMatchScore(query: string, companyName: string, source: 'probe42' | 'mca' | 'pan' | 'existing' | 'manual'): number {
     if (!companyName) return 0
 
     const queryLower = query.toLowerCase()
@@ -554,8 +673,8 @@ function calculateMatchScore(query: string, companyName: string, source: 'mca' |
         score = similarity * 50
     }
 
-    // Boost based on source reliability
-    const sourceBoost = { mca: 10, existing: 8, pan: 6, manual: 0 }
+    // Boost based on source reliability (Probe42 is primary and most reliable)
+    const sourceBoost = { probe42: 15, mca: 10, existing: 8, pan: 6, manual: 0 }
     score += sourceBoost[source]
 
     return Math.min(100, Math.max(0, score))
